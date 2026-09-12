@@ -176,7 +176,7 @@
 
                         <template x-if="!imgPrincipalPreview">
                             @if($producto->imagen)
-                                <img src="{{ asset('productos/' . $producto->imagen) }}"
+                                <img src="{{ url('/api/imagen/' . $producto->imagen) }}"
                                     class="w-full h-full object-cover group-hover:opacity-50 transition-all">
                             @endif
                         </template>
@@ -201,7 +201,7 @@
                         {{-- Fotos actuales en la DB --}}
                         @forelse($producto->galeria ?? [] as $img)
                             <div class="relative aspect-square rounded-xl overflow-hidden group border border-gray-50">
-                                <img src="{{ asset('productos/' . $img) }}" class="w-full h-full object-cover">
+                                <img src="{{ url('/api/imagen/' . $img) }}" class="w-full h-full object-cover">
                                 <label
                                     class="absolute inset-0 bg-rose-500/80 opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex flex-col items-center justify-center text-white text-center">
                                     <input type="checkbox" name="galeria_eliminar[]" value="{{ $img }}" class="hidden peer">

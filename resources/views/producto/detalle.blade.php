@@ -85,9 +85,9 @@
             {{-- Imagen principal --}}
             <div class="aspect-[4/5] bg-white overflow-hidden rounded-2xl border border-gray-100 shadow-sm group relative">
                 <img id="view-principal"
-                     src="{{ asset('productos/' . $producto->imagen) }}"
-                     class="w-full h-full object-contain p-6 transition-all duration-500 group-hover:scale-105"
-                     alt="{{ $producto->nombre_producto }}">
+                    src="{{ url('/api/imagen/' . $producto->imagen) }}"
+                    class="w-full h-full object-contain p-6 transition-all duration-500 group-hover:scale-105"
+                    alt="{{ $producto->nombre_producto }}">
 
                 @if($producto->precio_oferta)
                 <div class="absolute top-4 left-4">
@@ -100,17 +100,17 @@
 
             <div class="flex gap-2.5 overflow-x-auto pb-1 scroll-gallery">
                 <button type="button"
-                        onclick="cambiarImagen(this, '{{ asset('productos/' . $producto->imagen) }}')"
+                        onclick="cambiarImagen(this, '{{ url('/api/imagen/' . $producto->imagen) }}')"
                         class="thumbnail-btn thumbnail-active w-[72px] h-[82px] flex-shrink-0 rounded-xl border-2 overflow-hidden bg-white p-1">
-                    <img src="{{ asset('productos/' . $producto->imagen) }}" class="w-full h-full object-cover rounded-lg">
+                    <img src="{{ url('/api/imagen/' . $producto->imagen) }}" class="w-full h-full object-cover rounded-lg">
                 </button>
 
                 @if($producto->galeria)
                     @foreach($producto->galeria as $foto)
                     <button type="button"
-                            onclick="cambiarImagen(this, '{{ asset('productos/' . $foto) }}')"
+                            onclick="cambiarImagen(this, '{{ url('/api/imagen/' . $foto) }}')"
                             class="thumbnail-btn w-[72px] h-[82px] flex-shrink-0 rounded-xl border border-gray-200 overflow-hidden bg-white p-1 hover:border-gray-400 transition-all">
-                        <img src="{{ asset('productos/' . $foto) }}" class="w-full h-full object-cover rounded-lg">
+                        <img src="{{ url('/api/imagen/' . $foto) }}" class="w-full h-full object-cover rounded-lg">
                     </button>
                     @endforeach
                 @endif

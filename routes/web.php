@@ -18,10 +18,16 @@ use App\Http\Controllers\PagoController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CuponController;
 use App\Http\Controllers\PedidoUsuarioController;
+use App\Http\Controllers\Api\ImageController;
 
 // ── PÚBLICAS
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// ✅ NUEVO: Ruta para servir imágenes desde storage
+Route::get('/api/imagen/{filename}', [ImageController::class, 'show'])
+    ->where('filename', '.*')
+    ->name('imagen.show');
 
 Route::get('/producto/{id}', function ($id) {
     $producto = Producto::with('variantes')->findOrFail($id);
@@ -97,11 +103,10 @@ Route::middleware(['auth', 'verified', 'role:1'])
         });
 
         //Banners y cupones
-        //Banners y cupones
         Route::resource('banners', BannerController::class)->except(['show']);
-        Route::patch('banners/{banner}/toggle', [BannerController::class, 'toggle'])->name('banners.toggle'); // ← agregar
+        Route::patch('banners/{banner}/toggle', [BannerController::class, 'toggle'])->name('banners.toggle');
         Route::resource('cupones', CuponController::class)->except(['show']);
-        Route::patch('cupones/{cupon}/toggle',  [CuponController::class,  'toggle'])->name('cupones.toggle');  // ← agregar
+        Route::patch('cupones/{cupon}/toggle',  [CuponController::class,  'toggle'])->name('cupones.toggle');
     });
 
 // ── PERFIL

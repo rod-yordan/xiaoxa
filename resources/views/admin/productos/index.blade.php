@@ -73,7 +73,7 @@
                                     <div class="flex items-center gap-4">
                                         <div
                                             class="w-14 h-14 rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                                            <img src="{{ asset('productos/' . $producto->imagen) }}"
+                                            <img src="{{ url('/api/imagen/' . $producto->imagen) }}"
                                                 alt="{{ $producto->nombre_producto }}" class="w-full h-full object-cover"
                                                 onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($producto->nombre_producto) }}&color=7F9CF5&background=EBF4FF'">
                                         </div>

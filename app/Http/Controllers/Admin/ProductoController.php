@@ -70,13 +70,15 @@ class ProductoController extends Controller
             'id_categoria'
         ]));
 
+        // ✅ Imagen principal guardada en storage/app/public/productos/
         if ($request->hasFile('imagen')) {
             $archivo = $request->file('imagen');
             $nombre = uniqid() . '.' . $archivo->getClientOriginalExtension();
-            $archivo->move(public_path('productos'), $nombre);
+            $archivo->move(storage_path('app/public/productos'), $nombre);
             $producto->update(['imagen' => $nombre]);
         }
 
+        // ✅ Galería guardada en storage/app/public/productos/
         if ($request->hasFile('galeria')) {
             $galeria = [];
             foreach ($request->file('galeria') as $foto) {
@@ -101,7 +103,7 @@ class ProductoController extends Controller
                 $categoriaNombre
             );
         } catch (\Exception $e) {
-            // Silencioso - no interrumpimos el flujo
+            // Silencioso
         }
 
         return redirect()->route('admin.productos.index')->with('success', 'Producto creado exitosamente.');
@@ -153,19 +155,26 @@ class ProductoController extends Controller
 
         $datos = $request->only(['nombre_producto', 'descripcion', 'precio', 'precio_oferta', 'marca', 'estado_producto', 'id_genero', 'id_categoria', 'id_promocion']);
 
+        // ✅ Guardar nueva imagen principal
         if ($request->hasFile('imagen')) {
+            // Eliminar la imagen anterior
+            if ($producto->imagen && File::exists(storage_path('app/public/productos/' . $producto->imagen))) {
+                File::delete(storage_path('app/public/productos/' . $producto->imagen));
+            }
             $datos['imagen'] = $this->cargarArchivo($request->file('imagen'));
         }
 
         $galeriaActual = $producto->galeria ?? [];
 
+        // ✅ Eliminar fotos de la galería
         if ($request->has('galeria_eliminar')) {
             foreach ($request->galeria_eliminar as $fotoEliminar) {
-                File::delete(public_path('productos/' . $fotoEliminar));
+                File::delete(storage_path('app/public/productos/' . $fotoEliminar));
             }
             $galeriaActual = array_diff($galeriaActual, $request->galeria_eliminar);
         }
 
+        // ✅ Agregar nuevas fotos a la galería
         if ($request->hasFile('galeria')) {
             foreach ($request->file('galeria') as $foto) {
                 $galeriaActual[] = $this->cargarArchivo($foto);
@@ -211,10 +220,11 @@ class ProductoController extends Controller
         return redirect()->route('admin.productos.index')->with('success', 'Producto actualizado correctamente');
     }
 
+    // ✅ Guardar archivo en storage/app/public/productos/
     private function cargarArchivo($file)
     {
         $nombre = time() . '_' . $file->getClientOriginalName();
-        $file->move(public_path('productos'), $nombre);
+        $file->move(storage_path('app/public/productos'), $nombre);
         return $nombre;
     }
 
@@ -226,9 +236,16 @@ class ProductoController extends Controller
             return redirect()->back()->with('error', 'No se puede eliminar un producto con stock.');
         }
 
-        if ($producto->imagen) File::delete(public_path('productos/' . $producto->imagen));
+        // ✅ Eliminar archivos desde storage
+        if ($producto->imagen && File::exists(storage_path('app/public/productos/' . $producto->imagen))) {
+            File::delete(storage_path('app/public/productos/' . $producto->imagen));
+        }
         if ($producto->galeria) {
-            foreach ($producto->galeria as $img) File::delete(public_path('productos/' . $img));
+            foreach ($producto->galeria as $img) {
+                if (File::exists(storage_path('app/public/productos/' . $img))) {
+                    File::delete(storage_path('app/public/productos/' . $img));
+                }
+            }
         }
 
         $idCat = $producto->id_categoria;
