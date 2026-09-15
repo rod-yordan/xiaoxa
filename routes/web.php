@@ -24,7 +24,7 @@ use App\Http\Controllers\Api\ImageController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// ✅ NUEVO: Ruta para servir imágenes desde storage
+// ✅ Ruta para servir imágenes desde storage
 Route::get('/api/imagen/{filename}', [ImageController::class, 'show'])
     ->where('filename', '.*')
     ->name('imagen.show');
@@ -83,9 +83,6 @@ Route::middleware(['auth', 'verified', 'role:1'])
         // Categorías
         Route::resource('categorias', CategoriaController::class)->except(['show']);
         Route::patch('categorias/{id}/toggle', [CategoriaController::class, 'toggle'])->name('categorias.toggle');
-
-        // Géneros
-        Route::post('generos', [App\Http\Controllers\Admin\GeneroController::class, 'store'])->name('generos.store');
 
         // Pedidos
         Route::get('pedidos',      [PedidoController::class, 'index'])->name('pedidos.index');

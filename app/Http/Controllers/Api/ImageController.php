@@ -13,21 +13,24 @@ class ImageController extends Controller
             abort(404);
         }
 
-        // Ruta absoluta usando storage_path()
-        $path = storage_path('app/public/productos/' . $filename);
+        // ✅ Buscar en productos Y en banners (rutas absolutas)
+        $pathProducto = storage_path('app/public/productos/' . $filename);
+        $pathBanner   = storage_path('app/public/banners/' . $filename);
 
-        // Debug: verificar en logs
-        \Log::info('Buscando imagen en: ' . $path);
-        \Log::info('¿Existe el archivo? ' . (file_exists($path) ? 'SI' : 'NO'));
+        // Debug en logs
+        \Log::info('Productos: ' . $pathProducto . ' → ' . (file_exists($pathProducto) ? 'SI' : 'NO'));
+        \Log::info('Banners: ' . $pathBanner . ' → ' . (file_exists($pathBanner) ? 'SI' : 'NO'));
 
-        if (!file_exists($path)) {
+        if (file_exists($pathProducto)) {
+            $path = $pathProducto;
+        } elseif (file_exists($pathBanner)) {
+            $path = $pathBanner;
+        } else {
             abort(404, 'Imagen no encontrada');
         }
 
-        $mime = mime_content_type($path);
-
         return response()->file($path, [
-            'Content-Type' => $mime,
+            'Content-Type' => mime_content_type($path),
             'Cache-Control' => 'public, max-age=31536000',
         ]);
     }

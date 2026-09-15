@@ -97,18 +97,55 @@
     <div class="bg-[#f1f1f1]">
         <div class="w-full px-5 sm:px-8">
             <div class="hidden md:flex items-center justify-center space-x-8 lg:space-x-10 py-3">
+                
+                {{-- LO NUEVO --}}
                 <a href="{{ route('home') }}" 
                     class="text-base font-normal text-black">
                     Lo nuevo
                 </a>
-                <a href="{{ route('home', ['categoria' => 'Mujer']) }}"
-                    class="text-base font-normal text-black">
-                    Categorías
-                </a>
-                <a href="{{ route('home', ['categoria' => 'Hombre']) }}"
+
+                {{-- ✅ DROPDOWN DINÁMICO DE CATEGORÍAS --}}
+                @if(isset($categoriasMenu) && $categoriasMenu->count() > 0)
+                <div class="relative" 
+                     x-data="{ open: false }" 
+                     @mouseenter="open = true" 
+                     @mouseleave="open = false">
+                    
+                    <button class="text-base font-normal text-black flex items-center gap-1">
+                        Categorías
+                    </button>
+
+                    {{-- DROPDOWN --}}
+                    <div 
+                        x-show="open"
+                        x-cloak
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 -translate-y-2"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0 -translate-y-2"
+                        class="absolute top-full left-0 pt-2 z-50"
+                    >
+                        <div class="bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px]">
+                            @foreach($categoriasMenu as $cat)
+                                <a href="{{ route('home', ['categoria' => $cat->nombre_categoria]) }}"
+                                    class="block px-4 py-2.5 text-sm text-black hover:bg-[#f1f1f1] transition-colors">
+                                    {{ $cat->nombre_categoria }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                {{-- ACCESORIOS (categoría dinámica) --}}
+                <a href="{{ route('home', ['categoria' => 'Accesorios']) }}"
                     class="text-base font-normal text-black">
                     Accesorios
                 </a>
+
+                {{-- PROMOCIONES --}}
                 <a href="{{ route('home', ['promocion' => 1]) }}"
                     class="text-base font-normal text-black">
                     Promociones
@@ -121,11 +158,11 @@
                     <a href="{{ route('home') }}" class="text-black">
                         Inicio
                     </a>
-                    <a href="{{ route('home', ['categoria' => 'Mujer']) }}" class="text-black">
-                        Mujer
+                    <a href="{{ route('home') }}" class="text-black">
+                        Categorías
                     </a>
-                    <a href="{{ route('home', ['categoria' => 'Hombre']) }}" class="text-black">
-                        Hombre
+                    <a href="{{ route('home', ['categoria' => 'Accesorios']) }}" class="text-black">
+                        Accesorios
                     </a>
                     <a href="{{ route('home', ['promocion' => 1]) }}" class="text-black">
                         Ofertas

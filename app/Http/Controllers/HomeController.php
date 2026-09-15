@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Producto;
+use App\Models\Categoria;
 use App\Models\Banner;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,17 +15,21 @@ class HomeController extends Controller
         if (Auth::check() && (int) Auth::user()->id_rol === 1) {
             return redirect()->route('admin.dashboard');
         }
+
+        $hayFiltros = $request->filled('buscar') 
+                   || ($request->filled('categoria') && $request->categoria != 'Todo')
+                   || $request->has('promocion');
+
         // Iniciamos la consulta
         $query = Producto::query()->where('estado_producto', 1);
 
-        // Filtro por género
         if ($request->filled('categoria') && $request->categoria != 'Todo') {
-            $query->whereHas('genero', function ($q) use ($request) {
-                $q->where('nombre_genero', $request->categoria);
+            $query->whereHas('categoria', function ($q) use ($request) {
+                $q->where('nombre_categoria', $request->categoria);
             });
         }
 
-        //  Filtro por promoción activa
+        // Filtro por promoción activa
         if ($request->has('promocion')) {
             $query->where(function ($q) {
                 $q->whereNotNull('precio_oferta')
@@ -33,7 +38,7 @@ class HomeController extends Controller
             });
         }
 
-        //  Filtro por búsqueda de texto
+        // Filtro por búsqueda de texto
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
             $query->where(function ($q) use ($buscar) {
@@ -43,12 +48,32 @@ class HomeController extends Controller
             });
         }
 
-        $productos = $query->orderBy('created_at', 'desc')->get();
+        // ✅ Si hay filtros → un solo array
+        if ($hayFiltros) {
+            $productos = $query->orderBy('created_at', 'desc')->get();
+            $categorias = collect(); // vacío
+        } 
+        // ✅ Si NO hay filtros → agrupar por categoría
+        else {
+            // Traemos las categorías activas con sus productos
+            $categorias = Categoria::where('estado_categoria', 1)
+                ->with(['productos' => function ($q) {
+                    $q->where('estado_producto', 1)
+                      ->orderBy('created_at', 'desc');
+                }])
+                ->orderBy('id_categoria', 'asc')
+                ->get()
+                ->filter(function ($cat) {
+                    return $cat->productos->count() > 0;
+                });
+
+            $productos = collect(); // vacío
+        }
 
         $banners = Banner::where('estado', 1)
             ->orderBy('orden', 'asc')
             ->get();
 
-        return view('home.index', compact('productos', 'banners'));
+        return view('home.index', compact('productos', 'categorias', 'banners'));
     }
 }

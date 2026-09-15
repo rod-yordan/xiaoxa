@@ -13,15 +13,9 @@ class CategoriaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Categoria::where('estado_categoria', true);
-
-        if ($request->has('genero_id') && $request->genero_id) {
-            $query->whereHas('productos', function ($q) use ($request) {
-                $q->where('id_genero', $request->genero_id);
-            });
-        }
-
-        $categorias = $query->orderBy('nombre_categoria', 'asc')->get();
+        $categorias = Categoria::where('estado_categoria', true)
+            ->orderBy('nombre_categoria', 'asc')
+            ->get();
 
         $categorias = $categorias->map(function ($categoria) {
             return [
@@ -40,18 +34,13 @@ class CategoriaController extends Controller
     }
 
     /**
-     * Obtener productos por categoría, filtrados por género
+     * Obtener productos por categoría
      */
     public function productos($id, Request $request)
     {
         $categoria = Categoria::with(['productos' => function ($query) use ($request) {
             $query->where('estado_producto', true)
                   ->with('variantes');
-
-            // ✅ Filtrar por género si viene el parámetro
-            if ($request->has('genero_id') && $request->genero_id) {
-                $query->where('id_genero', $request->genero_id);
-            }
         }])->find($id);
 
         if (!$categoria) {

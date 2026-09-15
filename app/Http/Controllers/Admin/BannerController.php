@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Banner;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 
 class BannerController extends Controller
@@ -15,28 +14,20 @@ class BannerController extends Controller
         return view('admin.banners.index', compact('banners'));
     }
 
-    /*public function create()
-    {
-        return view('admin.banners.create');
-    }*/
-
     public function store(Request $request)
     {
         $data = $request->validate([
-            'titulo'      => 'required|max:100',
-            'subtitulo'   => 'nullable|max:150',
-            'descripcion' => 'nullable',
-            'etiqueta'    => 'nullable|max:50',
-            'texto_boton' => 'nullable|max:50',
-            'url_boton'   => 'nullable',
-            'imagen'      => 'required|image|max:2048',
-            'orden'       => 'integer',
-            'estado'      => 'boolean',
+            'titulo'    => 'required|max:100',
+            'url_boton' => 'nullable|max:500',
+            'orden'     => 'integer',
+            'estado'    => 'boolean',
+            'imagen'    => 'required|image|max:2048',
         ]);
 
+        // ✅ Guardar en storage/app/public/banners/
         $archivo = time() . '_' . $request->file('imagen')->getClientOriginalName();
-        $request->file('imagen')->move(public_path('banners'), $archivo);
-        $data['imagen'] = $archivo; // solo guarda el nombre, ej: "1234_foto.jpg"
+        $request->file('imagen')->move(storage_path('app/public/banners'), $archivo);
+        $data['imagen'] = $archivo;
 
         Banner::create($data);
 
@@ -48,26 +39,22 @@ class BannerController extends Controller
         $banner = Banner::findOrFail($id);
 
         $data = $request->validate([
-            'titulo'      => 'required|max:100',
-            'subtitulo'   => 'nullable|max:150',
-            'descripcion' => 'nullable',
-            'etiqueta'    => 'nullable|max:50',
-            'texto_boton' => 'nullable|max:50',
-            'url_boton'   => 'nullable',
-            'orden'       => 'integer',
-            'estado'      => 'boolean',
-            'imagen'      => 'nullable|image|max:2048',
+            'titulo'    => 'required|max:100',
+            'url_boton' => 'nullable|max:500',
+            'orden'     => 'integer',
+            'estado'    => 'boolean',
+            'imagen'    => 'nullable|image|max:2048',
         ]);
 
         if ($request->hasFile('imagen')) {
-            // Elimina la imagen anterior si existe
-            $rutaAnterior = public_path('banners/' . $banner->imagen);
+            // ✅ Eliminar imagen anterior de storage
+            $rutaAnterior = storage_path('app/public/banners/' . $banner->imagen);
             if (file_exists($rutaAnterior)) {
                 unlink($rutaAnterior);
             }
 
             $archivo = time() . '_' . $request->file('imagen')->getClientOriginalName();
-            $request->file('imagen')->move(public_path('banners'), $archivo);
+            $request->file('imagen')->move(storage_path('app/public/banners'), $archivo);
             $data['imagen'] = $archivo;
         }
 
@@ -80,7 +67,8 @@ class BannerController extends Controller
     {
         $banner = Banner::findOrFail($id);
 
-        $ruta = public_path('banners/' . $banner->imagen);
+        // ✅ Eliminar de storage
+        $ruta = storage_path('app/public/banners/' . $banner->imagen);
         if (file_exists($ruta)) {
             unlink($ruta);
         }

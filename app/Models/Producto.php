@@ -16,7 +16,7 @@ class Producto extends Model
     protected $fillable = [
         'nombre_producto', 'descripcion', 'precio', 'precio_oferta',
         'imagen', 'galeria', 'marca', 'estado_producto',
-        'id_genero', 'id_categoria', 'id_promocion'
+        'id_categoria', 'id_promocion'
     ];
 
     protected $casts = [
@@ -50,14 +50,6 @@ class Producto extends Model
     public function promocion()
     {
         return $this->belongsTo(Promocion::class, 'id_promocion', 'id_promocion');
-    }
-
-    /**
-     * Relación con género
-     */
-    public function genero()
-    {
-        return $this->belongsTo(Genero::class, 'id_genero', 'id_genero');
     }
 
     /**
@@ -281,14 +273,6 @@ class Producto extends Model
     }
 
     /**
-     * Scope para productos por género
-     */
-    public function scopePorGenero($query, $generoId)
-    {
-        return $query->where('id_genero', $generoId);
-    }
-
-    /**
      * Scope para búsqueda
      */
     public function scopeBuscar($query, $termino)
@@ -306,4 +290,3 @@ class Producto extends Model
         return $query->orderBy('precio', $direccion);
     }
 }
-

@@ -46,18 +46,9 @@ Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
 
 Route::get('/variantes/{idVariante}/verificar-stock', [CarritoController::class, 'verificarStock']);
 
+// ✅ Ruta unificada para servir imágenes (productos + banners)
 Route::get('/imagen/{filename}', [ImageController::class, 'show'])
     ->where('filename', '.*\.(jpg|jpeg|png|gif|webp)$');
-
-Route::get('/banner/{filename}', function ($filename) {
-    $path = public_path('banners/' . $filename);
-    
-    if (!file_exists($path)) {
-        return response()->json(['error' => 'Imagen no encontrada'], 404);
-    }
-    
-    return response()->file($path);
-})->where('filename', '.*');
 
 Route::prefix('productos')->group(function () {
     Route::get('/', [ProductoController::class, 'index']);
@@ -78,9 +69,6 @@ Route::prefix('productos')->group(function () {
 
 Route::get('/categorias', [CategoriaController::class, 'index']);
 Route::get('/categorias/{id}/productos', [CategoriaController::class, 'productos']);
-
-Route::get('/generos', [App\Http\Controllers\Api\GeneroController::class, 'index']);
-Route::get('/generos/{id}/productos', [App\Http\Controllers\Api\GeneroController::class, 'productos']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chat/message', [ChatController::class, 'sendMessage']);

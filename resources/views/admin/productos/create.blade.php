@@ -69,16 +69,7 @@
                                class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none font-bold">
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Género</label>
-                        <select name="id_genero" class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none font-bold appearance-none">
-                            @foreach($generos as $g)
-                                <option value="{{ $g->id_genero }}" {{ old('id_genero') == $g->id_genero ? 'selected' : '' }}>{{ $g->nombre_genero }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="space-y-2">
+                    <div class="space-y-2 md:col-span-2">
                         <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Categoría</label>
                         <select name="id_categoria" class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none font-bold appearance-none">
                             @foreach($categorias as $c)

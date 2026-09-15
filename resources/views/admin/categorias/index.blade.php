@@ -1,44 +1,20 @@
 @extends('admin.layout')
 
 @section('content')
-    <div x-data="{ createModal: false, createGeneroModal: false, tab: 'categorias' }">
+    <div x-data="{ createModal: false, editModal: null }">
 
-        {{-- HEADER Y NAVEGACIÓN --}}
+        {{-- HEADER --}}
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
             <div>
                 <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Gestión de Catálogo</h1>
-                <p class="text-gray-500 mt-2 text-lg font-medium">Administra las clasificaciones de tus productos.</p>
-
-                <div class="flex gap-2 mt-8 p-1.5 bg-gray-100 w-fit rounded-[2rem] border border-gray-200">
-                    <button @click="tab = 'categorias'"
-                        :class="tab === 'categorias' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'"
-                        class="px-8 py-3 rounded-[1.5rem] font-black transition-all duration-300 flex items-center gap-2">
-                        <x-heroicon-o-folder class="w-5 h-5" />
-                        Categorías
-                    </button>
-                    <button @click="tab = 'generos'"
-                        :class="tab === 'generos' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'"
-                        class="px-8 py-3 rounded-[1.5rem] font-black transition-all duration-300 flex items-center gap-2">
-                        <x-heroicon-o-users class="w-5 h-5" />
-                        Géneros
-                    </button>
-                </div>
+                <p class="text-gray-500 mt-2 text-lg font-medium">Administra las categorías de tus productos.</p>
             </div>
 
             <div class="pb-2">
-                {{-- Botón para Categorías --}}
-                <button x-show="tab === 'categorias'" @click="createModal = true"
+                <button @click="createModal = true"
                     class="inline-flex items-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-200 transition-all hover:-translate-y-1 active:scale-95">
                     <x-heroicon-o-plus class="w-6 h-6" />
                     Nueva Categoría
-                </button>
-
-                {{-- Botón para Géneros --}}
-                <button x-show="tab === 'generos'" @click="createGeneroModal = true"
-                    class="inline-flex items-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-200 transition-all hover:-translate-y-1 active:scale-95"
-                    x-cloak>
-                    <x-heroicon-o-plus class="w-6 h-6" />
-                    Nuevo Género
                 </button>
             </div>
         </div>
@@ -46,9 +22,7 @@
         <hr class="border-gray-100 mb-10">
 
         {{-- SECCIÓN CATEGORÍAS --}}
-        <div x-show="tab === 'categorias'" x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 translate-y-4">
-
+        <div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 @forelse($categorias as $categoria)
                     <div x-data="{ confirmModal: false, editModal: false }"
@@ -80,6 +54,7 @@
                                 class="font-bold {{ $categoria->estado_categoria ? 'text-rose-500' : 'text-emerald-500' }}">
                                 {{ $categoria->estado_categoria ? 'Desactivar' : 'Activar' }}
                             </button>
+
                             {{-- MODAL CONFIRMACIÓN ESTADO --}}
                             <template x-if="confirmModal">
                                 <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -110,6 +85,7 @@
                                 </div>
                             </template>
                         </div>
+
                         {{-- MODAL EDITAR CATEGORÍA --}}
                         <template x-if="editModal">
                             <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -144,31 +120,6 @@
                         <p class="text-gray-400 font-bold">No hay categorías registradas.</p>
                     </div>
                 @endforelse
-            </div>
-        </div>
-
-        {{-- SECCIÓN GENEROS --}}
-        <div x-show="tab === 'generos'" x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 translate-y-4" x-cloak>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                @foreach($generos as $genero)
-                    <div
-                        class="bg-white border border-gray-100 rounded-[2rem] p-6 shadow-sm flex items-center justify-between group hover:shadow-lg transition-all">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                                <x-heroicon-o-user class="w-6 h-6" />
-                            </div>
-                            <span class="text-xl font-black text-gray-800">{{ $genero->nombre_genero }}</span>
-                        </div>
-                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                            <button class="p-2 text-gray-400 hover:text-indigo-600"><x-heroicon-o-pencil
-                                    class="w-5 h-5" /></button>
-                            <button class="p-2 text-gray-400 hover:text-rose-500"><x-heroicon-o-trash
-                                    class="w-5 h-5" /></button>
-                        </div>
-                    </div>
-                @endforeach
             </div>
         </div>
 
@@ -207,39 +158,6 @@
                             <button type="submit"
                                 class="flex-[2] px-4 py-5 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 shadow-lg transition-all active:scale-95">Crear
                                 Categoría</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </template>
-
-        {{-- MODAL CREACION GÉNERO --}}
-        <template x-if="createGeneroModal">
-            <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <div @click="createGeneroModal = false"
-                    class="absolute inset-0 bg-gray-900/60 backdrop-blur-xl transition-opacity"></div>
-                <div
-                    class="relative bg-white rounded-[3rem] p-10 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 text-left">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-3xl font-black text-gray-900 leading-tight">Nuevo Género</h2>
-                        <button @click="createGeneroModal = false"
-                            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-500 transition">
-                            <x-heroicon-o-x-mark class="w-6 h-6" />
-                        </button>
-                    </div>
-                    <form action="{{ route('admin.generos.store') }}" method="POST" class="space-y-6 text-left">
-                        @csrf
-                        <div>
-                            <label
-                                class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Nombre</label>
-                            <input type="text" name="nombre_genero" required placeholder="Ej: Niños"
-                                class="w-full px-6 py-5 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 transition-all outline-none text-lg font-bold">
-                        </div>
-                        <div class="flex gap-3 pt-2">
-                            <button type="button" @click="createGeneroModal = false"
-                                class="flex-1 py-5 bg-gray-100 text-gray-500 font-bold rounded-2xl hover:bg-gray-200 transition text-center">Cancelar</button>
-                            <button type="submit"
-                                class="flex-[2] py-5 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 shadow-lg text-center">Guardar</button>
                         </div>
                     </form>
                 </div>

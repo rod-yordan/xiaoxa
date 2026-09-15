@@ -8,15 +8,15 @@ class ProductoResource extends JsonResource
 {
     public function toArray($request)
     {
-        // Imagen principal - CORREGIDO
+        // Imagen principal
         $imagenPrincipal = null;
         if ($this->imagen) {
             $imagenPrincipal = filter_var($this->imagen, FILTER_VALIDATE_URL)
                 ? $this->imagen
-                : url('/api/imagen/' . $this->imagen); // ← CAMBIADO
+                : url('/api/imagen/' . $this->imagen);
         }
 
-        // Procesar la galería de imágenes si existe - CORREGIDO
+        // Procesar la galería de imágenes si existe
         $galeria = [];
         if ($this->galeria) {
             // Decodificar JSON si es string
@@ -30,7 +30,7 @@ class ProductoResource extends JsonResource
             $galeria = collect($imagenesGaleria)->map(function($img) {
                 return filter_var($img, FILTER_VALIDATE_URL)
                     ? $img
-                    : url('/api/imagen/' . $img); // ← CAMBIADO
+                    : url('/api/imagen/' . $img);
             })->toArray();
         }
 
@@ -75,7 +75,6 @@ class ProductoResource extends JsonResource
             'imagen_principal' => $imagenPrincipal,
             'categoria' => $this->categoria?->nombre_categoria,
             'categoria_id' => $this->id_categoria,
-            'genero' => $this->genero?->nombre_genero,
             'tallas' => $tallas,
             'colores' => $colores,
             'marca' => $this->marca,

@@ -28,21 +28,16 @@
                 {{-- Imagen --}}
                 <div class="relative h-44 sm:h-52 bg-gray-100 overflow-hidden">
 
-                    <img src="{{ asset('banners/' . $banner->imagen) }}"
+                    <img src="{{ url('/api/imagen/' . $banner->imagen) }}"
                          alt="{{ $banner->titulo }}"
                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                          onerror="this.src='https://placehold.co/800x400/e5e7eb/9ca3af?text=Sin+imagen'">
 
-                    {{-- Badges --}}
+                    {{-- Badge Orden --}}
                     <div class="absolute top-3 left-3 flex gap-2 flex-wrap">
                         <span class="bg-black/60 backdrop-blur-sm text-white text-xs font-black px-3 py-1.5 rounded-full">
                             # {{ $banner->orden }}
                         </span>
-                        @if($banner->etiqueta)
-                        <span class="bg-indigo-600/90 backdrop-blur-sm text-white text-xs font-black px-3 py-1.5 rounded-full">
-                            {{ $banner->etiqueta }}
-                        </span>
-                        @endif
                     </div>
 
                     {{-- Estado --}}
@@ -58,18 +53,12 @@
                 {{-- Contenido --}}
                 <div class="p-5 sm:p-6">
                     <h3 class="text-lg sm:text-xl font-black text-gray-900 leading-tight">{{ $banner->titulo }}</h3>
-                    @if($banner->subtitulo)
-                        <p class="text-gray-500 font-medium mt-1 text-sm">{{ $banner->subtitulo }}</p>
-                    @endif
-                    @if($banner->descripcion)
-                        <p class="text-gray-400 text-sm mt-2 line-clamp-2">{{ $banner->descripcion }}</p>
-                    @endif
 
-                    @if($banner->texto_boton)
+                    @if($banner->url_boton)
                     <div class="mt-3">
-                        <span class="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl">
-                            <x-heroicon-o-cursor-arrow-rays class="w-3.5 h-3.5 flex-shrink-0" />
-                            {{ $banner->texto_boton }}
+                        <span class="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl truncate max-w-full">
+                            <x-heroicon-o-link class="w-3.5 h-3.5 flex-shrink-0" />
+                            <span class="truncate">{{ $banner->url_boton }}</span>
                         </span>
                     </div>
                     @endif
@@ -153,48 +142,33 @@
                     @csrf
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {{-- Título --}}
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Título *</label>
-                            <input type="text" name="titulo" required placeholder="Ej: Nueva Colección Verano"
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                Título * <span class="font-medium normal-case text-gray-300">(solo uso interno)</span>
+                            </label>
+                            <input type="text" name="titulo" required placeholder="Ej: Banner Verano 2026"
                                 class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-bold transition-all text-sm sm:text-base">
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Subtítulo</label>
-                            <input type="text" name="subtitulo" placeholder="Ej: Descubre lo nuevo"
-                                class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Etiqueta</label>
-                            <input type="text" name="etiqueta" placeholder="Ej: ¡Nuevo!"
-                                class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
-                        </div>
-
+                        {{-- URL del Botón --}}
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Descripción</label>
-                            <textarea name="descripcion" rows="2" placeholder="Descripción breve del banner..."
-                                class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-medium transition-all resize-none text-sm"></textarea>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Texto del Botón</label>
-                            <input type="text" name="texto_boton" placeholder="Ej: Ver colección"
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                URL del Banner <span class="font-medium normal-case text-gray-300">(a dónde redirige al hacer clic)</span>
+                            </label>
+                            <input type="text" name="url_boton" placeholder="Ej: https://xiaoxa.com/?categoria=Blusas o https://xiaoxa.com/producto/15"
                                 class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
+                            <p class="text-xs text-gray-400 mt-1 ml-1">💡 Copia la URL desde el navegador y pégala aquí. El banner completo será clickeable.</p>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">URL del Botón</label>
-                            <input type="text" name="url_boton" placeholder="Ej: /productos"
-                                class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
-                        </div>
-
+                        {{-- Orden --}}
                         <div>
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Orden</label>
                             <input type="number" name="orden" value="0" min="0"
                                 class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-bold transition-all text-sm">
                         </div>
 
+                        {{-- Estado --}}
                         <div>
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Estado</label>
                             <select name="estado"
@@ -204,6 +178,7 @@
                             </select>
                         </div>
 
+                        {{-- Imagen --}}
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Imagen *</label>
                             <label x-data="{ fileName: '' }"
@@ -253,50 +228,32 @@
                         <input type="hidden" name="_method" value="PUT">
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {{-- Título --}}
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Título *</label>
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                    Título * <span class="font-medium normal-case text-gray-300">(solo uso interno)</span>
+                                </label>
                                 <input type="text" name="titulo" :value="banner.titulo" required
                                     class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-bold transition-all text-sm sm:text-base">
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Subtítulo</label>
-                                <input type="text" name="subtitulo" :value="banner.subtitulo"
-                                    class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Etiqueta</label>
-                                <input type="text" name="etiqueta" :value="banner.etiqueta"
-                                    class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
-                            </div>
-
+                            {{-- URL del Botón --}}
                             <div class="sm:col-span-2">
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Descripción</label>
-                                {{-- Usamos x-init para cargar el valor al montar --}}
-                                <textarea name="descripcion" rows="2"
-                                    class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-medium transition-all resize-none text-sm"
-                                    x-init="$el.value = banner.descripcion ?? ''"></textarea>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Texto del Botón</label>
-                                <input type="text" name="texto_boton" :value="banner.texto_boton"
-                                    class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">URL del Botón</label>
+                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                    URL del Banner <span class="font-medium normal-case text-gray-300">(a dónde redirige al hacer clic)</span>
+                                </label>
                                 <input type="text" name="url_boton" :value="banner.url_boton"
                                     class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
                             </div>
 
+                            {{-- Orden --}}
                             <div>
                                 <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Orden</label>
                                 <input type="number" name="orden" :value="banner.orden" min="0"
                                     class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-bold transition-all text-sm">
                             </div>
 
+                            {{-- Estado --}}
                             <div>
                                 <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Estado</label>
                                 <select name="estado"
@@ -311,12 +268,13 @@
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Imagen actual</label>
                                 <div class="relative w-full h-32 rounded-2xl overflow-hidden bg-gray-100">
-                                    <img :src="`/banners/${banner.imagen}`"
+                                    <img :src="`/api/imagen/${banner.imagen}`"
                                          :alt="banner.titulo"
                                          class="w-full h-full object-cover">
                                 </div>
                             </div>
 
+                            {{-- Reemplazar imagen --}}
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
                                     Reemplazar Imagen <span class="font-medium normal-case text-gray-300">(opcional)</span>

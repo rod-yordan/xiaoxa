@@ -18,15 +18,11 @@ class ProductoController extends Controller
     public function index(Request $request)
     {
         $query = Producto::activos()
-            ->with(['categoria', 'genero', 'promocion', 'variantes']);
+            ->with(['categoria', 'promocion', 'variantes']);
         
         // Filtros
         if ($request->has('categoria')) {
             $query->where('id_categoria', $request->categoria);
-        }
-        
-        if ($request->has('genero')) {
-            $query->where('id_genero', $request->genero);
         }
         
         if ($request->has('talla') && !empty($request->talla)) {
@@ -85,7 +81,7 @@ class ProductoController extends Controller
     public function show($id)
     {
         $producto = Producto::activos()
-            ->with(['categoria', 'genero', 'promocion', 'variantes'])
+            ->with(['categoria', 'promocion', 'variantes'])
             ->find($id);
         
         if (!$producto) {
@@ -126,25 +122,20 @@ class ProductoController extends Controller
     }
 
     /**
-     * Obtener productos recomendados - AHORA CON FILTROS
+     * Obtener productos recomendados
      */
     public function recomendados(Request $request)
     {
         try {
             $query = Producto::activos()
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
+                ->with(['categoria', 'promocion', 'variantes']);
             
-            // NUEVO: Filtrar por género (hombre/mujer)
-            if ($request->has('genero_id')) {
-                $query->where('id_genero', $request->genero_id);
-            }
-            
-            // NUEVO: Filtrar por oferta/promociones
+            // Filtrar por oferta/promociones
             if ($request->has('en_oferta') && $request->en_oferta == 'true') {
                 $query->enOferta();
             }
             
-            // NUEVO: Filtrar por categoría si es necesario
+            // Filtrar por categoría si es necesario
             if ($request->has('categoria_id')) {
                 $query->where('id_categoria', $request->categoria_id);
             }
@@ -171,25 +162,20 @@ class ProductoController extends Controller
     }
 
     /**
-     * Obtener productos populares - AHORA CON FILTROS
+     * Obtener productos populares
      */
     public function populares(Request $request)
     {
         try {
             $query = Producto::activos()
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
+                ->with(['categoria', 'promocion', 'variantes']);
             
-            // NUEVO: Filtrar por género (hombre/mujer)
-            if ($request->has('genero_id')) {
-                $query->where('id_genero', $request->genero_id);
-            }
-            
-            // NUEVO: Filtrar por oferta/promociones
+            // Filtrar por oferta/promociones
             if ($request->has('en_oferta') && $request->en_oferta == 'true') {
                 $query->enOferta();
             }
             
-            // NUEVO: Filtrar por categoría si es necesario
+            // Filtrar por categoría si es necesario
             if ($request->has('categoria_id')) {
                 $query->where('id_categoria', $request->categoria_id);
             }
@@ -197,7 +183,7 @@ class ProductoController extends Controller
             // Límite de resultados
             $limit = $request->get('limit', 10);
             
-            // Orden aleatorio para "populares" (podrías cambiar por más vendidos después)
+            // Orden aleatorio para "populares"
             $productos = $query->inRandomOrder()->limit($limit)->get();
             
             return response()->json([
@@ -224,13 +210,8 @@ class ProductoController extends Controller
         try {
             $query = Producto::activos()
                 ->enOferta()
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
+                ->with(['categoria', 'promocion', 'variantes'])
                 ->conStock();
-            
-            // NUEVO: Filtrar por género en ofertas también
-            if ($request->has('genero_id')) {
-                $query->where('id_genero', $request->genero_id);
-            }
             
             $productos = $query->paginate($request->get('limit', 10));
             
@@ -263,13 +244,8 @@ class ProductoController extends Controller
             
             $query = Producto::activos()
                 ->buscar($request->q)
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
+                ->with(['categoria', 'promocion', 'variantes'])
                 ->conStock();
-            
-            // NUEVO: Filtrar por género en búsqueda
-            if ($request->has('genero_id')) {
-                $query->where('id_genero', $request->genero_id);
-            }
             
             $productos = $query->paginate($request->get('limit', 10));
             
@@ -301,12 +277,7 @@ class ProductoController extends Controller
                     $q->where('talla', $talla)
                       ->where('stock', '>', 0);
                 })
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
-            
-            // NUEVO: Filtrar por género
-            if ($request->has('genero_id')) {
-                $query->where('id_genero', $request->genero_id);
-            }
+                ->with(['categoria', 'promocion', 'variantes']);
             
             $productos = $query->paginate($request->get('limit', 10));
             
@@ -338,12 +309,7 @@ class ProductoController extends Controller
                     $q->where('color', $color)
                       ->where('stock', '>', 0);
                 })
-                ->with(['categoria', 'genero', 'promocion', 'variantes']);
-            
-            // NUEVO: Filtrar por género
-            if ($request->has('genero_id')) {
-                $query->where('id_genero', $request->genero_id);
-            }
+                ->with(['categoria', 'promocion', 'variantes']);
             
             $productos = $query->paginate($request->get('limit', 10));
             
@@ -377,13 +343,8 @@ class ProductoController extends Controller
             
             $query = Producto::activos()
                 ->whereBetween('precio', [$request->min, $request->max])
-                ->with(['categoria', 'genero', 'promocion', 'variantes'])
+                ->with(['categoria', 'promocion', 'variantes'])
                 ->conStock();
-            
-            // NUEVO: Filtrar por género
-            if ($request->has('genero_id')) {
-                $query->where('id_genero', $request->genero_id);
-            }
             
             $productos = $query->paginate($request->get('limit', 10));
             

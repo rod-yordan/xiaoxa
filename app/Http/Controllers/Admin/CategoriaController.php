@@ -5,19 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Categoria;
-use App\Models\Genero;
 
 class CategoriaController extends Controller
 {
     /**
-     * Mostrar lista de categorías y géneros
+     * Mostrar lista de categorías
      */
     public function index()
     {
         $categorias = Categoria::withCount('productos')->get();
-        $generos = Genero::all();
 
-        return view('admin.categorias.index', compact('categorias', 'generos'));
+        return view('admin.categorias.index', compact('categorias'));
     }
 
     /**

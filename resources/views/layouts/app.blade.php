@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Xiaoxa')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    {{-- ✅ Stack para CSS adicional --}}
+    @stack('styles')
 </head>
 
 <body class="bg-[#fbfaf8] text-gray-900 min-h-screen">
@@ -20,5 +23,8 @@
 
     {{-- FOOTER --}}
     <x-footer />
+
+    {{-- ✅ Stack para JavaScript adicional --}}
+    @stack('scripts')
 </body>
 </html>
