@@ -14,15 +14,14 @@ class CarritoController extends Controller
     // AGREGAR
     public function add(Request $request, $id)
     {
-
         $id_variante = $request->id_variante;
+        $cantidad    = max(1, (int) ($request->cantidad ?? 1)); // ✅ NUEVO: cantidad mínima 1
 
         $variante = ProductoVariante::with('producto')->findOrFail($id_variante);
 
-        if ($variante->stock < 1) {
+        if ($variante->stock < $cantidad) {
             return redirect()->back()->with('error', 'Stock no disponible');
         }
-
 
         // USUARIO LOGUEADO → BD
         if (Auth::check()) {
@@ -37,12 +36,11 @@ class CarritoController extends Controller
 
             if ($detalle) {
 
-                if ($detalle->cantidad + 1 > $variante->stock) {
+                if ($detalle->cantidad + $cantidad > $variante->stock) {
                     return redirect()->back()->with('error', 'Stock no disponible');
                 }
 
-                $detalle->cantidad++;
-
+                $detalle->cantidad += $cantidad; // ✅ Sumar la cantidad enviada
                 $detalle->save();
 
             } else {
@@ -50,278 +48,178 @@ class CarritoController extends Controller
                 DetalleCarrito::create([
                     'id_carrito' => $carrito->id_carrito,
                     'id_variante' => $id_variante,
-                    'cantidad' => 1
+                    'cantidad' => $cantidad // ✅ Usar la cantidad enviada
                 ]);
             }
-
         }
-
         // INVITADO → SESSION
         else {
 
             $carrito = session()->get('carrito', []);
 
-            if(isset($carrito[$id_variante])){
-
-                $carrito[$id_variante]['cantidad']++;
-
+            if (isset($carrito[$id_variante])) {
+                $carrito[$id_variante]['cantidad'] += $cantidad;
             } else {
-
                 $carrito[$id_variante] = [
-
-                    "id_variante"=>$id_variante,
-                    "nombre"=>$variante->producto->nombre_producto,
-                    "cantidad"=>1,
-                    "precio"=>$variante->producto->precio_oferta ?? $variante->producto->precio,
-                    "imagen"=>$variante->producto->imagen,
-                    "talla"=>$variante->talla,
-                    "color"=>$variante->color
-
+                    "id_variante" => $id_variante,
+                    "nombre"      => $variante->producto->nombre_producto,
+                    "cantidad"    => $cantidad,
+                    "precio"      => $variante->producto->precio_oferta ?? $variante->producto->precio,
+                    "imagen"      => $variante->producto->imagen,
+                    "talla"       => $variante->talla,
+                    "color"       => $variante->color
                 ];
-
             }
 
             session()->put('carrito', $carrito);
-
         }
 
-
         return redirect()->route('carrito.index');
-
     }
 
 
     // MOSTRAR
     public function index()
     {
+        $items = [];
+        $total = 0;
 
-        $items=[];
-        $total=0;
-
-
-        if(Auth::check()){
+        if (Auth::check()) {
 
             $carrito = Carrito::with('detalles.variante.producto')
-            ->where('id_usuario',Auth::id())
-            ->first();
+                ->where('id_usuario', Auth::id())
+                ->first();
 
+            if ($carrito) {
 
-            if($carrito){
+                foreach ($carrito->detalles as $detalle) {
 
-                foreach($carrito->detalles as $detalle){
+                    $variante = $detalle->variante;
+                    $producto = $variante->producto;
 
-                    $variante=$detalle->variante;
-                    $producto=$variante->producto;
-
-                    $items[$detalle->id_variante]=[
-
-                        "id_variante"=>$detalle->id_variante,
-                        "nombre"=>$producto->nombre_producto,
-                        "cantidad"=>$detalle->cantidad,
-                        "precio"=>$producto->precio_oferta ?? $producto->precio,
-                        "imagen"=>$producto->imagen,
-                        "talla"=>$variante->talla,
-                        "color"=>$variante->color
-
+                    $items[$detalle->id_variante] = [
+                        "id_variante" => $detalle->id_variante,
+                        "nombre"      => $producto->nombre_producto,
+                        "cantidad"    => $detalle->cantidad,
+                        "precio"      => $producto->precio_oferta ?? $producto->precio,
+                        "imagen"      => $producto->imagen,
+                        "talla"       => $variante->talla,
+                        "color"       => $variante->color
                     ];
 
-                    $total+=$items[$detalle->id_variante]['precio']*$detalle->cantidad;
-
+                    $total += $items[$detalle->id_variante]['precio'] * $detalle->cantidad;
                 }
-
             }
+        } else {
 
+            $items = session()->get('carrito', []);
+
+            foreach ($items as $item) {
+                $total += $item['precio'] * $item['cantidad'];
+            }
         }
 
-
-        else{
-
-            $items=session()->get('carrito',[]);
-
-            foreach($items as $item){
-
-                $total+=$item['precio']*$item['cantidad'];
-
-            }
-
-        }
-
-
-        return view('carrito.index',compact('items','total'));
-
+        return view('carrito.index', compact('items', 'total'));
     }
-
 
 
     // AUMENTAR
     public function aumentar($id_variante)
     {
+        if (Auth::check()) {
 
+            $variante = ProductoVariante::findOrFail($id_variante);
+            $carrito = Carrito::where('id_usuario', Auth::id())->first();
 
-        if(Auth::check()){
+            if ($carrito) {
 
+                $detalle = DetalleCarrito::where('id_carrito', $carrito->id_carrito)
+                    ->where('id_variante', $id_variante)
+                    ->first();
 
-            $variante=ProductoVariante::findOrFail($id_variante);
-
-            $carrito=Carrito::where('id_usuario',Auth::id())->first();
-
-            if($carrito){
-
-                $detalle=DetalleCarrito::where('id_carrito',$carrito->id_carrito)
-                ->where('id_variante',$id_variante)
-                ->first();
-
-
-                if($detalle && $detalle->cantidad<$variante->stock){
+                if ($detalle && $detalle->cantidad < $variante->stock) {
 
                     $detalle->cantidad++;
                     $detalle->save();
-
                 }
-
             }
+        } else {
 
-        }
+            $carrito = session()->get('carrito', []);
 
-
-
-        else{
-
-
-            $carrito=session()->get('carrito',[]);
-
-            if(isset($carrito[$id_variante])){
+            if (isset($carrito[$id_variante])) {
 
                 $carrito[$id_variante]['cantidad']++;
-
-                session()->put('carrito',$carrito);
-
+                session()->put('carrito', $carrito);
             }
-
         }
 
-
-
         return redirect()->route('carrito.index');
-
     }
-
-
 
 
     // DISMINUIR
     public function disminuir($id_variante)
     {
+        if (Auth::check()) {
 
+            $carrito = Carrito::where('id_usuario', Auth::id())->first();
 
-        if(Auth::check()){
+            if ($carrito) {
 
+                $detalle = DetalleCarrito::where('id_carrito', $carrito->id_carrito)
+                    ->where('id_variante', $id_variante)
+                    ->first();
 
-            $carrito=Carrito::where('id_usuario',Auth::id())->first();
+                if ($detalle) {
 
-            if($carrito){
-
-                $detalle=DetalleCarrito::where('id_carrito',$carrito->id_carrito)
-                ->where('id_variante',$id_variante)
-                ->first();
-
-
-                if($detalle){
-
-                    if($detalle->cantidad>1){
-
+                    if ($detalle->cantidad > 1) {
                         $detalle->cantidad--;
                         $detalle->save();
-
-                    }
-
-                    else{
-
+                    } else {
                         $detalle->delete();
-
                     }
-
                 }
-
             }
+        } else {
 
-        }
+            $carrito = session()->get('carrito', []);
 
+            if (isset($carrito[$id_variante])) {
 
-
-        else{
-
-
-            $carrito=session()->get('carrito',[]);
-
-            if(isset($carrito[$id_variante])){
-
-                if($carrito[$id_variante]['cantidad']>1){
-
+                if ($carrito[$id_variante]['cantidad'] > 1) {
                     $carrito[$id_variante]['cantidad']--;
-
-                }
-
-                else{
-
+                } else {
                     unset($carrito[$id_variante]);
-
                 }
 
-
-                session()->put('carrito',$carrito);
-
+                session()->put('carrito', $carrito);
             }
-
         }
-
-
 
         return redirect()->route('carrito.index');
-
     }
-
 
 
     // ELIMINAR
     public function eliminar($id_variante)
     {
+        if (Auth::check()) {
 
+            $carrito = Carrito::where('id_usuario', Auth::id())->first();
 
-        if(Auth::check()){
-
-
-            $carrito=Carrito::where('id_usuario',Auth::id())->first();
-
-            if($carrito){
-
-                DetalleCarrito::where('id_carrito',$carrito->id_carrito)
-                ->where('id_variante',$id_variante)
-                ->delete();
-
+            if ($carrito) {
+                DetalleCarrito::where('id_carrito', $carrito->id_carrito)
+                    ->where('id_variante', $id_variante)
+                    ->delete();
             }
+        } else {
 
-        }
-
-
-
-        else{
-
-
-            $carrito=session()->get('carrito',[]);
-
+            $carrito = session()->get('carrito', []);
             unset($carrito[$id_variante]);
-
-            session()->put('carrito',$carrito);
-
+            session()->put('carrito', $carrito);
         }
-
-
 
         return redirect()->route('carrito.index');
-
     }
-
-
-
 }

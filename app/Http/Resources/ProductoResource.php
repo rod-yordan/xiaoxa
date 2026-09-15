@@ -8,36 +8,28 @@ class ProductoResource extends JsonResource
 {
     public function toArray($request)
     {
-        // Imagen principal
-        $imagenPrincipal = null;
-        if ($this->imagen) {
-            $imagenPrincipal = filter_var($this->imagen, FILTER_VALIDATE_URL)
-                ? $this->imagen
-                : url('/api/imagen/' . $this->imagen);
-        }
-
-        // Procesar la galería de imágenes si existe
-        $galeria = [];
-        if ($this->galeria) {
-            // Decodificar JSON si es string
-            $imagenesGaleria = [];
-            if (is_array($this->galeria)) {
-                $imagenesGaleria = $this->galeria;
-            } elseif (is_string($this->galeria)) {
-                $imagenesGaleria = json_decode($this->galeria, true) ?? [];
-            }
-
-            $galeria = collect($imagenesGaleria)->map(function($img) {
-                return filter_var($img, FILTER_VALIDATE_URL)
-                    ? $img
-                    : url('/api/imagen/' . $img);
-            })->toArray();
-        }
-
-        // Obtener variantes del producto
-        $variantes = $this->whenLoaded('variantes', function() {
+        // Obtener variantes (cargadas o colección vacía)
+        $variantes = $this->whenLoaded('variantes', function () {
             return $this->variantes;
         }, collect());
+
+        // 👇 NUEVO: imagen principal = primera imagen de la primera variante con imágenes
+        $imagenPrincipal = null;
+        foreach ($variantes as $variante) {
+            $primera = $variante->imagenes->first() ?? null;
+            if ($primera) {
+                $imagenPrincipal = url('/api/imagen/' . $primera->imagen);
+                break;
+            }
+        }
+
+        // 👇 NUEVO: galería = todas las imágenes de todas las variantes
+        $galeria = [];
+        foreach ($variantes as $variante) {
+            foreach ($variante->imagenes as $img) {
+                $galeria[] = url('/api/imagen/' . $img->imagen);
+            }
+        }
 
         // Calcular stock total
         $stockTotal = $variantes->sum('stock');
@@ -58,16 +50,20 @@ class ProductoResource extends JsonResource
 
         if ($this->precio_oferta) {
             $precioFinal = (float) $this->precio_oferta;
-            $descuento = round((($precioOriginal - $precioFinal) / $precioOriginal) * 100, 0);
+            $descuento = $precioOriginal > 0
+                ? round((($precioOriginal - $precioFinal) / $precioOriginal) * 100, 0)
+                : 0;
         } elseif ($this->id_promocion && $this->promocion && $this->promocion->estado_promocion) {
             $precioFinal = $precioOriginal - $this->promocion->descuento;
-            $descuento = round(($this->promocion->descuento / $precioOriginal) * 100, 0);
+            $descuento = $precioOriginal > 0
+                ? round(($this->promocion->descuento / $precioOriginal) * 100, 0)
+                : 0;
         }
 
         return [
             'id' => $this->id_producto,
             'titulo' => $this->nombre_producto,
-            'descripcion' => $this->descripcion ?? '',
+            'descripcion' => '',   // 👈 ya no existe la columna
             'precio' => $precioFinal,
             'precio_antes' => $precioFinal < $precioOriginal ? $precioOriginal : null,
             'descuento' => $descuento > 0 ? $descuento : null,
@@ -83,7 +79,7 @@ class ProductoResource extends JsonResource
             'disponible' => $stockTotal > 0 && $this->estado_producto == 1,
             'en_oferta' => $this->precio_oferta !== null || $this->id_promocion !== null,
             'variantes' => VarianteResource::collection($variantes),
-            'promocion' => $this->when($this->id_promocion && $this->promocion, function() {
+            'promocion' => $this->when($this->id_promocion && $this->promocion, function () {
                 return [
                     'id' => $this->promocion->id_promocion,
                     'nombre' => $this->promocion->nombre_promocion,

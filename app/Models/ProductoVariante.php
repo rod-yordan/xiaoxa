@@ -14,7 +14,7 @@ class ProductoVariante extends Model
     const UPDATED_AT = 'updated_at';
 
     protected $fillable = [
-        'id_producto', 'talla', 'color', 'stock', 'sku'
+        'id_producto', 'talla', 'color', 'color_hex', 'stock', 'sku'
     ];
 
     protected $casts = [
@@ -24,6 +24,13 @@ class ProductoVariante extends Model
     public function producto()
     {
         return $this->belongsTo(Producto::class, 'id_producto', 'id_producto');
+    }
+
+    // ✅ NUEVO: Relación con las imágenes
+    public function imagenes()
+    {
+        return $this->hasMany(ProductoVarianteImagen::class, 'id_variante', 'id_variante')
+                    ->orderBy('orden', 'asc');
     }
 
     public function detallesPedido()

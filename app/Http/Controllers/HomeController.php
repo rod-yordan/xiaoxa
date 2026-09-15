@@ -20,8 +20,10 @@ class HomeController extends Controller
                    || ($request->filled('categoria') && $request->categoria != 'Todo')
                    || $request->has('promocion');
 
-        // Iniciamos la consulta
-        $query = Producto::query()->where('estado_producto', 1);
+        // ✅ Cargamos la relación con las imágenes de variantes
+        $query = Producto::query()
+            ->where('estado_producto', 1)
+            ->with(['variantes.imagenes']);
 
         if ($request->filled('categoria') && $request->categoria != 'Todo') {
             $query->whereHas('categoria', function ($q) use ($request) {
@@ -43,8 +45,7 @@ class HomeController extends Controller
             $buscar = $request->buscar;
             $query->where(function ($q) use ($buscar) {
                 $q->where('nombre_producto', 'like', "%{$buscar}%")
-                    ->orWhere('marca', 'like', "%{$buscar}%")
-                    ->orWhere('descripcion', 'like', "%{$buscar}%");
+                    ->orWhere('marca', 'like', "%{$buscar}%");
             });
         }
 
@@ -55,10 +56,10 @@ class HomeController extends Controller
         } 
         // ✅ Si NO hay filtros → agrupar por categoría
         else {
-            // Traemos las categorías activas con sus productos
             $categorias = Categoria::where('estado_categoria', 1)
                 ->with(['productos' => function ($q) {
                     $q->where('estado_producto', 1)
+                      ->with(['variantes.imagenes'])
                       ->orderBy('created_at', 'desc');
                 }])
                 ->orderBy('id_categoria', 'asc')

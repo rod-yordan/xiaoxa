@@ -81,7 +81,7 @@ class DashboardController extends Controller
 
         // ─── Ventas por categoría
         $ventasPorCategoria = DB::table('detalle_pedido as dp')
-            ->join('pedido as p',            'p.id_pedido',    '=', 'dp.id_pedido')
+            ->join('pedido as p',             'p.id_pedido',    '=', 'dp.id_pedido')
             ->join('producto_variante as pv', 'pv.id_variante', '=', 'dp.id_variante')
             ->join('producto as pr',          'pr.id_producto', '=', 'pv.id_producto')
             ->join('categoria as c',          'c.id_categoria', '=', 'pr.id_categoria')
@@ -94,12 +94,19 @@ class DashboardController extends Controller
 
         // ─── Top 5 productos más vendidos
         $topProductos = DB::table('detalle_pedido as dp')
-            ->join('pedido as p',            'p.id_pedido',    '=', 'dp.id_pedido')
+            ->join('pedido as p',             'p.id_pedido',    '=', 'dp.id_pedido')
             ->join('producto_variante as pv', 'pv.id_variante', '=', 'dp.id_variante')
             ->join('producto as pr',          'pr.id_producto', '=', 'pv.id_producto')
+            ->leftJoin('producto_variante_imagen as pvi', 'pvi.id_variante', '=', 'pv.id_variante')
             ->whereNotIn('p.estado_pedido', ['Cancelado'])
-            ->selectRaw('pr.nombre_producto, pr.imagen, SUM(dp.cantidad) as unidades, SUM(dp.subtotal) as ingresos')
-            ->groupBy('pr.id_producto', 'pr.nombre_producto', 'pr.imagen')
+            ->selectRaw('
+                pr.id_producto,
+                pr.nombre_producto,
+                MIN(pvi.imagen) as imagen,
+                SUM(dp.cantidad) as unidades,
+                SUM(dp.subtotal) as ingresos
+            ')
+            ->groupBy('pr.id_producto', 'pr.nombre_producto')
             ->orderByDesc('unidades')
             ->limit(5)
             ->get();

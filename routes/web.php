@@ -29,8 +29,10 @@ Route::get('/api/imagen/{filename}', [ImageController::class, 'show'])
     ->where('filename', '.*')
     ->name('imagen.show');
 
+// ✅ Detalle del producto - con variantes + imágenes + categoría
 Route::get('/producto/{id}', function ($id) {
-    $producto = Producto::with('variantes')->findOrFail($id);
+    $producto = Producto::with(['variantes.imagenes', 'categoria'])
+        ->findOrFail($id);
     return view('producto.detalle', compact('producto'));
 })->name('producto.show');
 

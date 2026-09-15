@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Producto;
 use App\Models\ProductoVariante;
+use App\Models\ProductoVarianteImagen;
 use App\Models\Categoria;
 use App\Models\Promocion;
 use Illuminate\Support\Facades\File;
@@ -25,7 +26,8 @@ class ProductoController extends Controller
         $buscar = $request->get('buscar');
         $perPage = $request->get('perPage', 10);
 
-        $productos = Producto::where('nombre_producto', 'LIKE', '%' . $buscar . '%')
+        $productos = Producto::with(['variantes.imagenes'])
+            ->where('nombre_producto', 'LIKE', '%' . $buscar . '%')
             ->paginate($perPage)
             ->withQueryString();
 
@@ -43,73 +45,73 @@ class ProductoController extends Controller
         $request->validate([
             'nombre_producto' => 'required|string|max:150',
             'precio' => 'required|numeric|min:0',
-            'imagen' => 'required|image|mimes:jpg,jpeg,png,webp',
             'variantes' => 'required|array|min:1',
             'variantes.*.talla' => 'required|string|max:50',
             'variantes.*.stock' => 'required|integer|min:0',
             'variantes.*.sku' => 'nullable|string|max:50|distinct|unique:producto_variante,sku',
+            // 👇 Imagen ahora OPCIONAL por variante
+            'variantes.*.imagenes' => 'nullable|array',
+            'variantes.*.imagenes.*' => 'image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
 
-        $combinaciones = collect($request->variantes)->map(function ($v) {
-            return strtolower(trim($v['talla'])) . '-' . strtolower(trim($v['color'] ?? ''));
-        });
-
+        // Validar combinaciones duplicadas
+        $combinaciones = collect($request->variantes)->map(fn($v) =>
+            strtolower(trim($v['talla'])) . '-' . strtolower(trim($v['color'] ?? ''))
+        );
         if ($combinaciones->duplicates()->isNotEmpty()) {
             return back()->withErrors(['variantes' => 'No puedes repetir la misma combinación de Talla y Color.'])->withInput();
         }
 
-        $producto = Producto::create($request->only([
-            'nombre_producto',
-            'descripcion',
-            'precio',
-            'precio_oferta',
-            'marca',
-            'id_categoria'
+        // Detalles: filtrar vacíos
+        $detalles = collect($request->detalles ?? [])
+            ->filter(fn($d) => !empty(trim($d)))
+            ->values()
+            ->toArray();
+
+        // Crear producto (SIN descripcion)
+        $producto = Producto::create(array_merge($request->only([
+            'nombre_producto', 'precio', 'precio_oferta', 'marca', 'id_categoria'
+        ]), [
+            'detalles' => $detalles
         ]));
 
-        // ✅ Imagen principal guardada en storage/app/public/productos/
-        if ($request->hasFile('imagen')) {
-            $archivo = $request->file('imagen');
-            $nombre = uniqid() . '.' . $archivo->getClientOriginalExtension();
-            $archivo->move(storage_path('app/public/productos'), $nombre);
-            $producto->update(['imagen' => $nombre]);
-        }
-
-        // ✅ Galería guardada en storage/app/public/productos/
-        if ($request->hasFile('galeria')) {
-            $galeria = [];
-            foreach ($request->file('galeria') as $foto) {
-                $galeria[] = $this->cargarArchivo($foto);
-            }
-            $producto->update(['galeria' => $galeria]);
-        }
-
-        foreach ($request->variantes as $v) {
-            $producto->variantes()->create([
+        // Crear variantes + imágenes (imágenes opcionales)
+        foreach ($request->variantes as $index => $v) {
+            $variante = $producto->variantes()->create([
                 'talla' => $v['talla'],
                 'color' => $v['color'] ?? null,
+                'color_hex' => $v['color_hex'] ?? null,
                 'stock' => $v['stock'],
                 'sku' => $v['sku'] ?? strtoupper(substr($producto->nombre_producto, 0, 3)) . '-' . uniqid(),
             ]);
+
+            // Guardar imágenes de la variante (solo si las hay)
+            if (isset($v['imagenes']) && is_array($v['imagenes'])) {
+                foreach ($v['imagenes'] as $orden => $foto) {
+                    if (!$foto instanceof \Illuminate\Http\UploadedFile) {
+                        continue;
+                    }
+                    $nombre = $this->cargarArchivo($foto, 'variantes');
+                    ProductoVarianteImagen::create([
+                        'id_variante' => $variante->id_variante,
+                        'imagen' => $nombre,
+                        'orden' => $orden
+                    ]);
+                }
+            }
         }
 
         try {
             $categoriaNombre = $producto->categoria->nombre_categoria ?? '';
-            $this->pusherBeams->enviarLanzamiento(
-                $producto->nombre_producto,
-                $categoriaNombre
-            );
-        } catch (\Exception $e) {
-            // Silencioso
-        }
+            $this->pusherBeams->enviarLanzamiento($producto->nombre_producto, $categoriaNombre);
+        } catch (\Exception $e) {}
 
         return redirect()->route('admin.productos.index')->with('success', 'Producto creado exitosamente.');
     }
 
     public function edit($id)
     {
-        $producto = Producto::with('variantes')->findOrFail($id);
-
+        $producto = Producto::with(['variantes.imagenes'])->findOrFail($id);
         $categorias = Categoria::all();
         $promociones = Promocion::where('estado_promocion', 1)->get();
 
@@ -118,7 +120,7 @@ class ProductoController extends Controller
 
     public function update(Request $request, $id)
     {
-        $producto = Producto::findOrFail($id);
+        $producto = Producto::with(['variantes.imagenes'])->findOrFail($id);
 
         $teniaOfertaAntes = !is_null($producto->precio_oferta) && $producto->precio_oferta > 0;
         $precioOfertaAntes = $producto->precio_oferta;
@@ -127,15 +129,18 @@ class ProductoController extends Controller
             'nombre_producto' => 'required|string|max:150',
             'precio' => 'required|numeric|min:0',
             'precio_oferta' => 'nullable|numeric|min:0|lt:precio',
-            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'galeria.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'variantes' => 'required|array|min:1',
             'variantes.*.talla' => 'required|string|max:50',
             'variantes.*.stock' => 'required|integer|min:0',
             'variantes.*.sku' => 'required|string|max:50|distinct',
+            // 👇 Imagen opcional también al editar
+            'variantes.*.imagenes' => 'nullable|array',
+            'variantes.*.imagenes.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
 
-        $combinaciones = collect($request->variantes)->map(fn($v) => strtolower(trim($v['talla'])) . '-' . strtolower(trim($v['color'] ?? '')));
+        $combinaciones = collect($request->variantes)->map(fn($v) =>
+            strtolower(trim($v['talla'])) . '-' . strtolower(trim($v['color'] ?? ''))
+        );
         if ($combinaciones->duplicates()->isNotEmpty()) {
             return back()->withErrors(['variantes' => 'Hay combinaciones de Talla y Color duplicadas.'])->withInput();
         }
@@ -149,98 +154,104 @@ class ProductoController extends Controller
             }
         }
 
-        $datos = $request->only(['nombre_producto', 'descripcion', 'precio', 'precio_oferta', 'marca', 'estado_producto', 'id_categoria', 'id_promocion']);
+        // Detalles
+        $detalles = collect($request->detalles ?? [])
+            ->filter(fn($d) => !empty(trim($d)))
+            ->values()
+            ->toArray();
 
-        // ✅ Guardar nueva imagen principal
-        if ($request->hasFile('imagen')) {
-            // Eliminar la imagen anterior
-            if ($producto->imagen && File::exists(storage_path('app/public/productos/' . $producto->imagen))) {
-                File::delete(storage_path('app/public/productos/' . $producto->imagen));
-            }
-            $datos['imagen'] = $this->cargarArchivo($request->file('imagen'));
-        }
-
-        $galeriaActual = $producto->galeria ?? [];
-
-        // ✅ Eliminar fotos de la galería
-        if ($request->has('galeria_eliminar')) {
-            foreach ($request->galeria_eliminar as $fotoEliminar) {
-                File::delete(storage_path('app/public/productos/' . $fotoEliminar));
-            }
-            $galeriaActual = array_diff($galeriaActual, $request->galeria_eliminar);
-        }
-
-        // ✅ Agregar nuevas fotos a la galería
-        if ($request->hasFile('galeria')) {
-            foreach ($request->file('galeria') as $foto) {
-                $galeriaActual[] = $this->cargarArchivo($foto);
-            }
-        }
-        $datos['galeria'] = array_values($galeriaActual);
+        // SIN descripcion
+        $datos = $request->only(['nombre_producto', 'precio', 'precio_oferta', 'marca', 'estado_producto', 'id_categoria', 'id_promocion']);
+        $datos['detalles'] = $detalles;
 
         $producto->update($datos);
 
         $idsEnviados = [];
-        foreach ($request->variantes as $v) {
+
+        foreach ($request->variantes as $index => $v) {
             $variante = $producto->variantes()->updateOrCreate(
                 ['id_variante' => $v['id_variante'] ?? null],
                 [
                     'talla' => $v['talla'],
                     'color' => $v['color'] ?? null,
+                    'color_hex' => $v['color_hex'] ?? null,
                     'stock' => $v['stock'],
                     'sku'   => $v['sku'],
                 ]
             );
             $idsEnviados[] = $variante->id_variante;
-        }
 
-        $producto->variantes()->whereNotIn('id_variante', $idsEnviados)->delete();
-
-        $tieneOfertaAhora = !is_null($request->precio_oferta) && $request->precio_oferta > 0;
-
-        if ($tieneOfertaAhora) {
-            if (!$teniaOfertaAntes || $precioOfertaAntes != $request->precio_oferta) {
-                try {
-                    $categoriaNombre = $producto->categoria->nombre_categoria ?? '';
-
-                    $this->pusherBeams->enviarOferta(
-                        $producto->nombre_producto,
-                        $request->precio_oferta,
-                        $categoriaNombre
-                    );
-                } catch (\Exception $e) {
+            // Eliminar imágenes marcadas
+            if (isset($v['imagenes_eliminar']) && is_array($v['imagenes_eliminar'])) {
+                foreach ($v['imagenes_eliminar'] as $idImagen) {
+                    $img = ProductoVarianteImagen::find($idImagen);
+                    if ($img && $img->id_variante == $variante->id_variante) {
+                        $ruta = storage_path('app/public/variantes/' . $img->imagen);
+                        if (File::exists($ruta)) File::delete($ruta);
+                        $img->delete();
+                    }
                 }
             }
+
+            // Agregar nuevas imágenes (opcional)
+            if (isset($v['imagenes']) && is_array($v['imagenes'])) {
+                $ordenMax = $variante->imagenes()->max('orden') ?? -1;
+                foreach ($v['imagenes'] as $foto) {
+                    if ($foto instanceof \Illuminate\Http\UploadedFile) {
+                        $ordenMax++;
+                        $nombre = $this->cargarArchivo($foto, 'variantes');
+                        ProductoVarianteImagen::create([
+                            'id_variante' => $variante->id_variante,
+                            'imagen' => $nombre,
+                            'orden' => $ordenMax
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Eliminar variantes que ya no están
+        $variantesAEliminar = $producto->variantes()->whereNotIn('id_variante', $idsEnviados)->get();
+        foreach ($variantesAEliminar as $vElim) {
+            foreach ($vElim->imagenes as $img) {
+                $ruta = storage_path('app/public/variantes/' . $img->imagen);
+                if (File::exists($ruta)) File::delete($ruta);
+                $img->delete();
+            }
+            $vElim->delete();
+        }
+
+        // Pusher Beams
+        $tieneOfertaAhora = !is_null($request->precio_oferta) && $request->precio_oferta > 0;
+        if ($tieneOfertaAhora && (!$teniaOfertaAntes || $precioOfertaAntes != $request->precio_oferta)) {
+            try {
+                $categoriaNombre = $producto->categoria->nombre_categoria ?? '';
+                $this->pusherBeams->enviarOferta($producto->nombre_producto, $request->precio_oferta, $categoriaNombre);
+            } catch (\Exception $e) {}
         }
 
         return redirect()->route('admin.productos.index')->with('success', 'Producto actualizado correctamente');
     }
 
-    // ✅ Guardar archivo en storage/app/public/productos/
-    private function cargarArchivo($file)
+    private function cargarArchivo($file, $carpeta = 'productos')
     {
-        $nombre = time() . '_' . $file->getClientOriginalName();
-        $file->move(storage_path('app/public/productos'), $nombre);
+        $nombre = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+        $file->move(storage_path('app/public/' . $carpeta), $nombre);
         return $nombre;
     }
 
     public function destroy($id)
     {
-        $producto = Producto::with('variantes')->findOrFail($id);
+        $producto = Producto::with(['variantes.imagenes'])->findOrFail($id);
 
         if ($producto->variantes()->where('stock', '>', 0)->exists()) {
             return redirect()->back()->with('error', 'No se puede eliminar un producto con stock.');
         }
 
-        // ✅ Eliminar archivos desde storage
-        if ($producto->imagen && File::exists(storage_path('app/public/productos/' . $producto->imagen))) {
-            File::delete(storage_path('app/public/productos/' . $producto->imagen));
-        }
-        if ($producto->galeria) {
-            foreach ($producto->galeria as $img) {
-                if (File::exists(storage_path('app/public/productos/' . $img))) {
-                    File::delete(storage_path('app/public/productos/' . $img));
-                }
+        foreach ($producto->variantes as $variante) {
+            foreach ($variante->imagenes as $img) {
+                $ruta = storage_path('app/public/variantes/' . $img->imagen);
+                if (File::exists($ruta)) File::delete($ruta);
             }
         }
 

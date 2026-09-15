@@ -4,72 +4,102 @@
 
 @section('content')
 
+@php
+    $variantesPorColor = $producto->variantes->groupBy('color');
+    $colores = $variantesPorColor->keys()->filter();
+    $tallas  = $producto->variantes->pluck('talla')->unique();
+
+    $coloresUnicos = [];
+    foreach ($colores as $color) {
+        $variante = $producto->variantes->where('color', $color)->first();
+        $coloresUnicos[] = [
+            'nombre' => $color,
+            'hex' => $variante->color_hex ?? '#cccccc'
+        ];
+    }
+
+    $todasLasImagenes = $producto->variantes
+        ->flatMap(fn($v) => $v->imagenes->map(fn($i) => [
+            'ruta' => url('/api/imagen/' . $i->imagen),
+        ]))
+        ->unique('ruta')
+        ->values();
+@endphp
+
+{{-- ===== BREADCRUMB ===== --}}
+<div class="max-w-7xl mx-auto px-4 sm:px-8 pt-6 pb-2">
+    <div class="flex items-center gap-2 flex-wrap">
+        <a href="{{ route('home') }}" class="flex items-center gap-1" title="Volver al inicio">
+            <span class="text-base font-normal text-black">Inicio</span>
+            <x-heroicon-o-chevron-right class="w-3 h-3 text-black" />
+        </a>
+
+        @if($producto->categoria)
+            <a href="{{ route('home', ['categoria' => $producto->categoria->nombre_categoria]) }}" class="flex items-center gap-1">
+                <span class="text-base font-normal text-black">
+                    {{ ucwords(strtolower($producto->categoria->nombre_categoria)) }}
+                </span>
+                <x-heroicon-o-chevron-right class="w-3 h-3 text-black" />
+            </a>
+        @endif
+
+        <span class="text-base font-normal text-black truncate">
+            {{ ucwords(strtolower($producto->nombre_producto)) }}
+        </span>
+    </div>
+</div>
+
 <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8">
-    <div class="flex flex-col lg:flex-row gap-10 items-start">
+    <div class="flex flex-col lg:flex-row items-start">
 
         {{-- ===== GALERÍA ===== --}}
-        <div class="w-full lg:w-[58%] space-y-3">
+        <div class="w-full lg:w-[65%]">
+            <div class="flex">
 
-            {{-- Imagen principal --}}
-            <div class="aspect-[4/5] bg-white overflow-hidden rounded-2xl border border-gray-100 shadow-sm group relative">
-                <img id="view-principal"
-                    src="{{ url('/api/imagen/' . $producto->imagen) }}"
-                    class="w-full h-full object-contain p-6 transition-all duration-500 group-hover:scale-105"
-                    alt="{{ $producto->nombre_producto }}">
-
-                @if($producto->precio_oferta)
-                <div class="absolute top-4 left-4">
-                    <span class="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                        -{{ round((($producto->precio - $producto->precio_oferta) / $producto->precio) * 100) }}% OFF
-                    </span>
-                </div>
-                @endif
-            </div>
-
-            {{-- Miniaturas --}}
-            <div class="flex gap-2.5 overflow-x-auto pb-1 scroll-gallery">
-                <button type="button"
-                        onclick="cambiarImagen(this, '{{ url('/api/imagen/' . $producto->imagen) }}')"
-                        class="thumbnail-btn thumbnail-active w-[72px] h-[82px] flex-shrink-0 rounded-xl border-2 overflow-hidden bg-white p-1">
-                    <img src="{{ url('/api/imagen/' . $producto->imagen) }}" class="w-full h-full object-cover rounded-lg">
-                </button>
-
-                @if($producto->galeria)
-                    @foreach($producto->galeria as $foto)
-                    <button type="button"
-                            onclick="cambiarImagen(this, '{{ url('/api/imagen/' . $foto) }}')"
-                            class="thumbnail-btn w-[72px] h-[82px] flex-shrink-0 rounded-xl border border-gray-200 overflow-hidden bg-white p-1 hover:border-gray-400 transition-all">
-                        <img src="{{ url('/api/imagen/' . $foto) }}" class="w-full h-full object-cover rounded-lg">
-                    </button>
+                {{-- Miniaturas verticales --}}
+                <div class="flex flex-col gap-2 w-[72px] shrink-0 max-h-[640px] overflow-y-auto scroll-gallery pr-1">
+                    @foreach($todasLasImagenes as $index => $img)
+                        <button type="button"
+                                onclick="cambiarImagen(this, '{{ $img['ruta'] }}')"
+                                class="thumbnail-btn {{ $index === 0 ? 'thumbnail-active' : '' }} w-[72px] h-[110px] flex-shrink-0 border {{ $index === 0 ? 'border-2' : 'border-gray-200' }} overflow-hidden bg-white p-0.5">
+                            <img src="{{ $img['ruta'] }}" class="w-full h-full object-cover">
+                        </button>
                     @endforeach
-                @endif
+                </div>
+
+                {{-- Imagen principal --}}
+                <div class="flex-1 relative overflow-hidden">
+                    <div class="w-full aspect-[4/5] relative overflow-hidden bg-white">
+                        <img id="imagen-principal"
+                             src="{{ $todasLasImagenes->first()['ruta'] ?? '' }}"
+                             class="w-full h-full object-contain"
+                             alt="{{ $producto->nombre_producto }}">
+                    </div>
+                </div>
             </div>
         </div>
 
-
         {{-- ===== INFO PRODUCTO ===== --}}
-        <div class="w-full lg:w-[42%] lg:sticky lg:top-28 space-y-0">
+        <div class="w-full lg:w-[35%] space-y-0">
 
-            {{-- Marca + Nombre --}}
-            <div class="pb-5 border-b border-gray-100">
+            <div class="pb-5">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-[0.2em] mb-2">{{ $producto->marca }}</p>
-                <h1 class="text-3xl font-semibold leading-snug text-gray-900">
+                <h1 class="text-3xl font-normal leading-snug text-gray-900">
                     {{ ucwords(strtolower($producto->nombre_producto)) }}
                 </h1>
-                <p id="sku-text" class="text-xs text-gray-400 mt-3 tracking-wider">SKU: Selecciona color y talla</p>
             </div>
 
-            {{-- Precio --}}
-            <div class="py-5 border-b border-gray-100">
+            <div class="py-5">
                 @if($producto->precio_oferta)
                     <div class="flex items-center gap-3 flex-wrap">
-                        <span class="text-3xl font-bold text-red-500">
+                        <span class="text-[40px] font-normal text-red-500">
                             S/ {{ number_format($producto->precio_oferta, 2) }}
                         </span>
-                        <span class="text-lg text-gray-400 line-through font-medium">
+                        <span class="text-[30px] text-gray-500 line-through">
                             S/ {{ number_format($producto->precio, 2) }}
                         </span>
-                        <span class="bg-red-50 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full border border-red-100">
+
+                        <span class="bg-red-500 text-white text-[15px] font-semibold leading-none min-w-[46px] text-center px-1 py-1.5 rounded-md shadow-sm">
                             -{{ round((1 - $producto->precio_oferta / $producto->precio) * 100) }}%
                         </span>
                     </div>
@@ -80,39 +110,55 @@
                 @endif
             </div>
 
-            @php
-                $variantesPorColor = $producto->variantes->groupBy('color');
-                $colores = $variantesPorColor->keys()->filter();
-                $tallas  = $producto->variantes->pluck('talla')->unique();
-            @endphp
+            @if(!empty($producto->detalles) && count($producto->detalles) > 0)
+            <div class="py-5">
+                <p class="text-lg font-semibold mb-3">Detalles</p>
+                <ul class="space-y-2">
+                    @foreach($producto->detalles as $detalle)
+                        @if(!empty(trim($detalle)))
+                        <li class="flex items-start gap-2 text-sm leading-relaxed">
+                            <span class="w-1.5 h-1.5 rounded-full bg-gray-700 flex-shrink-0 mt-2"></span>
+                            <span>{{ $detalle }}</span>
+                        </li>
+                        @endif
+                    @endforeach
+                </ul>
+            </div>
+            @endif
 
             {{-- Selector de Color --}}
-            <div class="py-5 border-b border-gray-100">
-                <div class="flex items-center justify-between mb-3">
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Color</p>
-                    <span id="color-seleccionado" class="text-xs text-gray-400 italic">Selecciona uno</span>
+            @if(count($coloresUnicos) > 0)
+            {{-- 👇 CAMBIO: se quitó 'border-b border-gray-100' --}}
+            <div class="py-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <p class="text-sm font-bold text-gray-900">Color:</p>
+                    <span id="color-seleccionado" class="text-xs"></span>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                    @foreach($colores as $color)
-                    <button type="button"
-                            onclick="seleccionarColor(this, '{{ $color }}')"
-                            class="color-btn px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium hover:border-gray-900 transition-all bg-white"
-                            data-color="{{ $color }}">
-                        {{ $color }}
-                    </button>
+                <div class="flex flex-wrap gap-3">
+                    @foreach($coloresUnicos as $c)
+                        <button type="button"
+                                onclick="seleccionarColor(this, '{{ $c['nombre'] }}', '{{ $c['hex'] }}')"
+                                class="color-btn w-9 h-9 rounded-full border-2 border-gray-200 hover:border-gray-400 transition-all box-border"
+                                style="background-color: {{ $c['hex'] }};"
+                                data-color="{{ $c['nombre'] }}"
+                                data-color-hex="{{ $c['hex'] }}"
+                                title="{{ $c['nombre'] }}">
+                        </button>
                     @endforeach
                 </div>
             </div>
+            @endif
 
             {{-- Selector de Talla --}}
-            <div class="py-5 border-b border-gray-100">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Talla</p>
+            {{-- 👇 CAMBIO: se quitó 'border-b border-gray-100' --}}
+            <div class="py-5">
+                <p class="text-sm font-bold mb-3">Talla:</p>
                 <div class="flex flex-wrap gap-2">
                     @foreach($tallas as $talla)
                     <button type="button"
                             onclick="selectTalla(this)"
-                            class="talla-btn w-12 h-12 border border-gray-200 rounded-xl text-sm font-semibold hover:border-gray-900 transition-all bg-white"
+                            class="talla-btn w-12 h-9 border-2 border-gray-400 rounded-lg text-sm font-semibold text-gray-900 bg-white"
                             data-talla="{{ $talla }}">
                         {{ $talla }}
                     </button>
@@ -120,48 +166,40 @@
                 </div>
             </div>
 
-            {{-- Formulario + Botón --}}
+            {{-- Cantidad + Botón --}}
             <div class="pt-5">
                 <form id="form-carrito" action="{{ route('carrito.add', $producto->id_producto) }}" method="POST">
                     @csrf
                     <input type="hidden" name="color"       id="input-color">
                     <input type="hidden" name="talla"       id="input-talla">
                     <input type="hidden" name="id_variante" id="input-variante">
+                    <input type="hidden" name="cantidad"    id="input-cantidad" value="1">
 
-                    {{-- Error --}}
                     <div id="error-msg" class="hidden bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl px-4 py-3 mb-4 flex items-center gap-2">
                         <x-heroicon-o-exclamation-circle class="w-4 h-4 shrink-0" />
                         <span>Debes seleccionar color y talla antes de añadir.</span>
                     </div>
 
-                    @if(session('success'))
-                    <button type="button"
-                            class="w-full bg-emerald-600 text-white rounded-2xl py-4 text-sm font-semibold tracking-wide flex items-center justify-center gap-2">
-                        <x-heroicon-o-check-circle class="w-5 h-5" />
-                        ¡Añadido a tu bolsa!
-                    </button>
-                    @else
-                    <button type="submit"
-                            class="w-full bg-gray-900 text-white rounded-2xl py-4 text-sm font-semibold tracking-wide
-                                   hover:bg-gray-800 active:scale-[0.99] transition-all flex items-center justify-center gap-2">
-                        <x-heroicon-o-shopping-bag class="w-4 h-4" />
-                        Añadir a la bolsa
-                    </button>
-                    @endif
-                </form>
-            </div>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                            <button type="button" onclick="disminuirCantidad()"
+                                    class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition">
+                                <x-heroicon-o-minus class="w-4 h-4" />
+                            </button>
+                            <span id="cantidad-display" class="w-8 text-center text-sm font-semibold">1</span>
+                            <button type="button" onclick="aumentarCantidad()"
+                                    class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition">
+                                <x-heroicon-o-plus class="w-4 h-4" />
+                            </button>
+                        </div>
 
-            {{-- Descripción --}}
-            <div class="mt-5 bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                <details class="group">
-                    <summary class="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
-                        <span class="text-xs font-semibold uppercase tracking-widest text-gray-700">Descripción del producto</span>
-                        <x-heroicon-o-chevron-down class="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" />
-                    </summary>
-                    <div class="px-5 pb-5 border-t border-gray-100">
-                        <p class="mt-4 text-sm text-gray-500 leading-relaxed whitespace-pre-line">{{ $producto->descripcion }}</p>
+                        <button type="submit"
+                                class="flex-1 bg-gray-900 text-white rounded-lg h-11 text-xs font-bold uppercase tracking-wider
+                                       hover:bg-gray-800 active:scale-[0.99] transition-all">
+                            Agregar a la bolsa
+                        </button>
                     </div>
-                </details>
+                </form>
             </div>
 
         </div>
@@ -172,13 +210,40 @@
 
 @push('styles')
 <style>
-    #view-principal { transition: opacity 0.25s ease-in-out; }
-
     .thumbnail-btn { transition: all 0.2s ease; }
     .thumbnail-active { border-color: #111 !important; border-width: 2px !important; }
 
-    /* Scrollbar galería */
-    .scroll-gallery::-webkit-scrollbar { height: 3px; }
+    .color-btn {
+        box-sizing: border-box;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    /* ✅ Anillo original (doble anillo con blanco interno) */
+    .color-btn.color-activo {
+        border-color: #111 !important;
+        box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px #111;
+    }
+
+    .talla-btn {
+        box-sizing: border-box;
+        font-weight: 600;
+        color: #000 !important;
+        background-color: #fff;
+        border-color: #9ca3af;
+        text-decoration: none !important;
+    }
+    .talla-btn.talla-activa {
+        background-color: #000 !important;
+        color: #fff !important;
+        border-color: #000 !important;
+    }
+    .talla-btn:disabled,
+    .talla-btn.talla-bloqueada {
+        color: #000 !important;
+        text-decoration: none !important;
+        cursor: not-allowed;
+    }
+
+    .scroll-gallery::-webkit-scrollbar { width: 3px; height: 3px; }
     .scroll-gallery::-webkit-scrollbar-track { background: #f1f1f1; }
     .scroll-gallery::-webkit-scrollbar-thumb { background: #ccc; border-radius: 99px; }
 </style>
@@ -187,86 +252,176 @@
 @push('scripts')
 <script>
     const variantes = @json($producto->variantes);
+
+    @php
+        $variantesConImagenes = $producto->variantes->map(function ($v) {
+            return [
+                'id_variante' => $v->id_variante,
+                'color'       => $v->color,
+                'talla'       => $v->talla,
+                'stock'       => $v->stock,
+                'imagenes'    => $v->imagenes
+                    ->map(fn($i) => url('/api/imagen/' . $i->imagen))
+                    ->toArray(),
+            ];
+        });
+    @endphp
+
+    const variantesConImagenes = @json($variantesConImagenes);
+
     let colorSeleccionado = "";
     let tallaSeleccionada = "";
+    let cantidad = 1;
+    let stockMaximo = 1;
 
+    // ===== GALERÍA (cambio directo) =====
     function cambiarImagen(elemento, ruta) {
-        const mainImg = document.getElementById('view-principal');
-        mainImg.style.opacity = '0';
-        setTimeout(() => {
-            mainImg.src = ruta;
-            mainImg.style.opacity = '1';
-        }, 250);
+        document.getElementById('imagen-principal').src = ruta;
+
         document.querySelectorAll('.thumbnail-btn').forEach(btn => {
-            btn.classList.remove('thumbnail-active', 'border-2', 'border-gray-900');
+            btn.classList.remove('thumbnail-active', 'border-2');
             btn.classList.add('border', 'border-gray-200');
         });
-        elemento.classList.add('thumbnail-active');
+        elemento.classList.add('thumbnail-active', 'border-2');
+        elemento.classList.remove('border', 'border-gray-200');
     }
 
-    function seleccionarColor(elemento, nombre) {
+    // ===== MOSTRAR LA PRIMERA IMAGEN DE UN COLOR =====
+    function mostrarPrimeraImagenDelColor(color) {
+        const variante = variantesConImagenes.find(v =>
+            v.color && v.color.toLowerCase() === color.toLowerCase() && v.imagenes.length > 0
+        );
+        if (!variante) return;
+
+        const ruta = variante.imagenes[0];
+        document.getElementById('imagen-principal').src = ruta;
+
+        document.querySelectorAll('.thumbnail-btn').forEach(btn => {
+            const img = btn.querySelector('img');
+            if (img && img.src === ruta) {
+                btn.classList.add('thumbnail-active', 'border-2');
+                btn.classList.remove('border', 'border-gray-200');
+            } else {
+                btn.classList.remove('thumbnail-active', 'border-2');
+                btn.classList.add('border', 'border-gray-200');
+            }
+        });
+    }
+
+    // ===== REINICIAR CANTIDAD A 1 =====
+    function reiniciarCantidad() {
+        cantidad = 1;
+        document.getElementById('cantidad-display').innerText = cantidad;
+        document.getElementById('input-cantidad').value = cantidad;
+    }
+
+    // ===== COLOR =====
+    function seleccionarColor(elemento, nombre, hex) {
         colorSeleccionado = nombre;
         document.getElementById('color-seleccionado').innerText = nombre;
         document.getElementById('input-color').value = nombre;
 
         document.querySelectorAll('.color-btn').forEach(btn => {
-            btn.classList.remove('border-gray-900', 'bg-gray-900', 'text-white', 'ring-2', 'ring-gray-900');
-            btn.classList.add('border-gray-200', 'bg-white', 'text-gray-900');
+            btn.classList.remove('color-activo');
         });
-        elemento.classList.remove('border-gray-200', 'bg-white', 'text-gray-900');
-        elemento.classList.add('border-gray-900', 'bg-gray-900', 'text-white');
+        elemento.classList.add('color-activo');
+
+        mostrarPrimeraImagenDelColor(nombre);
 
         bloquearTallasPorColor();
-        actualizarVarianteID();
+        reiniciarCantidad();
+        autoSeleccionarPrimeraTalla();
+        actualizarVarianteYStock();
     }
 
+    // ===== AUTO-SELECCIONAR PRIMERA TALLA DISPONIBLE =====
+    function autoSeleccionarPrimeraTalla() {
+        document.querySelectorAll('.talla-btn').forEach(btn => {
+            btn.classList.remove('talla-activa');
+        });
+
+        const primeraTallaOk = document.querySelector('.talla-btn:not([disabled])');
+        if (primeraTallaOk) {
+            tallaSeleccionada = primeraTallaOk.dataset.talla;
+            document.getElementById('input-talla').value = tallaSeleccionada;
+            primeraTallaOk.classList.add('talla-activa');
+        }
+    }
+
+    // ===== TALLA =====
     function selectTalla(elemento) {
         if (elemento.disabled) return;
         tallaSeleccionada = elemento.dataset.talla;
         document.getElementById('input-talla').value = tallaSeleccionada;
 
         document.querySelectorAll('.talla-btn').forEach(btn => {
-            btn.classList.remove('border-gray-900', 'bg-gray-900', 'text-white');
-            btn.classList.add('border-gray-200', 'bg-white', 'text-gray-900');
+            btn.classList.remove('talla-activa');
         });
-        elemento.classList.remove('border-gray-200', 'bg-white', 'text-gray-900');
-        elemento.classList.add('border-gray-900', 'bg-gray-900', 'text-white');
+        elemento.classList.add('talla-activa');
 
-        actualizarVarianteID();
+        reiniciarCantidad();
+        actualizarVarianteYStock();
     }
 
-    function actualizarVarianteID() {
-        if (colorSeleccionado && tallaSeleccionada) {
-            const variante = variantes.find(v =>
-                v.color.trim().toLowerCase() === colorSeleccionado.trim().toLowerCase() &&
-                v.talla.trim().toLowerCase() === tallaSeleccionada.trim().toLowerCase()
-            );
-            if (variante) {
-                document.getElementById('input-variante').value = variante.id_variante;
-                document.getElementById('sku-text').innerText = 'SKU: ' + variante.sku;
+    // ===== VARIANTE + STOCK =====
+    function actualizarVarianteYStock() {
+        if (!colorSeleccionado || !tallaSeleccionada) return;
+
+        const variante = variantes.find(v =>
+            v.color && v.talla &&
+            v.color.trim().toLowerCase() === colorSeleccionado.trim().toLowerCase() &&
+            v.talla.trim().toLowerCase() === tallaSeleccionada.trim().toLowerCase()
+        );
+
+        if (variante) {
+            document.getElementById('input-variante').value = variante.id_variante;
+            stockMaximo = parseInt(variante.stock) || 0;
+
+            if (stockMaximo === 0 && cantidad < 1) {
+                cantidad = 1;
+                document.getElementById('cantidad-display').innerText = cantidad;
+                document.getElementById('input-cantidad').value = cantidad;
             }
         }
     }
 
+    // ===== BLOQUEAR TALLAS =====
     function bloquearTallasPorColor() {
         document.querySelectorAll('.talla-btn').forEach(btn => {
             const talla = btn.dataset.talla;
             const disponible = variantes.find(v =>
-                v.color?.trim().toLowerCase() === colorSeleccionado.trim().toLowerCase() &&
-                v.talla?.trim().toLowerCase() === talla.trim().toLowerCase() &&
+                v.color && v.talla &&
+                v.color.trim().toLowerCase() === colorSeleccionado.trim().toLowerCase() &&
+                v.talla.trim().toLowerCase() === talla.trim().toLowerCase() &&
                 v.stock > 0
             );
             if (!disponible) {
                 btn.disabled = true;
-                btn.classList.add('opacity-35', 'cursor-not-allowed', 'line-through');
-                btn.classList.remove('hover:border-gray-900');
+                btn.classList.add('talla-bloqueada');
             } else {
                 btn.disabled = false;
-                btn.classList.remove('opacity-35', 'cursor-not-allowed', 'line-through');
+                btn.classList.remove('talla-bloqueada');
             }
         });
     }
 
+    // ===== CANTIDAD =====
+    function aumentarCantidad() {
+        if (cantidad >= stockMaximo) return;
+        cantidad++;
+        document.getElementById('cantidad-display').innerText = cantidad;
+        document.getElementById('input-cantidad').value = cantidad;
+    }
+
+    function disminuirCantidad() {
+        if (cantidad > 1) {
+            cantidad--;
+            document.getElementById('cantidad-display').innerText = cantidad;
+            document.getElementById('input-cantidad').value = cantidad;
+        }
+    }
+
+    // ===== VALIDAR ANTES DE ENVIAR =====
     document.getElementById('form-carrito').addEventListener('submit', function(e) {
         const color = document.getElementById('input-color').value;
         const talla = document.getElementById('input-talla').value;
@@ -279,6 +434,26 @@
             errorEl.classList.add('hidden');
             errorEl.classList.remove('flex');
         }
+    });
+
+    // ===== AUTO-SELECCIÓN INICIAL =====
+    document.addEventListener('DOMContentLoaded', function () {
+        const primera = variantesConImagenes[0];
+        if (!primera) return;
+
+        const btnColor = document.querySelector(`.color-btn[data-color="${primera.color}"]`);
+
+        if (btnColor) {
+            colorSeleccionado = primera.color;
+            document.getElementById('color-seleccionado').innerText = primera.color;
+            document.getElementById('input-color').value = primera.color;
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('color-activo'));
+            btnColor.classList.add('color-activo');
+            bloquearTallasPorColor();
+        }
+
+        autoSeleccionarPrimeraTalla();
+        actualizarVarianteYStock();
     });
 </script>
 @endpush

@@ -116,7 +116,7 @@
                             </span>
                         @endif
                         <img
-                            src="{{ url('/api/imagen/' . $item->imagen) }}"
+                            src="{{ $item->imagen_principal ? url('/api/imagen/' . $item->imagen_principal) : 'https://placehold.co/600x800/f5f5f5/cccccc?text=Sin+Imagen' }}"
                             alt="{{ $item->nombre_producto }}"
                             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             loading="lazy"
@@ -159,26 +159,27 @@
 {{-- ===== GRID ÚNICO (CUANDO HAY FILTROS O BÚSQUEDA) ===== --}}
 @if(isset($productos) && $productos->count() > 0)
 
-<div class="max-w-7xl mx-auto px-4 sm:px-8 py-10">
+<div class="max-w-7xl mx-auto px-4 sm:px-8 pt-6 pb-2">
+    {{-- BREADCRUMB (Inicio > Filtro) --}}
+    <div class="flex items-center gap-2">
+        <a href="{{ route('home') }}"
+           class="flex items-center gap-1"
+           title="Volver al inicio">
+            <span class="text-base font-normal text-black">Inicio</span>
+            <x-heroicon-o-chevron-right class="w-3 h-3 text-black" />
+        </a>
 
-    {{-- ICONO HOME + CHEVRON + TÍTULO --}}
-    <div class="flex items-center justify-between mb-7">
-        <div class="flex items-center gap-2">
-            <a href="{{ route('home') }}"
-                class="flex items-center"
-                title="Volver al inicio">
-                <x-heroicon-o-home class="w-5 h-5 text-black" />
-                <x-heroicon-o-chevron-right class="w-3 h-3 text-black" />
-            </a>
-            <h2 class="text-base font-normal text-black">
-                @if(request('categoria')) {{ ucwords(strtolower(request('categoria'))) }}
-                @elseif(request('promocion')) Promociones
-                @elseif(request('buscar')) Resultados: "{{ request('buscar') }}"
-                @else Todos los Productos
-                @endif
-            </h2>
-        </div>
+        <span class="text-base font-normal text-black truncate">
+            @if(request('categoria')) {{ ucwords(strtolower(request('categoria'))) }}
+            @elseif(request('promocion')) Promociones
+            @elseif(request('buscar')) Resultados: "{{ request('buscar') }}"
+            @else Todos los Productos
+            @endif
+        </span>
     </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-8 py-8">
 
     {{-- GRID --}}
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -194,7 +195,7 @@
                         </span>
                     @endif
                     <img
-                        src="{{ url('/api/imagen/' . $item->imagen) }}"
+                        src="{{ $item->imagen_principal ? url('/api/imagen/' . $item->imagen_principal) : 'https://placehold.co/600x800/f5f5f5/cccccc?text=Sin+Imagen' }}"
                         alt="{{ $item->nombre_producto }}"
                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         loading="lazy"

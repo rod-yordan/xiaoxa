@@ -14,13 +14,13 @@ class Producto extends Model
     const UPDATED_AT = 'updated_at';
 
     protected $fillable = [
-        'nombre_producto', 'descripcion', 'precio', 'precio_oferta',
-        'imagen', 'galeria', 'marca', 'estado_producto',
+        'nombre_producto', 'detalles', 'precio', 'precio_oferta',
+        'marca', 'estado_producto',
         'id_categoria', 'id_promocion'
     ];
 
     protected $casts = [
-        'galeria' => 'array',
+        'detalles' => 'array',
         'precio' => 'decimal:2',
         'precio_oferta' => 'decimal:2',
         'estado_producto' => 'boolean',
@@ -28,33 +28,21 @@ class Producto extends Model
         'updated_at' => 'datetime',
     ];
 
-    /**
-     * Relación con variantes (tallas y colores)
-     */
     public function variantes()
     {
         return $this->hasMany(ProductoVariante::class, 'id_producto', 'id_producto');
     }
 
-    /**
-     * Relación con categoría
-     */
     public function categoria()
     {
         return $this->belongsTo(Categoria::class, 'id_categoria', 'id_categoria');
     }
 
-    /**
-     * Relación con promoción
-     */
     public function promocion()
     {
         return $this->belongsTo(Promocion::class, 'id_promocion', 'id_promocion');
     }
 
-    /**
-     * Relación con detalles de pedido
-     */
     public function detallesPedido()
     {
         return $this->hasManyThrough(
@@ -67,9 +55,6 @@ class Producto extends Model
         );
     }
 
-    /**
-     * Relación con carritos
-     */
     public function detallesCarrito()
     {
         return $this->hasManyThrough(
@@ -84,39 +69,22 @@ class Producto extends Model
 
     // ============ ACCESORES ============
 
-    /**
-     * Obtener todas las imágenes del producto (principal + galería)
-     */
-    public function getImagenesAttribute()
+    public function getImagenPrincipalAttribute()
     {
-        $imagenes = [];
-        
-        if ($this->galeria && is_array($this->galeria)) {
-            $imagenes = $this->galeria;
+        foreach ($this->variantes as $variante) {
+            if ($variante->imagenes->count() > 0) {
+                return $variante->imagenes->first()->imagen;
+            }
         }
-        
-        if ($this->imagen) {
-            array_unshift($imagenes, $this->imagen);
-        }
-        
-        if (empty($imagenes)) {
-            $imagenes = ['default-product.jpg'];
-        }
-        
-        return $imagenes;
+        return null;
     }
 
-    /**
-     * Obtener el precio final (considerando oferta)
-     */
     public function getPrecioFinalAttribute()
     {
-        // Si hay precio de oferta, usar ese
         if ($this->precio_oferta) {
             return (float) $this->precio_oferta;
         }
         
-        // Si hay promoción activa, aplicar descuento
         if ($this->promocion && $this->promocion->estado_promocion) {
             $fechaActual = now();
             if ($fechaActual >= $this->promocion->fecha_inicio && 
@@ -128,9 +96,6 @@ class Producto extends Model
         return (float) $this->precio;
     }
 
-    /**
-     * Obtener el precio anterior (si está en oferta)
-     */
     public function getPrecioAnteriorAttribute()
     {
         if ($this->precio_oferta) {
@@ -148,9 +113,6 @@ class Producto extends Model
         return null;
     }
 
-    /**
-     * Obtener el porcentaje de descuento
-     */
     public function getDescuentoAttribute()
     {
         if ($this->precio_oferta && $this->precio > 0) {
@@ -168,17 +130,11 @@ class Producto extends Model
         return null;
     }
 
-    /**
-     * Obtener stock total sumando todas las variantes
-     */
     public function getStockAttribute()
     {
         return $this->variantes()->sum('stock');
     }
 
-    /**
-     * Obtener todas las tallas disponibles
-     */
     public function getTallasListAttribute()
     {
         return $this->variantes()
@@ -190,9 +146,6 @@ class Producto extends Model
             ->toArray();
     }
 
-    /**
-     * Obtener todos los colores disponibles
-     */
     public function getColoresListAttribute()
     {
         return $this->variantes()
@@ -204,18 +157,12 @@ class Producto extends Model
             ->toArray();
     }
 
-    /**
-     * Obtener SKU principal (primera variante)
-     */
     public function getSkuAttribute()
     {
         $primeraVariante = $this->variantes()->first();
         return $primeraVariante ? $primeraVariante->sku : null;
     }
 
-    /**
-     * Verificar si el producto está disponible
-     */
     public function getDisponibleAttribute()
     {
         return $this->stock > 0 && $this->estado_producto == 1;
@@ -223,17 +170,11 @@ class Producto extends Model
 
     // ============ SCOPES ============
 
-    /**
-     * Scope para productos activos
-     */
     public function scopeActivos($query)
     {
         return $query->where('estado_producto', 1);
     }
 
-    /**
-     * Scope para productos con stock
-     */
     public function scopeConStock($query)
     {
         return $query->whereHas('variantes', function($q) {
@@ -241,17 +182,11 @@ class Producto extends Model
         });
     }
 
-    /**
-     * Scope para productos disponibles (activos y con stock)
-     */
     public function scopeDisponibles($query)
     {
         return $query->activos()->conStock();
     }
 
-    /**
-     * Scope para productos en oferta
-     */
     public function scopeEnOferta($query)
     {
         return $query->where(function($q) {
@@ -264,27 +199,17 @@ class Producto extends Model
         });
     }
 
-    /**
-     * Scope para productos por categoría
-     */
     public function scopePorCategoria($query, $categoriaId)
     {
         return $query->where('id_categoria', $categoriaId);
     }
 
-    /**
-     * Scope para búsqueda
-     */
     public function scopeBuscar($query, $termino)
     {
         return $query->where('nombre_producto', 'LIKE', "%{$termino}%")
-                     ->orWhere('descripcion', 'LIKE', "%{$termino}%")
                      ->orWhere('marca', 'LIKE', "%{$termino}%");
     }
 
-    /**
-     * Scope para ordenar por precio
-     */
     public function scopeOrderByPrecio($query, $direccion = 'asc')
     {
         return $query->orderBy('precio', $direccion);

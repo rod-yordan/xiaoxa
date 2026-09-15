@@ -244,7 +244,7 @@
                     <div class="flex items-center gap-2 min-w-0">
                         <span class="font-syne font-bold text-xs w-5 text-right shrink-0 text-gray-400">{{ $i+1 }}</span>
                         @if($prod->imagen)
-                            <img src="{{ asset('productos/' . $prod->imagen) }}"
+                            <img src="{{ url('/api/imagen/' . $prod->imagen) }}"
                                  class="w-8 h-8 rounded-lg object-cover shrink-0 border border-gray-100"
                                  alt="{{ $prod->nombre_producto }}"
                                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
