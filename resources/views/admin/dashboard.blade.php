@@ -18,22 +18,10 @@
     .d6 { animation-delay:0.30s; opacity:0; }
 </style>
 
-{{-- ── HEADER ──────────────────────────────────────────────────────── --}}
-<div class="fade-up d1 mb-8">
-    <div class="bg-gray-950 rounded-2xl border border-gray-900 p-8 relative overflow-hidden">
-        <div class="absolute -top-10 -right-10 w-56 h-56 rounded-full bg-lime-300/5 pointer-events-none"></div>
-        <div class="absolute -bottom-16 right-32 w-40 h-40 rounded-full bg-orange-400/5 pointer-events-none"></div>
-
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative">
-            <div>
-                <p class="font-syne text-xs uppercase tracking-widest text-gray-500 mb-2">C·LUCKY — Panel de control</p>
-                <h1 class="font-syne text-3xl font-bold text-white leading-tight">Bienvenido de vuelta</h1>
-                <p class="text-gray-400 mt-2 text-sm">
-                    {{ now()->isoFormat('dddd, D [de] MMMM [de] YYYY') }} — Los cambios se reflejan en tiempo real.
-                </p>
-            </div>
-        </div>
-    </div>
+{{-- ── HEADER con saludo del mockup ────────────────────────────── --}}
+<div class="fade-up d1 mb-8 text-right">
+    <p class="text-lg font-medium text-gray-900">¡Hola, Administrador!</p>
+    <p class="text-2xl font-bold text-gray-900">¡Bienvenido de nuevo!</p>
 </div>
 
 {{-- ── KPIs ─────────────────────────────────────────────────────────── --}}

@@ -26,12 +26,48 @@ class ProductoController extends Controller
         $buscar = $request->get('buscar');
         $perPage = $request->get('perPage', 10);
 
-        $productos = Producto::with(['variantes.imagenes'])
-            ->where('nombre_producto', 'LIKE', '%' . $buscar . '%')
-            ->paginate($perPage)
-            ->withQueryString();
+        $query = Producto::with(['variantes.imagenes'])
+            ->where('nombre_producto', 'LIKE', '%' . $buscar . '%');
 
-        return view('admin.productos.index', compact('productos'));
+        // Filtro por categoría
+        if ($request->filled('categoria')) {
+            $query->where('id_categoria', $request->categoria);
+        }
+
+        // Filtro por marca
+        if ($request->filled('marca')) {
+            $query->where('marca', $request->marca);
+        }
+
+        // Filtro por stock
+        if ($request->filled('stock')) {
+            switch ($request->stock) {
+                case 'agotado':
+                    $query->whereDoesntHave('variantes', fn($q) => $q->where('stock', '>', 0));
+                    break;
+                case 'bajo':
+                    $query->whereHas('variantes', fn($q) => $q->where('stock', '>', 0))
+                          ->withSum('variantes as stock_total', 'stock')
+                          ->having('stock_total', '<=', 10);
+                    break;
+                case 'disponible':
+                    $query->whereHas('variantes', fn($q) => $q->where('stock', '>', 0))
+                          ->withSum('variantes as stock_total', 'stock')
+                          ->having('stock_total', '>', 10);
+                    break;
+            }
+        }
+
+        $productos = $query->paginate($perPage)->withQueryString();
+
+        $categoriasFiltro = Categoria::orderBy('nombre_categoria')->get();
+        $marcasFiltro = Producto::whereNotNull('marca')
+            ->where('marca', '!=', '')
+            ->distinct()
+            ->orderBy('marca')
+            ->pluck('marca');
+
+        return view('admin.productos.index', compact('productos', 'categoriasFiltro', 'marcasFiltro'));
     }
 
     public function create()
@@ -45,11 +81,11 @@ class ProductoController extends Controller
         $request->validate([
             'nombre_producto' => 'required|string|max:150',
             'precio' => 'required|numeric|min:0',
+            'precio_oferta' => 'nullable|numeric|min:0|lt:precio',
             'variantes' => 'required|array|min:1',
             'variantes.*.talla' => 'required|string|max:50',
             'variantes.*.stock' => 'required|integer|min:0',
             'variantes.*.sku' => 'nullable|string|max:50|distinct|unique:producto_variante,sku',
-            // 👇 Imagen ahora OPCIONAL por variante
             'variantes.*.imagenes' => 'nullable|array',
             'variantes.*.imagenes.*' => 'image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
@@ -133,7 +169,6 @@ class ProductoController extends Controller
             'variantes.*.talla' => 'required|string|max:50',
             'variantes.*.stock' => 'required|integer|min:0',
             'variantes.*.sku' => 'required|string|max:50|distinct',
-            // 👇 Imagen opcional también al editar
             'variantes.*.imagenes' => 'nullable|array',
             'variantes.*.imagenes.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);

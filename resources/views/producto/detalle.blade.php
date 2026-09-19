@@ -53,26 +53,25 @@
     <div class="flex flex-col lg:flex-row items-start">
 
         {{-- ===== GALERÍA ===== --}}
-        <div class="w-full lg:w-[65%]">
-            <div class="flex">
+        <div class="w-full lg:w-[65%] min-w-0">
+            <div class="flex min-w-0">
 
                 {{-- Miniaturas verticales --}}
-                <div class="flex flex-col gap-2 w-[72px] shrink-0 max-h-[640px] overflow-y-auto scroll-gallery pr-1">
+                <div class="flex flex-col gap-2 w-[72px] shrink-0 max-h-[800px] overflow-y-auto scroll-gallery pr-1">
                     @foreach($todasLasImagenes as $index => $img)
                         <button type="button"
                                 onclick="cambiarImagen(this, '{{ $img['ruta'] }}')"
-                                class="thumbnail-btn {{ $index === 0 ? 'thumbnail-active' : '' }} w-[72px] h-[110px] flex-shrink-0 border {{ $index === 0 ? 'border-2' : 'border-gray-200' }} overflow-hidden bg-white p-0.5">
-                            <img src="{{ $img['ruta'] }}" class="w-full h-full object-cover">
+                                class="thumbnail-btn {{ $index === 0 ? 'thumbnail-active' : '' }} w-[72px] h-[110px] flex-shrink-0 border {{ $index === 0 ? 'border-2' : 'border-gray-200' }} overflow-hidden bg-white p-0.5 relative">
+                            <img src="{{ $img['ruta'] }}" class="absolute inset-0 w-full h-full object-cover">
                         </button>
                     @endforeach
                 </div>
 
                 {{-- Imagen principal --}}
-                <div class="flex-1 relative overflow-hidden">
-                    <div class="w-full aspect-[4/5] relative overflow-hidden bg-white">
+                <div class="flex-1 min-w-0 relative overflow-hidden flex items-start justify-center">
+                    <div class="imagen-principal-wrapper">
                         <img id="imagen-principal"
                              src="{{ $todasLasImagenes->first()['ruta'] ?? '' }}"
-                             class="w-full h-full object-contain"
                              alt="{{ $producto->nombre_producto }}">
                     </div>
                 </div>
@@ -100,7 +99,7 @@
                         </span>
 
                         <span class="bg-red-500 text-white text-[15px] font-semibold leading-none min-w-[46px] text-center px-1 py-1.5 rounded-md shadow-sm">
-                            -{{ round((1 - $producto->precio_oferta / $producto->precio) * 100) }}%
+                            -{{ abs($producto->descuento) }}%
                         </span>
                     </div>
                 @else
@@ -128,11 +127,10 @@
 
             {{-- Selector de Color --}}
             @if(count($coloresUnicos) > 0)
-            {{-- 👇 CAMBIO: se quitó 'border-b border-gray-100' --}}
             <div class="py-5">
-                <div class="flex items-center gap-2 mb-3">
+                <div class="flex items-baseline gap-2 mb-3">
                     <p class="text-sm font-bold text-gray-900">Color:</p>
-                    <span id="color-seleccionado" class="text-xs"></span>
+                    <span id="color-seleccionado" class="text-sm text-gray-700"></span>
                 </div>
 
                 <div class="flex flex-wrap gap-3">
@@ -151,7 +149,6 @@
             @endif
 
             {{-- Selector de Talla --}}
-            {{-- 👇 CAMBIO: se quitó 'border-b border-gray-100' --}}
             <div class="py-5">
                 <p class="text-sm font-bold mb-3">Talla:</p>
                 <div class="flex flex-wrap gap-2">
@@ -210,6 +207,26 @@
 
 @push('styles')
 <style>
+    /* ===== Imagen principal: contenedor con aspect 4/5 fijo y altura máxima ===== */
+    .imagen-principal-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 640px;
+        aspect-ratio: 4 / 5;
+        overflow: hidden;
+        background-color: #fff;
+    }
+
+    .imagen-principal-wrapper img#imagen-principal {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+    }
+
     .thumbnail-btn { transition: all 0.2s ease; }
     .thumbnail-active { border-color: #111 !important; border-width: 2px !important; }
 
@@ -217,7 +234,6 @@
         box-sizing: border-box;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
-    /* ✅ Anillo original (doble anillo con blanco interno) */
     .color-btn.color-activo {
         border-color: #111 !important;
         box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px #111;
@@ -243,8 +259,10 @@
         cursor: not-allowed;
     }
 
-    .scroll-gallery::-webkit-scrollbar { width: 3px; height: 3px; }
-    .scroll-gallery::-webkit-scrollbar-track { background: #f1f1f1; }
+    /* ===== Scrollbar de la galería: solo vertical, sin línea horizontal ===== */
+    .scroll-gallery { overflow-x: hidden; }
+    .scroll-gallery::-webkit-scrollbar { width: 3px; height: 0; }
+    .scroll-gallery::-webkit-scrollbar-track { background: transparent; }
     .scroll-gallery::-webkit-scrollbar-thumb { background: #ccc; border-radius: 99px; }
 </style>
 @endpush
@@ -274,7 +292,6 @@
     let cantidad = 1;
     let stockMaximo = 1;
 
-    // ===== GALERÍA (cambio directo) =====
     function cambiarImagen(elemento, ruta) {
         document.getElementById('imagen-principal').src = ruta;
 
@@ -286,7 +303,6 @@
         elemento.classList.remove('border', 'border-gray-200');
     }
 
-    // ===== MOSTRAR LA PRIMERA IMAGEN DE UN COLOR =====
     function mostrarPrimeraImagenDelColor(color) {
         const variante = variantesConImagenes.find(v =>
             v.color && v.color.toLowerCase() === color.toLowerCase() && v.imagenes.length > 0
@@ -308,14 +324,12 @@
         });
     }
 
-    // ===== REINICIAR CANTIDAD A 1 =====
     function reiniciarCantidad() {
         cantidad = 1;
         document.getElementById('cantidad-display').innerText = cantidad;
         document.getElementById('input-cantidad').value = cantidad;
     }
 
-    // ===== COLOR =====
     function seleccionarColor(elemento, nombre, hex) {
         colorSeleccionado = nombre;
         document.getElementById('color-seleccionado').innerText = nombre;
@@ -334,7 +348,6 @@
         actualizarVarianteYStock();
     }
 
-    // ===== AUTO-SELECCIONAR PRIMERA TALLA DISPONIBLE =====
     function autoSeleccionarPrimeraTalla() {
         document.querySelectorAll('.talla-btn').forEach(btn => {
             btn.classList.remove('talla-activa');
@@ -348,7 +361,6 @@
         }
     }
 
-    // ===== TALLA =====
     function selectTalla(elemento) {
         if (elemento.disabled) return;
         tallaSeleccionada = elemento.dataset.talla;
@@ -363,7 +375,6 @@
         actualizarVarianteYStock();
     }
 
-    // ===== VARIANTE + STOCK =====
     function actualizarVarianteYStock() {
         if (!colorSeleccionado || !tallaSeleccionada) return;
 
@@ -385,7 +396,6 @@
         }
     }
 
-    // ===== BLOQUEAR TALLAS =====
     function bloquearTallasPorColor() {
         document.querySelectorAll('.talla-btn').forEach(btn => {
             const talla = btn.dataset.talla;
@@ -405,7 +415,6 @@
         });
     }
 
-    // ===== CANTIDAD =====
     function aumentarCantidad() {
         if (cantidad >= stockMaximo) return;
         cantidad++;
@@ -421,7 +430,6 @@
         }
     }
 
-    // ===== VALIDAR ANTES DE ENVIAR =====
     document.getElementById('form-carrito').addEventListener('submit', function(e) {
         const color = document.getElementById('input-color').value;
         const talla = document.getElementById('input-talla').value;
@@ -436,7 +444,6 @@
         }
     });
 
-    // ===== AUTO-SELECCIÓN INICIAL =====
     document.addEventListener('DOMContentLoaded', function () {
         const primera = variantesConImagenes[0];
         if (!primera) return;

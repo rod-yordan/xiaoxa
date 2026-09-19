@@ -18,32 +18,161 @@
             </a>
         </div>
 
-        {{-- Buscador --}}
+        {{-- Buscador + Filtros --}}
         <form action="{{ route('admin.productos.index') }}" method="GET"
-            class="mb-8 flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-            <div class="relative w-full md:max-w-md">
-                <span class="absolute inset-y-0 left-4 flex items-center text-gray-400">
-                    <x-heroicon-o-magnifying-glass class="w-5 h-5" />
-                </span>
-                <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre..."
-                    class="w-full pl-12 pr-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 transition-all outline-none font-medium text-gray-600">
-            </div>
+            x-data="{
+                categoria: '',
+                categoriaTexto: 'Categoría',
+                marca: '',
+                marcaTexto: 'Marca',
+                stock: '',
+                stockTexto: 'Stock',
 
-            <div class="flex items-center gap-3">
+                applyFilter() {
+                    const form = $el;
+                    const params = new URLSearchParams();
+
+                    const buscar = form.querySelector('input[name=buscar]').value.trim();
+                    if (buscar) params.append('buscar', buscar);
+                    if (this.categoria) params.append('categoria', this.categoria);
+                    if (this.marca) params.append('marca', this.marca);
+                    if (this.stock) params.append('stock', this.stock);
+
+                    form.querySelector('input[name=buscar]').value = '';
+                    this.categoria = '';
+                    this.categoriaTexto = 'Categoría';
+                    this.marca = '';
+                    this.marcaTexto = 'Marca';
+                    this.stock = '';
+                    this.stockTexto = 'Stock';
+
+                    window.location.href = form.action + '?' + params.toString();
+                }
+            }"
+            x-on:submit.prevent="applyFilter()"
+            class="mb-8 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div class="flex items-center gap-4 w-full flex-wrap">
+
+                {{-- Buscador --}}
+                <span class="text-sm font-bold text-gray-700 shrink-0">Buscar:</span>
+                <div class="relative flex-1 min-w-[295px] max-w-[400px]">
+                    <span class="absolute inset-y-0 left-4 flex items-center text-gray-400">
+                        <x-heroicon-o-magnifying-glass class="w-5 h-5" />
+                    </span>
+                    <input type="text" name="buscar" value="" placeholder="Buscar por nombre..."
+                        class="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none text-sm">
+                </div>
+
+                {{-- Etiqueta Filtros --}}
+                <span class="text-sm font-bold text-gray-700 shrink-0">Filtros:</span>
+
+                {{-- Select custom: Categoría --}}
+                <div x-data="{ open: false }" class="relative w-full max-w-[180px]">
+                    <input type="hidden" name="categoria" :value="categoria">
+
+                    <button type="button" @click="open = !open"
+                        class="w-full flex items-center justify-between gap-2 pl-4 pr-5 py-2.5 border border-gray-200 rounded-full bg-gray-50 text-sm text-gray-600 hover:bg-gray-100 transition cursor-pointer">
+                        <span x-text="categoriaTexto"></span>
+                        <x-heroicon-o-chevron-down class="w-4 h-4 text-gray-400 shrink-0" />
+                    </button>
+
+                    <div x-show="open" @click.outside="open = false"
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-100"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                        <div class="max-h-64 overflow-y-auto py-1">
+                            @foreach($categoriasFiltro ?? [] as $cat)
+                                <button type="button" @click="categoria = '{{ $cat->id_categoria }}'; categoriaTexto = '{{ addslashes($cat->nombre_categoria) }}'; open = false"
+                                    :class="categoria === '{{ $cat->id_categoria }}' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'"
+                                    class="w-full text-left px-4 py-2 text-sm transition">
+                                    {{ $cat->nombre_categoria }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Select custom: Marca --}}
+                <div x-data="{ open: false }" class="relative w-full max-w-[180px]">
+                    <input type="hidden" name="marca" :value="marca">
+
+                    <button type="button" @click="open = !open"
+                        class="w-full flex items-center justify-between gap-2 pl-4 pr-5 py-2.5 border border-gray-200 rounded-full bg-gray-50 text-sm text-gray-600 hover:bg-gray-100 transition cursor-pointer">
+                        <span x-text="marcaTexto"></span>
+                        <x-heroicon-o-chevron-down class="w-4 h-4 text-gray-400 shrink-0" />
+                    </button>
+
+                    <div x-show="open" @click.outside="open = false"
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-100"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                        <div class="max-h-64 overflow-y-auto py-1">
+                            @foreach($marcasFiltro ?? [] as $marca)
+                                <button type="button" @click="marca = '{{ addslashes($marca) }}'; marcaTexto = '{{ addslashes($marca) }}'; open = false"
+                                    :class="marca === '{{ addslashes($marca) }}' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'"
+                                    class="w-full text-left px-4 py-2 text-sm transition">
+                                    {{ $marca }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Select custom: Stock --}}
+                <div x-data="{ open: false }" class="relative w-full max-w-[180px]">
+                    <input type="hidden" name="stock" :value="stock">
+
+                    <button type="button" @click="open = !open"
+                        class="w-full flex items-center justify-between gap-2 pl-4 pr-5 py-2.5 border border-gray-200 rounded-full bg-gray-50 text-sm text-gray-600 hover:bg-gray-100 transition cursor-pointer">
+                        <span x-text="stockTexto"></span>
+                        <x-heroicon-o-chevron-down class="w-4 h-4 text-gray-400 shrink-0" />
+                    </button>
+
+                    <div x-show="open" @click.outside="open = false"
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-100"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                        <div class="max-h-64 overflow-y-auto py-1">
+                            <button type="button" @click="stock = 'agotado'; stockTexto = 'Agotado'; open = false"
+                                :class="stock === 'agotado' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'"
+                                class="w-full text-left px-4 py-2 text-sm transition">
+                                Agotado
+                            </button>
+                            <button type="button" @click="stock = 'bajo'; stockTexto = 'Bajo stock (1-10)'; open = false"
+                                :class="stock === 'bajo' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'"
+                                class="w-full text-left px-4 py-2 text-sm transition">
+                                Bajo stock (1-10)
+                            </button>
+                            <button type="button" @click="stock = 'disponible'; stockTexto = 'Disponible (+10)'; open = false"
+                                :class="stock === 'disponible' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'"
+                                class="w-full text-left px-4 py-2 text-sm transition">
+                                Disponible (+10)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Espaciador --}}
+                <div class="flex-1"></div>
+
+                {{-- Botón Filtrar --}}
                 <button type="submit"
-                    class="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition">
-                    Buscar
+                    class="shrink-0 px-6 py-2.5 bg-indigo-600 text-white rounded-full font-bold text-sm hover:bg-indigo-700 transition shadow-md shadow-indigo-200">
+                    Filtrar
                 </button>
 
-                <div class="h-8 w-[1px] bg-gray-200 mx-2"></div>
-
-                <span class="text-sm font-bold text-gray-400 uppercase tracking-widest">Mostrar:</span>
-                <select name="perPage" onchange="this.form.submit()"
-                    class="bg-gray-50 border-none rounded-xl py-2 px-4 font-bold text-indigo-600 focus:ring-0 cursor-pointer">
-                    <option value="5" {{ request('perPage') == 5 ? 'selected' : '' }}>5</option>
-                    <option value="10" {{ request('perPage') == 10 || !request('perPage') ? 'selected' : '' }}>10</option>
-                    <option value="20" {{ request('perPage') == 20 ? 'selected' : '' }}>20</option>
-                </select>
             </div>
         </form>
 
@@ -67,30 +196,18 @@
                     <tbody class="divide-y divide-gray-50">
                         @forelse($productos as $producto)
                             <tr class="group hover:bg-indigo-50/30 transition-colors">
-                                {{-- Producto con Imagen --}}
                                 <td class="px-8 py-6">
-                                    <div class="flex items-center gap-4">
-                                        <div
-                                            class="w-14 h-14 rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50 flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                                            <img src="{{ $producto->imagen_principal ? url('/api/imagen/' . $producto->imagen_principal) : 'https://ui-avatars.com/api/?name=' . urlencode($producto->nombre_producto) . '&color=7F9CF5&background=EBF4FF' }}"
-                                                alt="{{ $producto->nombre_producto }}" class="w-full h-full object-cover">
-                                        </div>
-                                        <div>
-                                            <p class="font-bold text-gray-900 text-lg leading-tight">
-                                                {{ $producto->nombre_producto }}
-                                            </p>
-                                        </div>
-                                    </div>
+                                    <p class="font-bold text-gray-900 text-lg leading-tight">
+                                        {{ $producto->nombre_producto }}
+                                    </p>
                                 </td>
 
-                                {{-- Precio --}}
                                 <td class="px-8 py-6 text-center">
                                     <span class="font-black text-gray-900 text-lg">
                                         S/ {{ number_format($producto->precio, 2) }}
                                     </span>
                                 </td>
 
-                                {{-- Stock --}}
                                 <td class="px-8 py-6 text-center">
                                     @if($producto->stock <= 0)
                                         <span class="inline-flex items-center gap-1 text-rose-600 font-bold bg-rose-50 px-3 py-1 rounded-lg">
@@ -106,7 +223,6 @@
                                     @endif
                                 </td>
 
-                                {{-- Estado --}}
                                 <td class="px-8 py-6 text-center">
                                     @if($producto->estado_producto)
                                         <span class="inline-flex items-center gap-1.5 py-1.5 px-4 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100">
@@ -120,7 +236,6 @@
                                     @endif
                                 </td>
 
-                                {{-- Acciones --}}
                                 <td class="px-8 py-6">
                                     <div class="flex justify-end gap-2">
                                         <a href="{{ route('admin.productos.edit', $producto->id_producto) }}"
@@ -137,12 +252,21 @@
                                 </td>
                             </tr>
                         @empty
+                            <tr>
+                                <td colspan="5" class="px-8 py-12 text-center text-gray-400 text-sm">
+                                    No hay productos registrados.
+                                </td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
+
+                {{-- Paginación --}}
+                @if($productos->hasPages())
                 <div class="px-8 py-6 bg-gray-50/50 border-t border-gray-100">
                     {{ $productos->links() }}
                 </div>
+                @endif
             </div>
         </div>
 

@@ -112,7 +112,7 @@
                     <div class="relative aspect-[3/4] bg-[#f5f5f5] overflow-hidden rounded-xl">
                         @if($item->precio_oferta)
                             <span class="absolute top-2.5 right-2.5 bg-red-500 text-white text-[15px] font-semibold leading-none min-w-[46px] text-center px-1 py-1.5 z-10 rounded-md shadow-sm">
-                                -{{ round((1 - $item->precio_oferta / $item->precio) * 100) }}%
+                                -{{ abs($item->descuento) }}%
                             </span>
                         @endif
                         <img
@@ -191,7 +191,7 @@
                 <div class="relative aspect-[3/4] bg-[#f5f5f5] overflow-hidden rounded-xl">
                     @if($item->precio_oferta)
                         <span class="absolute top-2.5 right-2.5 bg-red-500 text-white text-[15px] font-semibold leading-none min-w-[46px] text-center px-1 py-1.5 z-10 rounded-md shadow-sm">
-                            -{{ round((1 - $item->precio_oferta / $item->precio) * 100) }}%
+                            -{{ abs($item->descuento) }}%
                         </span>
                     @endif
                     <img

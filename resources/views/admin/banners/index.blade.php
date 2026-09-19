@@ -1,7 +1,7 @@
 @extends('admin.layout')
 
 @section('content')
-<div x-data="{ createModal: false }">
+<div x-data="{ createModal: {{ $errors->any() ? 'true' : 'false' }} }">
 
     {{-- HEADER --}}
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
@@ -147,7 +147,7 @@
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
                                 Título * <span class="font-medium normal-case text-gray-300">(solo uso interno)</span>
                             </label>
-                            <input type="text" name="titulo" required placeholder="Ej: Banner Verano 2026"
+                            <input type="text" name="titulo" required value="{{ old('titulo') }}" placeholder="Ej: Banner Verano 2026"
                                 class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-bold transition-all text-sm sm:text-base">
                         </div>
 
@@ -156,7 +156,7 @@
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
                                 URL del Banner <span class="font-medium normal-case text-gray-300">(a dónde redirige al hacer clic)</span>
                             </label>
-                            <input type="text" name="url_boton" placeholder="Ej: https://xiaoxa.com/?categoria=Blusas o https://xiaoxa.com/producto/15"
+                            <input type="text" name="url_boton" value="{{ old('url_boton') }}" placeholder="Ej: https://xiaoxa.com/?categoria=Blusas o https://xiaoxa.com/producto/15"
                                 class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
                             <p class="text-xs text-gray-400 mt-1 ml-1">💡 Copia la URL desde el navegador y pégala aquí. El banner completo será clickeable.</p>
                         </div>
@@ -164,7 +164,7 @@
                         {{-- Orden --}}
                         <div>
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Orden</label>
-                            <input type="number" name="orden" value="0" min="0"
+                            <input type="number" name="orden" value="{{ old('orden', 0) }}" min="0"
                                 class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-bold transition-all text-sm">
                         </div>
 
@@ -173,8 +173,8 @@
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Estado</label>
                             <select name="estado"
                                 class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
-                                <option value="1">Activo</option>
-                                <option value="0">Inactivo</option>
+                                <option value="1" {{ old('estado', 1) == 1 ? 'selected' : '' }}>Activo</option>
+                                <option value="0" {{ old('estado') === '0' ? 'selected' : '' }}>Inactivo</option>
                             </select>
                         </div>
 
@@ -187,7 +187,7 @@
                                 <span class="text-sm font-bold text-gray-400 group-hover:text-indigo-500 px-4 text-center"
                                     x-text="fileName || 'Haz clic para subir imagen'"></span>
                                 <span class="text-xs text-gray-300 mt-1">JPG, PNG, WEBP — Max 2MB</span>
-                                <input type="file" name="imagen" required accept="image/*" class="hidden"
+                                <input type="file" name="imagen" required accept="image/jpeg,image/png,image/webp" class="hidden"
                                     @change="fileName = $event.target.files[0]?.name || ''">
                             </label>
                         </div>
@@ -284,7 +284,7 @@
                                     <x-heroicon-o-arrow-path class="w-7 h-7 text-gray-300 group-hover:text-indigo-400 transition-colors mb-1" />
                                     <span class="text-sm font-bold text-gray-400 group-hover:text-indigo-500 px-4 text-center"
                                         x-text="fileName || 'Haz clic para cambiar imagen'"></span>
-                                    <input type="file" name="imagen" accept="image/*" class="hidden"
+                                    <input type="file" name="imagen" accept="image/jpeg,image/png,image/webp" class="hidden"
                                         @change="fileName = $event.target.files[0]?.name || ''">
                                 </label>
                             </div>
