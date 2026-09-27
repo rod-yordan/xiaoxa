@@ -9,11 +9,14 @@ class Pedido extends Model
     protected $table = 'pedido';
     protected $primaryKey = 'id_pedido';
 
+    public $timestamps = true;
+
     protected $casts = [
-        'fecha_pedido' => 'datetime',
-        'fecha_envio' => 'datetime',
+        'fecha_pedido'           => 'datetime',
+        'fecha_envio'            => 'datetime',
         'fecha_entrega_estimada' => 'date',
-        'fecha_entrega_real' => 'datetime',
+        'fecha_entrega_real'     => 'datetime',
+        'total_pedido'           => 'decimal:2',
     ];
 
     protected $fillable = [
@@ -21,43 +24,59 @@ class Pedido extends Model
         'fecha_pedido',
         'total_pedido',
         'estado_pedido',
+        'payment_id',
+        'id_departamento',
+        'provincia',
+        'distrito',
+        'lugar_recojo',
         'fecha_envio',
         'fecha_entrega_estimada',
         'fecha_entrega_real',
-        'id_distrito',
         'id_usuario',
         'id_cupon',
         'id_tipo_entrega',
-        'id_agencia',
-        'costo_envio',
-        'nombre_agencia',
-        'direccion',
     ];
 
     // ── Relaciones ──────────────────────────────────
 
     public function usuario()
     {
-        return $this->belongsTo(User::class, 'id_usuario');
+        return $this->belongsTo(User::class, 'id_usuario', 'id_usuario');
     }
 
     public function detalles()
     {
-        return $this->hasMany(DetallePedido::class, 'id_pedido');
+        return $this->hasMany(DetallePedido::class, 'id_pedido', 'id_pedido');
     }
 
-    public function distrito()
+    public function departamento()
     {
-        return $this->belongsTo(Distrito::class, 'id_distrito');
+        return $this->belongsTo(Departamento::class, 'id_departamento', 'id_departamento');
     }
 
     public function tipoEntrega()
     {
-        return $this->belongsTo(TipoEntrega::class, 'id_tipo_entrega');
+        return $this->belongsTo(TipoEntrega::class, 'id_tipo_entrega', 'id_tipo_entrega');
     }
 
-    public function agencia()
+    public function cupon()
     {
-        return $this->belongsTo(Agencia::class, 'id_agencia');
+        return $this->belongsTo(Cupon::class, 'id_cupon', 'id_cupon');
+    }
+
+    // ── Helpers ─────────────────────────────────────
+
+    /**
+     * Devuelve la dirección de envío formateada.
+     */
+    public function getDireccionCompletaAttribute(): ?string
+    {
+        $partes = array_filter([
+            $this->distrito,
+            $this->provincia,
+            $this->departamento?->nombre_departamento,
+        ]);
+
+        return $partes ? implode(', ', $partes) : null;
     }
 }

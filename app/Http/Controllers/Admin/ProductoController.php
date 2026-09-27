@@ -80,6 +80,7 @@ class ProductoController extends Controller
     {
         $request->validate([
             'nombre_producto' => 'required|string|max:150',
+            'id_categoria' => 'required|exists:categoria,id_categoria',
             'precio' => 'required|numeric|min:0',
             'precio_oferta' => 'nullable|numeric|min:0|lt:precio',
             'variantes' => 'required|array|min:1',
@@ -88,6 +89,9 @@ class ProductoController extends Controller
             'variantes.*.sku' => 'nullable|string|max:50|distinct|unique:producto_variante,sku',
             'variantes.*.imagenes' => 'nullable|array',
             'variantes.*.imagenes.*' => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+        ], [
+            'id_categoria.required' => 'Debes seleccionar una categoría.',
+            'id_categoria.exists' => 'La categoría seleccionada no es válida.',
         ]);
 
         // Validar combinaciones duplicadas
@@ -279,20 +283,28 @@ class ProductoController extends Controller
     {
         $producto = Producto::with(['variantes.imagenes'])->findOrFail($id);
 
+        // 1. Verificar que no tenga stock
         if ($producto->variantes()->where('stock', '>', 0)->exists()) {
             return redirect()->back()->with('error', 'No se puede eliminar un producto con stock.');
         }
 
+        // 2. Eliminar imágenes (archivo físico + registro) y variantes
         foreach ($producto->variantes as $variante) {
             foreach ($variante->imagenes as $img) {
                 $ruta = storage_path('app/public/variantes/' . $img->imagen);
-                if (File::exists($ruta)) File::delete($ruta);
+                if (File::exists($ruta)) {
+                    File::delete($ruta);
+                }
+                $img->delete();
             }
+            $variante->delete();
         }
 
+        // 3. Ahora sí, eliminar el producto
         $idCat = $producto->id_categoria;
         $producto->delete();
 
+        // 4. Actualizar estado de la categoría
         $this->actualizarEstadoCategoria($idCat);
 
         return redirect()->route('admin.productos.index')->with('success', 'Producto eliminado.');

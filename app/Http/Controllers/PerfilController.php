@@ -10,7 +10,13 @@ class PerfilController extends Controller
 {
     public function index()
     {
-        return view('perfil.index');
+        $pedidos = auth()->user()
+            ->pedidos()
+            ->with(['detalles.variante.producto', 'detalles.variante.imagenes', 'tipoEntrega', 'departamento'])
+            ->orderBy('fecha_pedido', 'desc')
+            ->paginate(5);
+
+        return view('perfil.index', compact('pedidos'));
     }
 
     public function edit()

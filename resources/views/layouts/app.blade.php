@@ -11,10 +11,10 @@
     @stack('styles')
 </head>
 
-<body class="bg-[#fbfaf8] text-gray-900 min-h-screen">
+<body class="bg-[#fbfaf8] text-gray-900 min-h-screen flex flex-col">
     {{-- NAVBAR STICKY --}}
     <div class="sticky top-0 z-50">
-        <x-navbar />
+        <x-navbar :modoCarrito="request()->routeIs('carrito.*') || request()->routeIs('checkout.*') || request()->routeIs('pago.*')" />
     </div>
 
     <main class="flex-1">

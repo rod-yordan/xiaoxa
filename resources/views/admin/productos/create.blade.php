@@ -1,315 +1,460 @@
 @extends('admin.layout')
 
 @section('content')
-<div x-data="productoForm({{ json_encode(old('variantes', [['talla' => '', 'color' => '', 'color_hex' => '#000000', 'stock' => '', 'sku' => '']])) }}, {{ json_encode(old('detalles', [''])) }})">
+    <div x-data="productoForm(
+        @js(old('variantes', [['talla' => '', 'color' => '', 'color_hex' => '#000000', 'stock' => '', 'sku' => '']])),
+        @js(old('detalles', ['']))
+    )">
 
-    <div class="flex items-center gap-4 mb-12">
-        <a href="{{ route('admin.productos.index') }}" class="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 transition-all shadow-sm">
-            <x-heroicon-o-arrow-left class="w-6 h-6" />
-        </a>
-        <div>
-            <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Nuevo Producto</h1>
-            <p class="text-gray-500 font-medium">Completa la información para el catálogo.</p>
-        </div>
-    </div>
-
-    @if ($errors->any())
-        <div class="mb-8 p-6 bg-rose-50 border-l-4 border-rose-500 rounded-2xl flex gap-4 items-start">
-            <x-heroicon-s-x-circle class="w-6 h-6 text-rose-500 flex-shrink-0" />
+        {{-- Header con título y botones a la derecha --}}
+        <div class="flex items-center justify-between gap-4 mb-6">
             <div>
-                <h3 class="font-bold text-rose-800">Hay errores en el formulario:</h3>
-                <ul class="text-rose-600 text-sm mt-1 list-disc pl-4">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        </div>
-    @endif
-
-    <form action="{{ route('admin.productos.store') }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        @csrf
-
-        {{-- COLUMNA 1: PRODUCTO --}}
-        <div class="space-y-8">
-
-            {{-- Información General --}}
-            <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
-                <div class="flex items-center gap-3 mb-2">
-                    <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                        <x-heroicon-o-document-text class="w-5 h-5" />
-                    </div>
-                    <h2 class="text-xl font-bold text-gray-800">Información General</h2>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Nombre del producto</label>
-                        <input name="nombre_producto" value="{{ old('nombre_producto') }}" placeholder="Ej: Blusa Skinny Denim"
-                               class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none font-bold" required>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Marca</label>
-                        <input name="marca" value="{{ old('marca') }}" placeholder="Ej: Zara"
-                               class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none font-bold">
-                    </div>
-
-                    <div class="space-y-2">
-                        <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Precio Principal (S/)</label>
-                        <input name="precio" type="text" inputmode="decimal" value="{{ old('precio') }}" placeholder="0.00"
-                               oninput="this.value = this.value.replace(/[^0-9.]/g, '')"
-                               class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none font-bold" required>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Precio Oferta</label>
-                        <input name="precio_oferta" type="text" inputmode="decimal" value="{{ old('precio_oferta') }}" placeholder="0.00"
-                               oninput="this.value = this.value.replace(/[^0-9.]/g, '')"
-                               class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none font-bold">
-                    </div>
-
-                    <div class="space-y-2 md:col-span-2">
-                        <label class="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Categoría</label>
-                        <select name="id_categoria" class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all outline-none font-bold appearance-none">
-                            @foreach($categorias as $c)
-                                <option value="{{ $c->id_categoria }}" {{ old('id_categoria') == $c->id_categoria ? 'selected' : '' }}>{{ $c->nombre_categoria }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Nuevo Producto</h1>
             </div>
 
-            {{-- Detalles --}}
-            <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
-                            <x-heroicon-o-list-bullet class="w-5 h-5" />
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-800">Detalles</h2>
-                    </div>
-                    <button type="button" @click="addDetalle"
-                            class="flex items-center gap-2 text-sm font-black text-indigo-600 hover:text-indigo-700 transition">
-                        <x-heroicon-o-plus-circle class="w-5 h-5" />
-                        Añadir Detalle
-                    </button>
-                </div>
-
-                <div class="space-y-3">
-                    <template x-for="(detalle, index) in detalles" :key="index">
-                        <div class="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
-                            <span class="w-2 h-2 rounded-full bg-gray-900 flex-shrink-0"></span>
-                            <input type="text"
-                                   :name="`detalles[${index}]`"
-                                   x-model="detalles[index]"
-                                   placeholder="Ej: Cuello redondo ideal para un look casual"
-                                   class="flex-1 px-4 py-3 bg-white border-2 border-transparent rounded-xl focus:border-indigo-500 outline-none font-medium text-sm transition-all">
-                            <button type="button" @click="removeDetalle(index)"
-                                    x-show="detalles.length > 1"
-                                    class="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition flex-shrink-0">
-                                <x-heroicon-o-trash class="w-5 h-5" />
-                            </button>
-                        </div>
-                    </template>
-                </div>
-            </div>
-
-            {{-- Botones --}}
-            <div class="flex flex-col gap-4">
-                <button type="submit" class="w-full py-5 bg-indigo-600 text-white font-black rounded-3xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 transition-all active:scale-95">
-                    Guardar Producto
-                </button>
-                <a href="{{ route('admin.productos.index') }}" class="w-full py-5 bg-white text-gray-400 font-bold rounded-3xl text-center border border-gray-100 hover:bg-gray-50 transition">
+            <div class="flex items-center gap-3 shrink-0">
+                <a href="{{ route('admin.productos.index') }}"
+                    class="px-14 py-3.5 bg-gray-100 text-gray-700 border border-gray-200 text-sm font-bold tracking-wider rounded-full transition-colors duration-200">
                     Cancelar
                 </a>
+
+                <button type="submit" form="form-nuevo-producto"
+                    class="px-14 py-3.5 bg-indigo-600 text-white text-sm font-bold tracking-wider rounded-full transition-colors duration-200">
+                    Aceptar
+                </button>
             </div>
         </div>
 
-        {{-- COLUMNA 2: VARIANTES --}}
-        <div class="space-y-8">
-            <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                <div class="flex justify-between items-center mb-6">
+        <form id="form-nuevo-producto" action="{{ route('admin.productos.store') }}" method="POST"
+            enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-2 gap-6"
+            x-data="{
+                categoriaCheck: '{{ old('id_categoria', '') }}',
+                errores: {},
+                erroresVariantes: {},
+
+                validateForm(e) {
+                    this.errores = {};
+                    this.erroresVariantes = {};
+
+                    const nombre = this.$refs.nombreProducto.value.trim();
+                    if (!nombre) this.errores.nombre_producto = true;
+
+                    if (!this.categoriaCheck) this.errores.id_categoria = true;
+
+                    const precio = this.$refs.precio.value.trim();
+                    if (!precio || isNaN(precio) || parseFloat(precio) < 0) this.errores.precio = true;
+
+                    const precioOferta = this.$refs.precioOferta.value.trim();
+                    if (precioOferta && (isNaN(precioOferta) || parseFloat(precioOferta) >= parseFloat(precio))) {
+                        this.errores.precio_oferta = true;
+                    }
+
+                    const detallesConTexto = this.detalles.filter(d => d && d.trim() !== '');
+                    if (detallesConTexto.length === 0) {
+                        this.errores.detalles = true;
+                    }
+
+                    this.variantes.forEach((variante, index) => {
+                        const vErr = {};
+
+                        if (!variante.sku || !variante.sku.trim()) vErr.sku = true;
+                        if (!variante.talla || !variante.talla.trim()) vErr.talla = true;
+                        if (!variante.color || !variante.color.trim()) vErr.color = true;
+
+                        if (variante.stock === '' || variante.stock === null || variante.stock === undefined) {
+                            vErr.stock = true;
+                        } else if (isNaN(variante.stock) || parseInt(variante.stock) < 0) {
+                            vErr.stock = true;
+                        }
+
+                        if (Object.keys(vErr).length > 0) {
+                            this.erroresVariantes[index] = vErr;
+                        }
+                    });
+
+                    const hayErrores = Object.keys(this.errores).length > 0 || Object.keys(this.erroresVariantes).length > 0;
+
+                    if (hayErrores) {
+                        e.preventDefault();
+
+                        if (Object.keys(this.errores).length > 0) {
+                            const primerError = Object.keys(this.errores)[0];
+                            const ref = this.$refs[primerError + 'Container'];
+                            if (ref) ref.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else if (Object.keys(this.erroresVariantes).length > 0) {
+                            const primerIndex = Object.keys(this.erroresVariantes)[0];
+                            const ref = this.$refs['varianteContainer' + primerIndex];
+                            if (ref) ref.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        return;
+                    }
+
+                    e.target.submit();
+                }
+            }"
+            @submit.prevent="validateForm($event)">
+            @csrf
+
+            {{-- ============================================= --}}
+            {{-- COLUMNA 1: PRODUCTO --}}
+            {{-- ============================================= --}}
+            <div class="space-y-6">
+
+                {{-- Información General --}}
+                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-4">
                     <div class="flex items-center gap-3">
-                        <div class="p-2 bg-amber-50 rounded-lg text-amber-600">
-                            <x-heroicon-o-swatch class="w-5 h-5" />
+                        <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                            <x-heroicon-o-document-text class="w-5 h-5" />
                         </div>
-                        <h2 class="text-xl font-bold text-gray-800">Tallas, Colores e Imágenes</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Información General</h2>
                     </div>
-                    <button type="button" @click="addVariante"
-                            class="flex items-center gap-2 text-sm font-black text-indigo-600 hover:text-indigo-700 transition">
-                        <x-heroicon-o-plus-circle class="w-5 h-5" />
-                        Añadir Variante
-                    </button>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+
+                        {{-- Nombre del producto --}}
+                        <div class="md:col-span-2" x-ref="nombre_productoContainer">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Nombre del producto:</label>
+                                <input name="nombre_producto" x-ref="nombreProducto" value="{{ old('nombre_producto') }}"
+                                    class="w-full px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                    :class="errores.nombre_producto ? 'border-rose-500' : 'border-gray-200'">
+                            </div>
+                        </div>
+
+                        {{-- Marca --}}
+                        <div x-ref="marcaContainer">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Marca:</label>
+                                <input name="marca" value="{{ old('marca') }}"
+                                    class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors">
+                            </div>
+                        </div>
+
+                        {{-- Categoría --}}
+                        <div x-ref="id_categoriaContainer"
+                             x-data="{ open: false, categoriaTexto: '{{ old('id_categoria') ? addslashes(\App\Models\Categoria::find(old('id_categoria'))?->nombre_categoria ?? '') : 'Seleccionar' }}' }"
+                             x-init="
+                                $watch('categoriaCheck', value => {
+                                    if (!value) categoriaTexto = 'Seleccionar';
+                                    delete errores.id_categoria;
+                                });
+                             ">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Categoría:</label>
+                                <input type="hidden" name="id_categoria" :value="categoriaCheck" x-model="categoriaCheck">
+                                <div class="relative w-full">
+                                    <button type="button" @click="open = !open" x-ref="id_categoria"
+                                        class="w-full flex items-center justify-between gap-2 pl-4 pr-3 py-1.5 border rounded-full bg-gray-50 text-[14px] cursor-pointer transition-colors focus:outline-none focus:border-gray-400"
+                                        :class="errores.id_categoria ? 'border-rose-500 text-rose-600' : 'border-gray-200 text-gray-600'">
+                                        <span x-text="categoriaTexto"></span>
+                                        <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
+                                    </button>
+
+                                    <div x-show="open" @click.outside="open = false"
+                                         x-transition:enter="transition ease-out duration-150"
+                                         x-transition:enter-start="opacity-0 -translate-y-1"
+                                         x-transition:enter-end="opacity-100 translate-y-0"
+                                         x-transition:leave="transition ease-in duration-100"
+                                         x-transition:leave-start="opacity-100"
+                                         x-transition:leave-end="opacity-0"
+                                         class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                                        <div class="max-h-64 overflow-y-auto py-1">
+                                            @foreach($categorias as $c)
+                                                <button type="button"
+                                                    @click="categoriaCheck = '{{ $c->id_categoria }}'; categoriaTexto = '{{ addslashes($c->nombre_categoria) }}'; open = false"
+                                                    class="w-full text-left px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-50">
+                                                    {{ $c->nombre_categoria }}
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Precio Principal --}}
+                        <div x-ref="precioContainer">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Precio:</label>
+                                <div class="relative w-full">
+                                    <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[14px]">S/</span>
+                                    <input name="precio" x-ref="precio" type="text" inputmode="decimal" value="{{ old('precio') }}"
+                                        oninput="this.value = this.value.replace(/[^0-9.]/g, '')"
+                                        class="w-full pl-9 pr-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                        :class="errores.precio ? 'border-rose-500' : 'border-gray-200'">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Precio Oferta --}}
+                        <div x-ref="precio_ofertaContainer">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Precio de oferta:</label>
+                                <div class="relative w-full">
+                                    <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[14px]">S/</span>
+                                    <input name="precio_oferta" x-ref="precioOferta" type="text" inputmode="decimal" value="{{ old('precio_oferta') }}"
+                                        oninput="this.value = this.value.replace(/[^0-9.]/g, '')"
+                                        class="w-full pl-9 pr-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                        :class="errores.precio_oferta ? 'border-rose-500' : 'border-gray-200'">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="space-y-6">
-                    <template x-for="(variante, index) in variantes" :key="index">
-                        <div class="p-5 bg-gray-50 rounded-3xl space-y-4">
-
-                            {{-- Fila 1: Talla, Color, HEX, Stock, SKU --}}
-                            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                <input type="text" :name="`variantes[${index}][talla]`" x-model="variante.talla" placeholder="Talla"
-                                       class="bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm" required>
-
-                                <input type="text" :name="`variantes[${index}][color]`" x-model="variante.color" placeholder="Color"
-                                       class="bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm">
-
-                                <div class="flex items-center gap-2 bg-white px-2 py-2 rounded-xl shadow-sm">
-                                    <input type="color" :name="`variantes[${index}][color_hex]`" x-model="variante.color_hex"
-                                           class="w-5 h-6 rounded-md border-0 cursor-pointer p-0 flex-shrink-0"
-                                           style="background: transparent;">
-                                    <input type="text"
-                                           x-model="variante.color_hex"
-                                           @input="variante.color_hex = variante.color_hex.toUpperCase()"
-                                           maxlength="7"
-                                           placeholder="#000000"
-                                           class="w-full min-w-0 bg-transparent border-none outline-none font-mono font-bold text-[11px] text-gray-600 uppercase">
-                                </div>
-
-                                <input type="text" inputmode="numeric" :name="`variantes[${index}][stock]`" x-model="variante.stock" placeholder="Stock"
-                                       oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                                       class="bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm" required>
-
-                                <input type="text" :name="`variantes[${index}][sku]`" x-model="variante.sku" placeholder="SKU"
-                                       class="bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm">
+                {{-- Detalles --}}
+                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 rounded-lg transition-colors"
+                                 :class="errores.detalles ? 'bg-rose-50 text-rose-600' : 'bg-indigo-50 text-indigo-600'">
+                                <x-heroicon-o-list-bullet class="w-5 h-5" />
                             </div>
+                            <h2 class="text-xl font-bold text-gray-800">Detalles</h2>
+                        </div>
 
-                            {{-- Fila 2: Miniaturas + botón cuadrado --}}
-                            <div class="flex items-start gap-3">
-                                <div class="flex-1">
-                                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        <button type="button" @click="addDetalle"
+                                class="flex items-center gap-2 text-sm font-black text-indigo-600">
+                            <x-heroicon-o-plus-circle class="w-5 h-5" />
+                            Añadir Detalle
+                        </button>
+                    </div>
 
-                                        <template x-for="(file, imgIndex) in variante.files" :key="imgIndex">
-                                            <div class="relative group aspect-square">
-                                                <img :src="variante.previewUrls[imgIndex]"
-                                                     @click="pickColorFromImage($event, index, imgIndex)"
-                                                     class="w-full h-full object-cover rounded-xl cursor-crosshair border-2 border-transparent hover:border-indigo-400 transition"
-                                                     title="Clic para tomar color">
-                                                <button type="button"
-                                                        @click="removeImagen(index, imgIndex)"
-                                                        class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 text-white rounded-full text-[10px] font-bold opacity-0 group-hover:opacity-100 transition shadow-lg">
-                                                    ✕
-                                                </button>
-                                            </div>
-                                        </template>
+                    <div class="space-y-2">
+                        <template x-for="(detalle, index) in detalles" :key="index">
+                            <div class="relative group pt-1.5 flex items-center gap-3">
+                                <span class="w-2 h-2 rounded-full bg-gray-900 flex-shrink-0"></span>
 
-                                        <label class="aspect-square flex flex-col items-center justify-center bg-white border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all">
-                                            <x-heroicon-o-cloud-arrow-up class="w-5 h-5 text-gray-300" />
-                                            <span class="text-[9px] font-bold text-gray-400 mt-1">Añadir imagen</span>
+                                <div class="relative flex-1">
+                                    <textarea
+                                        :name="`detalles[${index}]`"
+                                        x-model="detalles[index]"
+                                        rows="1"
+                                        x-init="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
+                                        @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'; if ($event.target.value.trim()) delete errores.detalles"
+                                        class="w-full px-4 py-1.5 pr-10 border rounded-2xl bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 resize-none overflow-hidden leading-snug transition-colors"
+                                        :class="errores.detalles ? 'border-rose-500' : 'border-gray-200'"
+                                        style="min-height: 34px;"></textarea>
 
-                                            <input type="file"
-                                                   :name="`variantes[${index}][imagenes][]`"
-                                                   accept="image/*"
-                                                   multiple
-                                                   class="hidden"
-                                                   @change="handleImagenes($event, index)">
-                                        </label>
+                                    <button type="button" @click="removeDetalle(index)"
+                                            x-show="detalles.length > 1"
+                                            class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold transition z-10 opacity-0 group-hover:opacity-100"
+                                            title="Eliminar detalle">
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ============================================= --}}
+            {{-- COLUMNA 2: VARIANTES --}}
+            {{-- ============================================= --}}
+            <div class="space-y-6">
+                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                                <x-heroicon-o-swatch class="w-5 h-5" />
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">Variantes del Producto</h2>
+                        </div>
+
+                        <button type="button" @click="addVariante"
+                                class="flex items-center gap-2 text-sm font-black text-indigo-600">
+                            <x-heroicon-o-plus-circle class="w-5 h-5" />
+                            Añadir Variante
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <template x-for="(variante, index) in variantes" :key="index">
+                            <div class="relative group pt-1.5 pb-2 px-3 rounded-2xl bg-gray-50 space-y-2"
+                                 :x-ref="'varianteContainer' + index">
+
+                                <button type="button" @click="removeVariante(index)"
+                                        x-show="variantes.length > 1"
+                                        class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold transition z-10 opacity-0 group-hover:opacity-100"
+                                        title="Eliminar variante">
+                                    ✕
+                                </button>
+
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2 flex-1">
+                                        <label class="text-[14px] font-bold text-gray-800 shrink-0">SKU:</label>
+                                        <input type="text" :name="`variantes[${index}][sku]`" x-model="variante.sku"
+                                            class="w-full px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                            :class="erroresVariantes[index]?.sku ? 'border-rose-500' : 'border-gray-200'">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[14px] font-bold text-gray-800 shrink-0">Talla:</label>
+                                        <input type="text" :name="`variantes[${index}][talla]`" x-model="variante.talla"
+                                            class="w-[50px] px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                            :class="erroresVariantes[index]?.talla ? 'border-rose-500' : 'border-gray-200'">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[14px] font-bold text-gray-800 shrink-0">Stock:</label>
+                                        <input type="text" inputmode="numeric" :name="`variantes[${index}][stock]`" x-model="variante.stock"
+                                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                            class="w-[50px] px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                            :class="erroresVariantes[index]?.stock ? 'border-rose-500' : 'border-gray-200'">
                                     </div>
                                 </div>
 
-                                <button type="button" @click="removeVariante(index)" x-show="variantes.length > 1"
-                                        class="p-4 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition flex-shrink-0">
-                                    <x-heroicon-o-trash class="w-5 h-5" />
-                                </button>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2 flex-1">
+                                        <label class="text-[14px] font-bold text-gray-800 shrink-0">Color:</label>
+                                        <input type="text" :name="`variantes[${index}][color]`" x-model="variante.color"
+                                            class="w-full px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                            :class="erroresVariantes[index]?.color ? 'border-rose-500' : 'border-gray-200'">
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[14px] font-bold text-gray-800 shrink-0">Color Hex:</label>
+                                        <div class="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 focus-within:border-gray-400 transition-colors">
+                                            <input type="color" :name="`variantes[${index}][color_hex]`" x-model="variante.color_hex"
+                                                   class="w-5 h-6 rounded-md border-0 cursor-pointer p-0 flex-shrink-0"
+                                                   style="background: transparent;">
+                                            <input type="text"
+                                                   x-model="variante.color_hex"
+                                                   @input="variante.color_hex = variante.color_hex.toUpperCase()"
+                                                   maxlength="7"
+                                                   placeholder="#000000"
+                                                   class="w-[60px] bg-transparent border-none outline-none font-mono font-bold text-[14px] uppercase focus:ring-0">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- ⬇️ CAMBIO: aspect-[3/4] y grid-cols-4/5 para igualar al edit --}}
+                                <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 pt-3">
+                                    <template x-for="(file, imgIndex) in variante.files" :key="imgIndex">
+                                        <div class="relative group/img aspect-[3/4]">
+                                            <img :src="variante.previewUrls[imgIndex]"
+                                                 @click="pickColorFromImage($event, index, imgIndex)"
+                                                 class="w-full h-full object-cover cursor-crosshair"
+                                                 title="Seleccionar color">
+
+                                            <button type="button"
+                                                    @click="removeImagen(index, imgIndex)"
+                                                    class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold transition shadow-md opacity-0 group-hover/img:opacity-100">
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                    <label class="aspect-[3/4] flex flex-col items-center justify-center bg-white border-2 border-dashed border-gray-200 cursor-pointer transition-all hover:border-indigo-300">
+                                        <x-heroicon-o-cloud-arrow-up class="w-5 h-5 text-gray-300" />
+                                        <span class="text-[9px] font-bold text-gray-400 mt-1">Añadir imagen</span>
+                                        <span class="text-[7px] font-medium text-gray-300 mt-0.5">JPG, PNG, WEBP</span>
+                                        <span class="text-[7px] font-medium text-gray-300">Máx 2MB</span>
+
+                                        <input type="file"
+                                               :name="`variantes[${index}][imagenes][]`"
+                                               accept="image/jpeg,image/png,image/webp"
+                                               multiple
+                                               class="hidden"
+                                               @change="handleImagenes($event, index)">
+                                    </label>
+                                </div>
                             </div>
-                        </div>
-                    </template>
+                        </template>
+                    </div>
                 </div>
             </div>
-        </div>
-    </form>
+        </form>
 
-    <script>
-        function productoForm(initialVariantes, initialDetalles) {
-            return {
-                variantes: (initialVariantes || []).map(v => ({
-                    talla: v.talla ?? '',
-                    color: v.color ?? '',
-                    color_hex: (v.color_hex ?? '#000000').toUpperCase(),
-                    stock: v.stock ?? '',
-                    sku: v.sku ?? '',
-                    files: [],
-                    previewUrls: []
-                })),
-                detalles: (initialDetalles && initialDetalles.length > 0) ? initialDetalles : [''],
+        <script>
+            function productoForm(initialVariantes, initialDetalles) {
+                return {
+                    variantes: (initialVariantes || []).map(v => ({
+                        talla: v.talla ?? '',
+                        color: v.color ?? '',
+                        color_hex: (v.color_hex ?? '#000000').toUpperCase(),
+                        stock: v.stock ?? '',
+                        sku: v.sku ?? '',
+                        files: [],
+                        previewUrls: []
+                    })),
+                    detalles: (initialDetalles && initialDetalles.length > 0) ? initialDetalles : [''],
 
-                addVariante() {
-                    this.variantes.push({
-                        talla: '', color: '', color_hex: '#000000', stock: '', sku: '',
-                        files: [], previewUrls: []
-                    })
-                },
-                removeVariante(index) {
-                    (this.variantes[index].previewUrls || []).forEach(u => URL.revokeObjectURL(u))
-                    this.variantes.splice(index, 1)
-                },
-                addDetalle() {
-                    this.detalles.push('')
-                },
-                removeDetalle(index) {
-                    if (this.detalles.length > 1) this.detalles.splice(index, 1)
-                    else this.detalles[0] = ''
-                },
+                    addVariante() {
+                        this.variantes.push({
+                            talla: '', color: '', color_hex: '#000000', stock: '', sku: '',
+                            files: [], previewUrls: []
+                        })
+                    },
+                    removeVariante(index) {
+                        (this.variantes[index].previewUrls || []).forEach(u => URL.revokeObjectURL(u))
+                        this.variantes.splice(index, 1)
+                    },
+                    addDetalle() {
+                        this.detalles.push('')
+                    },
+                    removeDetalle(index) {
+                        if (this.detalles.length > 1) this.detalles.splice(index, 1)
+                        else this.detalles[0] = ''
+                    },
 
-                handleImagenes(event, index) {
-                    const nuevos = Array.from(event.target.files)
-                    if (nuevos.length === 0) return
+                    handleImagenes(event, index) {
+                        const nuevos = Array.from(event.target.files)
+                        if (nuevos.length === 0) return
 
-                    const variante = this.variantes[index]
+                        const variante = this.variantes[index]
 
-                    variante.files = [...variante.files, ...nuevos]
+                        variante.files = [...variante.files, ...nuevos]
 
-                    variante.previewUrls.forEach(u => URL.revokeObjectURL(u))
-                    variante.previewUrls = variante.files.map(f => URL.createObjectURL(f))
+                        variante.previewUrls.forEach(u => URL.revokeObjectURL(u))
+                        variante.previewUrls = variante.files.map(f => URL.createObjectURL(f))
 
-                    this.syncInputFiles(index, event.target)
-                },
+                        this.syncInputFiles(index, event.target)
+                    },
 
-                removeImagen(index, imgIndex) {
-                    const variante = this.variantes[index]
+                    removeImagen(index, imgIndex) {
+                        const variante = this.variantes[index]
 
-                    URL.revokeObjectURL(variante.previewUrls[imgIndex])
+                        URL.revokeObjectURL(variante.previewUrls[imgIndex])
 
-                    variante.files.splice(imgIndex, 1)
-                    variante.previewUrls.splice(imgIndex, 1)
+                        variante.files.splice(imgIndex, 1)
+                        variante.previewUrls.splice(imgIndex, 1)
 
-                    const input = this.$el.querySelector(`input[name="variantes[${index}][imagenes][]"]`)
-                    if (input) this.syncInputFiles(index, input)
-                },
+                        const input = this.$el.querySelector(`input[name="variantes[${index}][imagenes][]"]`)
+                        if (input) this.syncInputFiles(index, input)
+                    },
 
-                syncInputFiles(index, input) {
-                    const dt = new DataTransfer()
-                    this.variantes[index].files.forEach(f => dt.items.add(f))
-                    input.files = dt.files
-                },
+                    syncInputFiles(index, input) {
+                        const dt = new DataTransfer()
+                        this.variantes[index].files.forEach(f => dt.items.add(f))
+                        input.files = dt.files
+                    },
 
-                pickColorFromImage(event, index, imgIndex) {
-                    const img = event.target
-                    const rect = img.getBoundingClientRect()
+                    pickColorFromImage(event, index, imgIndex) {
+                        const img = event.target
+                        const rect = img.getBoundingClientRect()
 
-                    const x = Math.floor((event.clientX - rect.left) * (img.naturalWidth / rect.width))
-                    const y = Math.floor((event.clientY - rect.top) * (img.naturalHeight / rect.height))
+                        const x = Math.floor((event.clientX - rect.left) * (img.naturalWidth / rect.width))
+                        const y = Math.floor((event.clientY - rect.top) * (img.naturalHeight / rect.height))
 
-                    const canvas = document.createElement('canvas')
-                    canvas.width = img.naturalWidth
-                    canvas.height = img.naturalHeight
-                    const ctx = canvas.getContext('2d')
-                    ctx.drawImage(img, 0, 0)
+                        const canvas = document.createElement('canvas')
+                        canvas.width = img.naturalWidth
+                        canvas.height = img.naturalHeight
+                        const ctx = canvas.getContext('2d')
+                        ctx.drawImage(img, 0, 0)
 
-                    try {
-                        const pixel = ctx.getImageData(x, y, 1, 1).data
-                        const hex = '#' + [pixel[0], pixel[1], pixel[2]]
-                            .map(c => c.toString(16).padStart(2, '0')).join('')
-                            .toUpperCase()
+                        try {
+                            const pixel = ctx.getImageData(x, y, 1, 1).data
+                            const hex = '#' + [pixel[0], pixel[1], pixel[2]]
+                                .map(c => c.toString(16).padStart(2, '0')).join('')
+                                .toUpperCase()
 
-                        this.variantes[index].color_hex = hex
-                    } catch (e) {
-                        console.warn('No se pudo leer el píxel (posible CORS):', e)
+                            this.variantes[index].color_hex = hex
+                        } catch (e) {
+                            console.warn('No se pudo leer el píxel (posible CORS):', e)
+                        }
                     }
                 }
             }
-        }
-    </script>
-</div>
+        </script>
+    </div>
 @endsection

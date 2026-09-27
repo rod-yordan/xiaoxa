@@ -6,20 +6,28 @@
         @js(old('detalles') ?? $producto->detalles ?? [''])
     )">
 
-        {{-- Header --}}
-        <div class="flex items-center gap-4 mb-12">
-            <a href="{{ route('admin.productos.index') }}"
-                class="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-indigo-600 transition-all shadow-sm">
-                <x-heroicon-o-arrow-left class="w-6 h-6" />
-            </a>
+        {{-- Header con título y botones a la derecha --}}
+        <div class="flex items-center justify-between gap-4 mb-6">
             <div>
                 <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Editar Producto</h1>
+            </div>
+
+            <div class="flex items-center gap-3 shrink-0">
+                <a href="{{ route('admin.productos.index') }}"
+                    class="px-14 py-3.5 bg-gray-100 text-gray-700 border border-gray-200 text-sm font-bold tracking-wider rounded-full transition-colors duration-200">
+                    Cancelar
+                </a>
+
+                <button type="submit" form="form-editar-producto"
+                    class="px-14 py-3.5 bg-indigo-600 text-white text-sm font-bold tracking-wider rounded-full transition-colors duration-200">
+                    Aceptar
+                </button>
             </div>
         </div>
 
         {{-- Errores --}}
         @if ($errors->any())
-            <div class="mb-8 p-6 bg-rose-50 border-l-4 border-rose-500 rounded-2xl flex gap-4 items-start">
+            <div class="mb-6 p-6 bg-rose-50 border-l-4 border-rose-500 rounded-2xl flex gap-4 items-start">
                 <x-heroicon-s-x-circle class="w-6 h-6 text-rose-500 flex-shrink-0" />
                 <div>
                     <h3 class="font-bold text-rose-800 text-sm">Hay errores que debes corregir:</h3>
@@ -32,46 +40,177 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.productos.update', $producto->id_producto) }}" method="POST"
-            enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <form id="form-editar-producto"
+            action="{{ route('admin.productos.update', $producto->id_producto) }}" method="POST"
+            enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-2 gap-6"
+            x-data="{
+                categoriaCheck: '{{ old('id_categoria', $producto->id_categoria) }}',
+                errores: {},
+                erroresVariantes: {},
+
+                validateForm(e) {
+                    this.errores = {};
+                    this.erroresVariantes = {};
+
+                    const nombre = this.$refs.nombreProducto.value.trim();
+                    if (!nombre) this.errores.nombre_producto = true;
+
+                    if (!this.categoriaCheck) this.errores.id_categoria = true;
+
+                    const precio = this.$refs.precio.value.trim();
+                    if (!precio || isNaN(precio) || parseFloat(precio) < 0) this.errores.precio = true;
+
+                    const precioOferta = this.$refs.precioOferta.value.trim();
+                    if (precioOferta && (isNaN(precioOferta) || parseFloat(precioOferta) >= parseFloat(precio))) {
+                        this.errores.precio_oferta = true;
+                    }
+
+                    const detallesConTexto = this.detalles.filter(d => d && d.trim() !== '');
+                    if (detallesConTexto.length === 0) {
+                        this.errores.detalles = true;
+                    }
+
+                    this.variantes.forEach((variante, index) => {
+                        const vErr = {};
+
+                        if (!variante.sku || !variante.sku.trim()) vErr.sku = true;
+                        if (!variante.talla || !variante.talla.trim()) vErr.talla = true;
+                        if (!variante.color || !variante.color.trim()) vErr.color = true;
+
+                        if (variante.stock === '' || variante.stock === null || variante.stock === undefined) {
+                            vErr.stock = true;
+                        } else if (isNaN(variante.stock) || parseInt(variante.stock) < 0) {
+                            vErr.stock = true;
+                        }
+
+                        if (Object.keys(vErr).length > 0) {
+                            this.erroresVariantes[index] = vErr;
+                        }
+                    });
+
+                    const hayErrores = Object.keys(this.errores).length > 0 || Object.keys(this.erroresVariantes).length > 0;
+
+                    if (hayErrores) {
+                        e.preventDefault();
+
+                        if (Object.keys(this.errores).length > 0) {
+                            const primerError = Object.keys(this.errores)[0];
+                            const ref = this.$refs[primerError + 'Container'];
+                            if (ref) ref.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else if (Object.keys(this.erroresVariantes).length > 0) {
+                            const primerIndex = Object.keys(this.erroresVariantes)[0];
+                            const ref = this.$refs['varianteContainer' + primerIndex];
+                            if (ref) ref.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        return;
+                    }
+
+                    e.target.submit();
+                }
+            }"
+            @submit.prevent="validateForm($event)">
             @csrf
             @method('PUT')
 
-            {{-- COLUMNA IZQUIERDA --}}
-            <div class="lg:col-span-2 space-y-8">
+            {{-- ============================================= --}}
+            {{-- COLUMNA 1: PRODUCTO --}}
+            {{-- ============================================= --}}
+            <div class="space-y-6">
 
                 {{-- Información General --}}
-                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-4">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                            <x-heroicon-o-pencil-square class="w-5 h-5" />
+                            <x-heroicon-o-document-text class="w-5 h-5" />
                         </div>
-                        <h2 class="text-xl font-bold text-gray-800">Información del Producto</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Información General</h2>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Nombre</label>
-                            <input name="nombre_producto" value="{{ old('nombre_producto', $producto->nombre_producto) }}"
-                                required
-                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+
+                        {{-- Nombre del producto --}}
+                        <div class="md:col-span-2" x-ref="nombre_productoContainer">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Nombre del producto:</label>
+                                <input name="nombre_producto" x-ref="nombreProducto"
+                                    value="{{ old('nombre_producto', $producto->nombre_producto) }}"
+                                    class="w-full px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                    :class="errores.nombre_producto ? 'border-rose-500' : 'border-gray-200'">
+                            </div>
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Marca</label>
-                            <input name="marca" value="{{ old('marca', $producto->marca) }}"
-                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+
+                        {{-- Marca --}}
+                        <div x-ref="marcaContainer">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Marca:</label>
+                                <input name="marca" value="{{ old('marca', $producto->marca) }}"
+                                    class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors">
+                            </div>
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Precio (S/)</label>
-                            <input name="precio" type="number" step="0.01" value="{{ old('precio', $producto->precio) }}"
-                                required
-                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm text-indigo-600 focus:ring-2 focus:ring-indigo-500 outline-none">
+
+                        {{-- Estado del producto --}}
+                        <div x-data="{ open: false, estado: '{{ $producto->estado_producto ? '1' : '0' }}', estadoTexto: '{{ $producto->estado_producto ? 'Activo' : 'Inactivo' }}' }">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Estado:</label>
+                                <input type="hidden" name="estado_producto" :value="estado">
+                                <div class="relative w-full">
+                                    <button type="button" @click="open = !open"
+                                        class="w-full flex items-center justify-between gap-2 pl-4 pr-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 cursor-pointer focus:outline-none focus:border-gray-400 transition-colors">
+                                        <span x-text="estadoTexto"></span>
+                                        <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
+                                    </button>
+
+                                    <div x-show="open" @click.outside="open = false"
+                                         x-transition:enter="transition ease-out duration-150"
+                                         x-transition:enter-start="opacity-0 -translate-y-1"
+                                         x-transition:enter-end="opacity-100 translate-y-0"
+                                         x-transition:leave="transition ease-in duration-100"
+                                         x-transition:leave-start="opacity-100"
+                                         x-transition:leave-end="opacity-0"
+                                         class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                                        <div class="max-h-64 overflow-y-auto py-1">
+                                            <button type="button" @click="estado = '1'; estadoTexto = 'Activo'; open = false"
+                                                class="w-full text-left px-4 py-2 text-sm text-gray-600 transition">
+                                                Activo
+                                            </button>
+                                            <button type="button" @click="estado = '0'; estadoTexto = 'Inactivo'; open = false"
+                                                class="w-full text-left px-4 py-2 text-sm text-gray-600 transition">
+                                                Inactivo
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Precio Oferta</label>
-                            <input name="precio_oferta" type="number" step="0.01"
-                                value="{{ old('precio_oferta', $producto->precio_oferta) }}"
-                                class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm text-rose-500 focus:ring-2 focus:ring-indigo-500 outline-none">
+
+                        {{-- Precio Principal --}}
+                        <div x-ref="precioContainer">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Precio:</label>
+                                <div class="relative w-full">
+                                    <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[14px]">S/</span>
+                                    <input name="precio" x-ref="precio" type="text" inputmode="decimal"
+                                        value="{{ old('precio', $producto->precio) }}"
+                                        oninput="this.value = this.value.replace(/[^0-9.]/g, '')"
+                                        class="w-full pl-9 pr-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                        :class="errores.precio ? 'border-rose-500' : 'border-gray-200'">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Precio Oferta --}}
+                        <div x-ref="precio_ofertaContainer">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Precio de oferta:</label>
+                                <div class="relative w-full">
+                                    <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[14px]">S/</span>
+                                    <input name="precio_oferta" x-ref="precioOferta" type="text" inputmode="decimal"
+                                        value="{{ old('precio_oferta', $producto->precio_oferta) }}"
+                                        oninput="this.value = this.value.replace(/[^0-9.]/g, '')"
+                                        class="w-full pl-9 pr-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                        :class="errores.precio_oferta ? 'border-rose-500' : 'border-gray-200'">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -80,163 +219,180 @@
                 <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
                     <div class="flex justify-between items-center mb-6">
                         <div class="flex items-center gap-3">
-                            <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+                            <div class="p-2 rounded-lg transition-colors"
+                                 :class="errores.detalles ? 'bg-rose-50 text-rose-600' : 'bg-indigo-50 text-indigo-600'">
                                 <x-heroicon-o-list-bullet class="w-5 h-5" />
                             </div>
                             <h2 class="text-xl font-bold text-gray-800">Detalles</h2>
                         </div>
+
                         <button type="button" @click="addDetalle"
-                                class="flex items-center gap-2 text-sm font-black text-indigo-600 hover:text-indigo-700 transition">
+                                class="flex items-center gap-2 text-sm font-black text-indigo-600">
                             <x-heroicon-o-plus-circle class="w-5 h-5" />
                             Añadir Detalle
                         </button>
                     </div>
 
-                    <p class="text-xs text-gray-400 mb-4">Cada detalle aparecerá como una viñeta con punto en la ficha del producto.</p>
-
-                    <div class="space-y-3">
+                    <div class="space-y-2">
                         <template x-for="(detalle, index) in detalles" :key="index">
-                            <div class="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
+                            <div class="relative group pt-1.5 flex items-center gap-3">
                                 <span class="w-2 h-2 rounded-full bg-gray-900 flex-shrink-0"></span>
-                                <input type="text"
-                                       :name="`detalles[${index}]`"
-                                       x-model="detalles[index]"
-                                       placeholder="Ej: Cuello redondo ideal para un look casual"
-                                       class="flex-1 px-4 py-3 bg-white border-2 border-transparent rounded-xl focus:border-indigo-500 outline-none font-medium text-sm transition-all">
-                                <button type="button" @click="removeDetalle(index)"
-                                        x-show="detalles.length > 1"
-                                        class="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition flex-shrink-0">
-                                    <x-heroicon-o-trash class="w-5 h-5" />
-                                </button>
+
+                                <div class="relative flex-1">
+                                    <textarea
+                                        :name="`detalles[${index}]`"
+                                        x-model="detalles[index]"
+                                        rows="1"
+                                        x-init="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
+                                        @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'; if ($event.target.value.trim()) delete errores.detalles"
+                                        class="w-full px-4 py-1.5 pr-10 border rounded-2xl bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 resize-none overflow-hidden leading-snug transition-colors"
+                                        :class="errores.detalles ? 'border-rose-500' : 'border-gray-200'"
+                                        style="min-height: 34px;"></textarea>
+
+                                    <button type="button" @click="removeDetalle(index)"
+                                            x-show="detalles.length > 1"
+                                            class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold transition z-10 opacity-0 group-hover:opacity-100"
+                                            title="Eliminar detalle">
+                                        ✕
+                                    </button>
+                                </div>
                             </div>
                         </template>
                     </div>
                 </div>
+            </div>
 
-                {{-- Variantes con imágenes --}}
+            {{-- ============================================= --}}
+            {{-- COLUMNA 2: VARIANTES --}}
+            {{-- ============================================= --}}
+            <div class="space-y-6">
                 <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
                     <div class="flex justify-between items-center mb-6">
                         <div class="flex items-center gap-3">
-                            <div class="p-2 bg-amber-50 rounded-lg text-amber-600">
+                            <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
                                 <x-heroicon-o-swatch class="w-5 h-5" />
                             </div>
-                            <h2 class="text-xl font-bold text-gray-800">Tallas, Colores e Imágenes</h2>
+                            <h2 class="text-xl font-bold text-gray-800">Variantes del Producto</h2>
                         </div>
+
                         <button type="button" @click="addVariante"
-                                class="flex items-center gap-2 text-sm font-black text-indigo-600 hover:text-indigo-700 transition">
+                                class="flex items-center gap-2 text-sm font-black text-indigo-600">
                             <x-heroicon-o-plus-circle class="w-5 h-5" />
                             Añadir Variante
                         </button>
                     </div>
 
-                    <div class="space-y-1 mb-6">
-                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Estado del producto</label>
-                        <select name="estado_producto"
-                            class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl font-bold text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                            <option value="1" {{ $producto->estado_producto ? 'selected' : '' }}>Activo</option>
-                            <option value="0" {{ !$producto->estado_producto ? 'selected' : '' }}>Inactivo</option>
-                        </select>
-                    </div>
-
-                    {{-- 👇 CAMBIO: se eliminó el aviso "Cada variante debe tener al menos 1 imagen" --}}
-                    <p class="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 mb-6">
-                        💡 Las imágenes por variante son <strong>opcionales</strong>. Puedes dejar una variante sin imágenes.
-                    </p>
-
-                    <div class="space-y-6">
+                    <div class="space-y-2">
                         <template x-for="(variante, index) in variantes" :key="variante.uid">
-                            <div class="p-5 rounded-3xl transition-all border-2 space-y-4"
-                                 :class="isDuplicated(index) ? 'bg-rose-50 border-rose-200' : 'bg-gray-50 border-transparent'">
+                            <div class="relative group pt-1.5 pb-2 px-3 rounded-2xl bg-gray-50 space-y-2"
+                                 :x-ref="'varianteContainer' + index">
+
+                                <button type="button" @click="removeVariante(index)"
+                                        x-show="variantes.length > 1"
+                                        class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold transition z-10 opacity-0 group-hover:opacity-100"
+                                        title="Eliminar variante">
+                                    ✕
+                                </button>
 
                                 <input type="hidden" :name="`variantes[${index}][id_variante]`" x-model="variante.id_variante">
 
-                                {{-- Fila 1: Talla, Color, HEX, Stock, SKU --}}
-                                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                    <div class="space-y-1">
-                                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Talla</label>
-                                        <input type="text" :name="`variantes[${index}][talla]`" x-model="variante.talla" required
-                                            class="w-full px-4 py-3 rounded-xl border-2 font-bold text-sm outline-none transition-all bg-white border-transparent focus:border-indigo-500">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2 flex-1">
+                                        <label class="text-[14px] font-bold text-gray-800 shrink-0">SKU:</label>
+                                        <input type="text" :name="`variantes[${index}][sku]`" x-model="variante.sku"
+                                            class="w-full px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                            :class="erroresVariantes[index]?.sku ? 'border-rose-500' : 'border-gray-200'">
                                     </div>
-
-                                    <div class="space-y-1">
-                                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Color</label>
-                                        <input type="text" :name="`variantes[${index}][color]`" x-model="variante.color"
-                                            class="w-full px-4 py-3 rounded-xl border-2 font-bold text-sm outline-none transition-all bg-white border-transparent focus:border-indigo-500">
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[14px] font-bold text-gray-800 shrink-0">Talla:</label>
+                                        <input type="text" :name="`variantes[${index}][talla]`" x-model="variante.talla"
+                                            class="w-[50px] px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                            :class="erroresVariantes[index]?.talla ? 'border-rose-500' : 'border-gray-200'">
                                     </div>
-
-                                    <div class="space-y-1">
-                                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">HEX</label>
-                                        <div class="flex items-center gap-2 bg-white px-2 py-2 rounded-xl shadow-sm">
-                                            <input type="color" :name="`variantes[${index}][color_hex]`" x-model="variante.color_hex"
-                                                   class="w-8 h-8 rounded-lg border-0 cursor-pointer p-0"
-                                                   style="background: transparent;">
-                                            <span class="text-[10px] font-mono font-bold text-gray-500" x-text="variante.color_hex"></span>
-                                        </div>
-                                    </div>
-
-                                    <div class="space-y-1">
-                                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Stock</label>
-                                        <input type="number" :name="`variantes[${index}][stock]`" x-model="variante.stock" required
-                                            class="w-full bg-white px-4 py-3 rounded-xl border-none font-bold text-sm shadow-sm" min="0">
-                                    </div>
-
-                                    <div class="space-y-1">
-                                        <label class="text-[10px] font-black uppercase text-gray-400 ml-1">SKU</label>
-                                        <input type="text" :name="`variantes[${index}][sku]`" x-model="variante.sku" required
-                                            class="w-full px-4 py-3 rounded-xl border-2 font-bold text-[10px] shadow-sm outline-none bg-white border-transparent focus:border-indigo-500">
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[14px] font-bold text-gray-800 shrink-0">Stock:</label>
+                                        <input type="text" inputmode="numeric" :name="`variantes[${index}][stock]`" x-model="variante.stock"
+                                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                            class="w-[50px] px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                            :class="erroresVariantes[index]?.stock ? 'border-rose-500' : 'border-gray-200'">
                                     </div>
                                 </div>
 
-                                {{-- Fila 2: Imágenes --}}
-                                <div class="space-y-3">
-                                    <label class="text-[10px] font-black uppercase text-gray-400 ml-1">Imágenes de la variante</label>
-
-                                    {{-- Imágenes existentes --}}
-                                    <div class="flex flex-wrap gap-2">
-                                        <template x-for="(img, imgIndex) in variante.imagenes_existentes" :key="img.id_imagen">
-                                            <div class="relative w-20 h-20 rounded-xl overflow-hidden group border border-gray-200">
-                                                <img :src="'/api/imagen/' + img.imagen" class="w-full h-full object-cover">
-
-                                                <label class="absolute inset-0 bg-rose-500/80 opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex flex-col items-center justify-center text-white text-center">
-                                                    <input type="checkbox"
-                                                           :name="`variantes[${index}][imagenes_eliminar][]`"
-                                                           :value="img.id_imagen"
-                                                           class="hidden peer">
-                                                    <x-heroicon-o-trash class="w-5 h-5 mb-0.5" />
-                                                    <span class="text-[7px] font-black uppercase peer-checked:hidden">Eliminar</span>
-                                                    <span class="hidden peer-checked:block text-[7px] font-black uppercase">¡Marcado!</span>
-                                                </label>
-                                            </div>
-                                        </template>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2 flex-1">
+                                        <label class="text-[14px] font-bold text-gray-800 shrink-0">Color:</label>
+                                        <input type="text" :name="`variantes[${index}][color]`" x-model="variante.color"
+                                            class="w-full px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
+                                            :class="erroresVariantes[index]?.color ? 'border-rose-500' : 'border-gray-200'">
                                     </div>
 
-                                    {{-- Input para agregar nuevas imágenes (OPCIONAL) --}}
-                                    <label class="flex items-center justify-center gap-3 py-4 bg-white border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all">
-                                        <x-heroicon-o-cloud-arrow-up class="w-6 h-6 text-gray-300" />
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[14px] font-bold text-gray-800 shrink-0">Color Hex:</label>
+                                        <div class="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 focus-within:border-gray-400 transition-colors">
+                                            <input type="color" :name="`variantes[${index}][color_hex]`" x-model="variante.color_hex"
+                                                   class="w-5 h-6 rounded-md border-0 cursor-pointer p-0 flex-shrink-0"
+                                                   style="background: transparent;">
+                                            <input type="text"
+                                                   x-model="variante.color_hex"
+                                                   @input="variante.color_hex = variante.color_hex.toUpperCase()"
+                                                   maxlength="7"
+                                                   placeholder="#000000"
+                                                   class="w-[60px] bg-transparent border-none outline-none font-mono font-bold text-[14px] uppercase focus:ring-0">
+                                        </div>
+                                    </div>
+                                </div>
 
-                                        {{-- 👇 CAMBIO: texto "Añadir más imágenes" → "Añadir imágenes (opcional)" --}}
-                                        <span class="text-xs font-bold text-gray-500"
-                                              x-text="variante.imagenesNuevasNombres && variante.imagenesNuevasNombres.length > 0
-                                                        ? variante.imagenesNuevasNombres.join(', ')
-                                                        : 'Añadir imágenes (opcional)'"></span>
+                                <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 pt-3">
+
+                                    <template x-for="(img, imgIndex) in variante.imagenes_existentes" :key="img.id_imagen">
+                                        <div class="relative group/img aspect-[3/4]">
+                                            <img :src="'/api/imagen/' + img.imagen"
+                                                 @click="pickColorFromExistingImage($event, index, imgIndex)"
+                                                 class="w-full h-full object-cover cursor-crosshair"
+                                                 title="Seleccionar color">
+
+                                            <label class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition shadow-md opacity-0 group-hover/img:opacity-100">
+                                                <input type="checkbox"
+                                                       :name="`variantes[${index}][imagenes_eliminar][]`"
+                                                       :value="img.id_imagen"
+                                                       class="hidden peer">
+                                                <span class="peer-checked:hidden">✕</span>
+                                                <span class="hidden peer-checked:block">✓</span>
+                                            </label>
+                                        </div>
+                                    </template>
+
+                                    <template x-for="(file, newIndex) in variante.imagenesNuevas" :key="newIndex">
+                                        <div class="relative group/img aspect-[3/4]">
+                                            <img :src="variante.imagenesNuevasUrls[newIndex]"
+                                                 @click="pickColorFromNewImage($event, index, newIndex)"
+                                                 class="w-full h-full object-cover cursor-crosshair border-2 border-indigo-300"
+                                                 title="Clic para tomar color">
+
+                                            <span class="absolute top-1 left-1 bg-indigo-500 text-white text-[7px] font-black uppercase px-1.5 py-0.5 rounded-full pointer-events-none">Nueva</span>
+
+                                            <button type="button"
+                                                    @click="removeNuevaImagen(index, newIndex)"
+                                                    class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold transition shadow-md opacity-0 group-hover/img:opacity-100">
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                    {{-- Placeholder con tipos y peso --}}
+                                    <label class="aspect-[3/4] flex flex-col items-center justify-center bg-white border-2 border-dashed border-gray-200 cursor-pointer transition-all hover:border-indigo-300">
+                                        <x-heroicon-o-cloud-arrow-up class="w-5 h-5 text-gray-300" />
+                                        <span class="text-[9px] font-bold text-gray-400 mt-1">Añadir imagen</span>
+                                        <span class="text-[7px] font-medium text-gray-300 mt-0.5">JPG, PNG, WEBP</span>
+                                        <span class="text-[7px] font-medium text-gray-300">Máx 2MB</span>
 
                                         <input type="file"
                                                :name="`variantes[${index}][imagenes][]`"
-                                               accept="image/*"
+                                               accept="image/jpeg,image/png,image/webp"
                                                multiple
                                                class="hidden"
-                                               @change="variante.imagenesNuevasNombres = Array.from($event.target.files).map(f => f.name)">
+                                               @change="handleNuevasImagenes($event, index)">
                                     </label>
-                                </div>
-
-                                {{-- Botón eliminar variante --}}
-                                <div class="flex justify-end">
-                                    <button type="button" @click="removeVariante(index)"
-                                        x-show="variantes.length > 1"
-                                        class="flex items-center gap-2 text-xs font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50 px-3 py-2 rounded-xl transition">
-                                        <x-heroicon-o-trash class="w-4 h-4" />
-                                        Eliminar variante
-                                    </button>
                                 </div>
 
                                 <template x-if="isDuplicated(index)">
@@ -248,37 +404,6 @@
                             </div>
                         </template>
                     </div>
-                </div>
-            </div>
-
-            {{-- COLUMNA DERECHA --}}
-            <div class="space-y-8">
-                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-4">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600">
-                            <x-heroicon-o-information-circle class="w-5 h-5" />
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-800">Instrucciones</h2>
-                    </div>
-                    <ul class="text-sm text-gray-500 space-y-2 leading-relaxed">
-                        <li>• Cada <strong>detalle</strong> será una viñeta en la ficha.</li>
-                        {{-- 👇 CAMBIO: se eliminó "Cada variante debe tener al menos 1 imagen" --}}
-                        <li>• Las <strong>imágenes</strong> por variante son opcionales.</li>
-                        <li>• Puedes eliminar imágenes marcando el checkbox.</li>
-                        <li>• Al agregar nuevas imágenes, se suman a las existentes.</li>
-                    </ul>
-                </div>
-
-                <div class="flex flex-col gap-4">
-                    <button type="submit" :disabled="hasErrors()"
-                        :class="hasErrors() ? 'bg-gray-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'"
-                        class="w-full py-5 text-white font-black rounded-3xl shadow-xl transition-all active:scale-95">
-                        <span x-text="hasErrors() ? 'Corrige los errores' : 'Guardar Cambios'"></span>
-                    </button>
-                    <a href="{{ route('admin.productos.index') }}"
-                        class="w-full py-5 bg-white text-gray-400 font-bold rounded-3xl text-center border border-gray-100 hover:bg-gray-50 transition-all">
-                        Descartar Cambios
-                    </a>
                 </div>
             </div>
         </form>
@@ -296,11 +421,12 @@
                                 id_variante: v.id_variante ?? null,
                                 talla: v.talla ?? '',
                                 color: v.color ?? '',
-                                color_hex: v.color_hex ?? '#000000',
+                                color_hex: (v.color_hex ?? '#000000').toUpperCase(),
                                 stock: v.stock ?? 0,
                                 sku: v.sku ?? '',
                                 imagenes_existentes: v.imagenes ?? [],
-                                imagenesNuevasNombres: []
+                                imagenesNuevas: [],
+                                imagenesNuevasUrls: []
                             }));
                         } else {
                             this.addVariante();
@@ -317,12 +443,95 @@
                             stock: 0,
                             sku: '',
                             imagenes_existentes: [],
-                            imagenesNuevasNombres: []
+                            imagenesNuevas: [],
+                            imagenesNuevasUrls: []
                         });
                     },
 
                     removeVariante(index) {
                         if (this.variantes.length > 1) this.variantes.splice(index, 1);
+                    },
+
+                    handleNuevasImagenes(event, index) {
+                        const nuevos = Array.from(event.target.files);
+                        if (nuevos.length === 0) return;
+
+                        const variante = this.variantes[index];
+
+                        variante.imagenesNuevas = [...variante.imagenesNuevas, ...nuevos];
+
+                        variante.imagenesNuevasUrls.forEach(u => URL.revokeObjectURL(u));
+                        variante.imagenesNuevasUrls = variante.imagenesNuevas.map(f => URL.createObjectURL(f));
+
+                        event.target.value = '';
+
+                        this.syncInputFiles(index, event.target);
+                    },
+
+                    removeNuevaImagen(index, newIndex) {
+                        const variante = this.variantes[index];
+
+                        URL.revokeObjectURL(variante.imagenesNuevasUrls[newIndex]);
+
+                        variante.imagenesNuevas.splice(newIndex, 1);
+                        variante.imagenesNuevasUrls.splice(newIndex, 1);
+
+                        const input = this.$el.querySelector(`input[name="variantes[${index}][imagenes][]"]`);
+                        if (input) this.syncInputFiles(index, input);
+                    },
+
+                    syncInputFiles(index, input) {
+                        const dt = new DataTransfer();
+                        this.variantes[index].imagenesNuevas.forEach(f => dt.items.add(f));
+                        input.files = dt.files;
+                    },
+
+                    pickColorFromExistingImage(event, index, imgIndex) {
+                        const img = event.target;
+                        const rect = img.getBoundingClientRect();
+
+                        const x = Math.floor((event.clientX - rect.left) * (img.naturalWidth / rect.width));
+                        const y = Math.floor((event.clientY - rect.top) * (img.naturalHeight / rect.height));
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+
+                        try {
+                            const pixel = ctx.getImageData(x, y, 1, 1).data;
+                            const hex = '#' + [pixel[0], pixel[1], pixel[2]]
+                                .map(c => c.toString(16).padStart(2, '0')).join('')
+                                .toUpperCase();
+                            this.variantes[index].color_hex = hex;
+                        } catch (e) {
+                            console.warn('No se pudo leer el píxel:', e);
+                        }
+                    },
+
+                    pickColorFromNewImage(event, index, newIndex) {
+                        const img = event.target;
+                        const rect = img.getBoundingClientRect();
+
+                        const x = Math.floor((event.clientX - rect.left) * (img.naturalWidth / rect.width));
+                        const y = Math.floor((event.clientY - rect.top) * (img.naturalHeight / rect.height));
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+
+                        try {
+                            const pixel = ctx.getImageData(x, y, 1, 1).data;
+                            const hex = '#' + [pixel[0], pixel[1], pixel[2]]
+                                .map(c => c.toString(16).padStart(2, '0')).join('')
+                                .toUpperCase();
+                            this.variantes[index].color_hex = hex;
+                        } catch (e) {
+                            console.warn('No se pudo leer el píxel:', e);
+                        }
                     },
 
                     addDetalle() {
@@ -339,9 +548,6 @@
                         return this.variantes.some((v, i) => i !== index &&
                             v.talla.toLowerCase().trim() === current.talla.toLowerCase().trim() &&
                             v.color.toLowerCase().trim() === current.color.toLowerCase().trim());
-                    },
-                    hasErrors() {
-                        return this.variantes.some((_, i) => this.isDuplicated(i));
                     }
                 }
             }

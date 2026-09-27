@@ -22,27 +22,34 @@
 
     <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-10 text-center max-w-lg mx-auto">
 
-        {{-- Icono éxito --}}
-        <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        {{-- Icono pendiente --}}
+        <div class="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
         </div>
 
         <h1 class="text-3xl font-bold text-gray-900 mb-3">
-            ¡Compra exitosa!
+            Pago pendiente
         </h1>
 
         <p class="text-gray-500 text-sm leading-relaxed mb-8">
-            Su pedido fue registrado. Una vez sea enviado, podrá ver en
-            <span class="font-semibold text-gray-700">"Mis pedidos"</span>
-            la dirección donde deberá recoger su pedido.
+            Tu pago está siendo procesado. Te avisaremos cuando se confirme.
+            Puedes revisar el estado en cualquier momento desde
+            <span class="font-semibold text-gray-700">"Mis pedidos"</span>.
         </p>
 
-        <a href="{{ route('perfil.index') }}?seccion=pedidos"
-           class="block w-full border border-gray-200 rounded-full py-3.5 text-sm font-semibold hover:bg-gray-50 transition-colors">
-            Ver mis pedidos
-        </a>
+        <div class="space-y-3">
+            <a href="{{ route('perfil.index') }}?seccion=pedidos"
+               class="block w-full bg-gray-900 text-white rounded-full py-3.5 text-sm font-semibold hover:bg-gray-800 transition-colors">
+                Ver mis pedidos
+            </a>
+
+            <a href="{{ url('/') }}"
+               class="block w-full border border-gray-200 rounded-full py-3.5 text-sm font-semibold hover:bg-gray-50 transition-colors">
+                Ir al inicio
+            </a>
+        </div>
 
     </div>
 </div>

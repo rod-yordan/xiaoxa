@@ -13,13 +13,18 @@ class Categoria extends Model
         'nombre_categoria',
         'estado_categoria'
     ];
+
+    protected $casts = [
+        'estado_categoria' => 'integer',
+    ];
+
     public function productos()
     {
         return $this->hasMany(Producto::class, 'id_categoria', 'id_categoria');
     }
 
     /**
-     * Devulve la catergoria de productos activos
+     * Devuelve la categoría de productos activos
      */
     public function scopeConProductosActivos($query)
     {

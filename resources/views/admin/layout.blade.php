@@ -12,28 +12,26 @@
     </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen text-gray-900 overflow-x-hidden">
+<body class="bg-[#fbfaf8] min-h-screen text-gray-900 overflow-x-hidden">
 
     <div class="flex min-h-screen relative">
 
         {{-- ============== SIDEBAR ============== --}}
         <aside class="w-64 bg-white border-r border-gray-200 flex flex-col z-40">
 
-            {{-- Logo: misma distancia arriba (pt-14) y a la izquierda (pl-14) --}}
-            <div class="pt-14 pb-8 pl-14 border-b border-gray-100">
+            <div class="pt-14 pb-8 flex justify-center">
                 <a href="{{ route('admin.dashboard') }}" class="inline-block">
                     <img src="{{ asset('images/logo.jpeg') }}" alt="Xiaoxa" class="h-12 w-auto">
                 </a>
             </div>
 
-            {{-- Menú --}}
             <nav class="flex-1 py-6 space-y-2 overflow-y-auto">
                 @php
                     $links = [
-                        ['route' => 'admin.dashboard',          'icon' => 'o-chart-bar',              'label' => 'Dashboard'],
-                        ['route' => 'admin.productos.index',    'icon' => 'o-cube',                   'label' => 'Productos'],
-                        ['route' => 'admin.categorias.index',   'icon' => 'o-tag',                    'label' => 'Categorías'],
-                        ['route' => 'admin.pedidos.index',      'icon' => 'o-clipboard-document-list','label' => 'Pedidos'],
+                        ['route' => 'admin.dashboard',          'pattern' => 'admin.dashboard',       'icon' => 'o-chart-bar',              'label' => 'Dashboard'],
+                        ['route' => 'admin.productos.index',    'pattern' => 'admin.productos.*',     'icon' => 'o-cube',                   'label' => 'Productos'],
+                        ['route' => 'admin.categorias.index',   'pattern' => 'admin.categorias.*',    'icon' => 'o-tag',                    'label' => 'Categorías'],
+                        ['route' => 'admin.pedidos.index',      'pattern' => 'admin.pedidos.*',       'icon' => 'o-clipboard-document-list','label' => 'Pedidos'],
                     ];
 
                     $otrosRoutes = ['admin.banners.index', 'admin.cupones.index'];
@@ -41,22 +39,21 @@
                 @endphp
 
                 @foreach($links as $link)
-                @php $activo = request()->routeIs($link['route']); @endphp
+                @php $activo = request()->routeIs($link['pattern']); @endphp
                 <a href="{{ route($link['route']) }}"
-                   class="flex items-center gap-3 py-3.5 pl-14 pr-5 mr-4 font-medium transition-all
+                   class="flex items-center gap-3 py-3.5 pl-10 pr-5 mr-6 font-medium transition-all
                    {{ $activo
                         ? 'bg-pink-600 text-white rounded-r-full'
-                        : 'text-gray-700 hover:bg-gray-100 rounded-full' }}">
+                        : 'text-gray-700 rounded-full' }}">
                     <x-dynamic-component :component="'heroicon-' . $link['icon']" class="w-5 h-5 flex-shrink-0" />
                     <span>{{ $link['label'] }}</span>
                 </a>
                 @endforeach
 
-                {{-- DROPDOWN OTROS --}}
                 <div x-data="{ otrosOpen: {{ $otrosActive ? 'true' : 'false' }} }" class="mr-4">
                     <button @click="otrosOpen = !otrosOpen"
-                        class="w-full flex items-center gap-3 py-3.5 pl-14 pr-5 font-medium transition-all
-                        {{ $otrosActive ? 'bg-pink-600 text-white rounded-r-full' : 'text-gray-700 hover:bg-gray-100 rounded-full' }}">
+                        class="w-full flex items-center gap-3 py-3.5 pl-10 pr-5 font-medium transition-all
+                        {{ $otrosActive ? 'bg-pink-600 text-white rounded-r-full' : 'text-gray-700 rounded-full' }}">
                         <x-heroicon-o-squares-2x2 class="w-5 h-5 flex-shrink-0" />
                         <span class="flex-1 text-left">Otros</span>
                         <x-heroicon-o-chevron-down
@@ -75,14 +72,14 @@
 
                         <a href="{{ route('admin.banners.index') }}"
                            class="flex items-center gap-3 px-4 py-3 rounded-full font-medium transition-all
-                           {{ request()->routeIs('admin.banners.index') ? 'bg-pink-100 text-pink-700' : 'text-gray-600 hover:bg-gray-100' }}">
+                           {{ request()->routeIs('admin.banners.index') ? 'bg-pink-100 text-pink-700' : 'text-gray-600' }}">
                             <x-heroicon-o-photo class="w-5 h-5 flex-shrink-0" />
                             <span>Banners</span>
                         </a>
 
                         <a href="{{ route('admin.cupones.index') }}"
                            class="flex items-center gap-3 px-4 py-3 rounded-full font-medium transition-all
-                           {{ request()->routeIs('admin.cupones.index') ? 'bg-pink-100 text-pink-700' : 'text-gray-600 hover:bg-gray-100' }}">
+                           {{ request()->routeIs('admin.cupones.index') ? 'bg-pink-100 text-pink-700' : 'text-gray-600' }}">
                             <x-heroicon-o-ticket class="w-5 h-5 flex-shrink-0" />
                             <span>Cupones</span>
                         </a>
@@ -90,14 +87,13 @@
                 </div>
             </nav>
 
-            {{-- Cerrar sesión --}}
-            <div class="p-4 border-t border-gray-100">
+            <div class="pt-4 pb-6 mr-4">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit"
-                        class="w-full flex items-center gap-3 pl-14 pr-5 py-3.5 rounded-full font-semibold text-gray-700 hover:bg-gray-100 transition-all text-left">
+                        class="w-full flex items-center gap-3 py-3.5 pl-10 pr-5 rounded-full font-semibold text-gray-700 transition-all text-left">
                         <x-heroicon-o-arrow-left-on-rectangle class="w-5 h-5 flex-shrink-0" />
-                        <span class="text-sm">CERRAR SESION</span>
+                        <span class="text-sm">Cerrar sesión</span>
                     </button>
                 </form>
             </div>
@@ -108,50 +104,29 @@
 
             {{-- ✅ ÉXITO --}}
             @if(session('success'))
-                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
-                     x-transition:enter="transform ease-out duration-300 transition"
-                     x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-10"
-                     x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
-                     x-transition:leave="transition ease-in duration-200"
-                     x-transition:leave-start="opacity-100"
-                     x-transition:leave-end="opacity-0"
-                     class="pointer-events-auto flex items-center gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border-l-8 border-emerald-500 min-w-[320px]">
-                    <div class="flex-shrink-0 bg-emerald-100 text-emerald-600 p-2 rounded-xl">
-                        <x-heroicon-s-check-circle class="w-7 h-7" />
+                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4500)"
+                     x-transition:enter="transform ease-out duration-500 transition"
+                     x-transition:enter-start="translate-y-4 opacity-0 scale-95 sm:translate-y-0 sm:translate-x-10"
+                     x-transition:enter-end="translate-y-0 opacity-100 scale-100 sm:translate-x-0"
+                     x-transition:leave="transition ease-in duration-300"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="pointer-events-auto flex items-center gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border border-emerald-100 min-w-[340px] max-w-md">
+
+                    {{-- ✅ Icono circular estilo éxito de pago --}}
+                    <div class="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
                     </div>
+
                     <div class="flex-1">
                         <p class="font-black text-gray-900 text-sm leading-none">¡Éxito!</p>
-                        <p class="text-gray-500 text-xs font-medium mt-1">{{ session('success') }}</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1.5 leading-relaxed">{{ session('success') }}</p>
                     </div>
-                    <button @click="show = false" class="text-gray-300 hover:text-gray-500 transition">
-                        <x-heroicon-o-x-mark class="w-5 h-5" />
-                    </button>
-                </div>
-            @endif
 
-            {{-- ❌ ERRORES DE VALIDACIÓN --}}
-            @if($errors->any())
-                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 8000)"
-                     x-transition:enter="transform ease-out duration-300 transition"
-                     x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-10"
-                     x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
-                     x-transition:leave="transition ease-in duration-200"
-                     x-transition:leave-start="opacity-100"
-                     x-transition:leave-end="opacity-0"
-                     class="pointer-events-auto flex items-start gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border-l-8 border-rose-500 min-w-[320px] max-w-md">
-                    <div class="flex-shrink-0 bg-rose-100 text-rose-600 p-2 rounded-xl">
-                        <x-heroicon-s-exclamation-circle class="w-7 h-7" />
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-black text-gray-900 text-sm leading-none">No se pudo guardar</p>
-                        <ul class="text-gray-500 text-xs font-medium mt-2 space-y-1 list-disc pl-4">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    <button @click="show = false" class="text-gray-300 hover:text-gray-500 transition flex-shrink-0">
-                        <x-heroicon-o-x-mark class="w-5 h-5" />
+                    <button @click="show = false" class="text-gray-300 hover:text-gray-600 transition flex-shrink-0 p-1">
+                        <x-heroicon-o-x-mark class="w-4 h-4" />
                     </button>
                 </div>
             @endif
@@ -159,22 +134,28 @@
             {{-- ❌ ERROR --}}
             @if(session('error'))
                 <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)"
-                     x-transition:enter="transform ease-out duration-300 transition"
-                     x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-10"
-                     x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
-                     x-transition:leave="transition ease-in duration-200"
-                     x-transition:leave-start="opacity-100"
-                     x-transition:leave-end="opacity-0"
-                     class="pointer-events-auto flex items-center gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border-l-8 border-rose-500 min-w-[320px]">
-                    <div class="flex-shrink-0 bg-rose-100 text-rose-600 p-2 rounded-xl">
-                        <x-heroicon-s-exclamation-circle class="w-7 h-7" />
+                     x-transition:enter="transform ease-out duration-500 transition"
+                     x-transition:enter-start="translate-y-4 opacity-0 scale-95 sm:translate-y-0 sm:translate-x-10"
+                     x-transition:enter-end="translate-y-0 opacity-100 scale-100 sm:translate-x-0"
+                     x-transition:leave="transition ease-in duration-300"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     class="pointer-events-auto flex items-center gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border border-rose-100 min-w-[340px] max-w-md">
+
+                    {{-- ❌ Icono circular estilo fallo --}}
+                    <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
                     </div>
+
                     <div class="flex-1">
                         <p class="font-black text-gray-900 text-sm leading-none">Error</p>
-                        <p class="text-gray-500 text-xs font-medium mt-1">{{ session('error') }}</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1.5 leading-relaxed">{{ session('error') }}</p>
                     </div>
-                    <button @click="show = false" class="text-gray-300 hover:text-gray-500 transition">
-                        <x-heroicon-o-x-mark class="w-5 h-5" />
+
+                    <button @click="show = false" class="text-gray-300 hover:text-gray-600 transition flex-shrink-0 p-1">
+                        <x-heroicon-o-x-mark class="w-4 h-4" />
                     </button>
                 </div>
             @endif

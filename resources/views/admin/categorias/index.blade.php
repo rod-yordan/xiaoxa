@@ -1,175 +1,288 @@
 @extends('admin.layout')
 
 @section('content')
-    <div x-data="{ createModal: false, editModal: null }">
+    <div x-data="{ createModal: {{ $errors->any() ? 'true' : 'false' }} }">
 
+        {{-- ============================================= --}}
         {{-- HEADER --}}
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        {{-- ============================================= --}}
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-6">
             <div>
-                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Gestión de Catálogo</h1>
+                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Categorías</h1>
                 <p class="text-gray-500 mt-2 text-lg font-medium">Administra las categorías de tus productos.</p>
             </div>
 
-            <div class="pb-2">
-                <button @click="createModal = true"
-                    class="inline-flex items-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-200 transition-all hover:-translate-y-1 active:scale-95">
-                    <x-heroicon-o-plus class="w-6 h-6" />
-                    Nueva Categoría
-                </button>
-            </div>
+            <a @click="createModal = true"
+                class="inline-flex items-center gap-3 bg-indigo-600 text-white px-7 py-4 rounded-2xl font-bold transition-colors duration-200 cursor-pointer">
+                <x-heroicon-o-plus class="w-6 h-6" />
+                Nueva Categoría
+            </a>
         </div>
 
-        <hr class="border-gray-100 mb-10">
+        {{-- ============================================= --}}
+        {{-- GRID DE CATEGORÍAS --}}
+        {{-- ============================================= --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            @forelse($categorias as $categoria)
+                <div class="group relative bg-white border border-gray-200 rounded-[2rem] p-6 shadow-sm transition-all duration-300">
 
-        {{-- SECCIÓN CATEGORÍAS --}}
-        <div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                @forelse($categorias as $categoria)
-                    <div x-data="{ confirmModal: false, editModal: false }"
-                        class="group relative bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm hover:shadow-2xl transition-all duration-500">
-
-                        {{-- Estado --}}
-                        <div class="absolute top-8 right-8">
-                            <span
-                                class="inline-flex items-center gap-1.5 py-1.5 px-4 rounded-full text-xs font-black uppercase tracking-wider {{ $categoria->estado_categoria ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-50 text-gray-400' }}">
-                                {{ $categoria->estado_categoria ? 'Activo' : 'Inactivo' }}
-                            </span>
-                        </div>
-
-                        <div class="mb-10">
-                            <div
-                                class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-110 transition-transform">
-                                <x-heroicon-o-folder class="w-8 h-8" />
-                            </div>
-                            <h3 class="text-2xl font-black text-gray-800 leading-tight">{{ $categoria->nombre_categoria }}</h3>
-                            <p class="mt-2 text-gray-400 font-medium italic">{{ $categoria->productos->count() }} productos</p>
-                        </div>
-
-                        <div class="pt-6 border-t border-gray-50 flex items-center justify-between">
-                            <button @click="editModal = true"
-                                class="font-bold text-gray-600 hover:text-indigo-600 flex items-center gap-2">
-                                <x-heroicon-o-pencil-square class="w-5 h-5" /> Editar
-                            </button>
-                            <button @click="confirmModal = true"
-                                class="font-bold {{ $categoria->estado_categoria ? 'text-rose-500' : 'text-emerald-500' }}">
-                                {{ $categoria->estado_categoria ? 'Desactivar' : 'Activar' }}
-                            </button>
-
-                            {{-- MODAL CONFIRMACIÓN ESTADO --}}
-                            <template x-if="confirmModal">
-                                <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                                    <div @click="confirmModal = false" class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm">
-                                    </div>
-                                    <div class="relative bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl text-center">
-                                        <div
-                                            class="w-20 h-20 {{ $categoria->estado_categoria ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500' }} rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <x-heroicon-o-exclamation-triangle class="w-10 h-10" />
-                                        </div>
-                                        <h3 class="text-2xl font-black text-gray-900 mb-2">¿Estás seguro?</h3>
-                                        <p class="text-gray-500 font-medium mb-8">
-                                            Vas a {{ $categoria->estado_categoria ? 'desactivar' : 'activar' }} la categoría
-                                            <span class="font-bold text-gray-800">"{{ $categoria->nombre_categoria }}"</span>.
-                                        </p>
-                                        <form action="{{ route('admin.categorias.toggle', $categoria->id_categoria) }}"
-                                            method="POST" class="flex gap-3">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="button" @click="confirmModal = false"
-                                                class="flex-1 py-3 bg-gray-100 text-gray-500 font-bold rounded-xl">No,
-                                                volver</button>
-                                            <button type="submit"
-                                                class="flex-1 py-3 {{ $categoria->estado_categoria ? 'bg-rose-500' : 'bg-emerald-500' }} text-white font-bold rounded-xl shadow-lg">Sí,
-                                                continuar</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-
-                        {{-- MODAL EDITAR CATEGORÍA --}}
-                        <template x-if="editModal">
-                            <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                                <div @click="editModal = false" class="absolute inset-0 bg-gray-900/60 backdrop-blur-md"></div>
-                                <div class="relative bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl">
-                                    <h2 class="text-3xl font-black text-gray-900 mb-6">Editar Categoría</h2>
-                                    <form action="{{ route('admin.categorias.update', $categoria) }}" method="POST"
-                                        class="space-y-6">
-                                        @csrf
-                                        @method('PUT')
-                                        <div>
-                                            <label class="block text-xs font-black text-gray-400 uppercase mb-2 ml-1">Nuevo
-                                                Nombre</label>
-                                            <input type="text" name="nombre_categoria"
-                                                value="{{ $categoria->nombre_categoria }}" required
-                                                class="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none text-lg font-bold">
-                                        </div>
-                                        <div class="flex gap-4">
-                                            <button type="button" @click="editModal = false"
-                                                class="flex-1 py-4 bg-gray-100 text-gray-500 font-bold rounded-xl">Cancelar</button>
-                                            <button type="submit"
-                                                class="flex-[2] py-4 bg-indigo-600 text-white font-black rounded-xl shadow-lg">Actualizar</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </template>
+                    {{-- Estado (solo visual) --}}
+                    <div class="absolute top-6 right-6">
+                        <span class="inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider
+                            {{ $categoria->estado_categoria
+                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                : 'bg-gray-100 text-gray-500 border border-gray-200' }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $categoria->estado_categoria ? 'bg-emerald-500' : 'bg-gray-400' }}"></span>
+                            {{ $categoria->estado_categoria ? 'Activo' : 'Inactivo' }}
+                        </span>
                     </div>
-                @empty
-                    <div
-                        class="col-span-full py-20 text-center bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-200">
-                        <p class="text-gray-400 font-bold">No hay categorías registradas.</p>
+
+                    {{-- Ícono + Nombre --}}
+                    <div class="mb-6">
+                        <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-4">
+                            <x-heroicon-o-folder class="w-7 h-7" />
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 leading-tight pr-20">
+                            {{ $categoria->nombre_categoria }}
+                        </h3>
+                        <p class="mt-1 text-sm text-gray-500 font-medium">
+                            {{ $categoria->productos->count() }} {{ $categoria->productos->count() === 1 ? 'producto' : 'productos' }}
+                        </p>
                     </div>
-                @endforelse
-            </div>
+
+                    {{-- Acciones --}}
+                    <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
+                        <button @click="$dispatch('open-edit-categoria', @js($categoria))"
+                            class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 transition-all"
+                            title="Editar">
+                            <x-heroicon-o-pencil-square class="w-4 h-4" />
+                            Editar
+                        </button>
+
+                        <button @click="$dispatch('open-delete-categoria', @js($categoria))"
+                            class="inline-flex items-center gap-2 text-sm font-bold text-rose-600 transition-all"
+                            title="Eliminar">
+                            <x-heroicon-o-trash class="w-4 h-4" />
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            @empty
+                <div class="col-span-full py-20 text-center bg-white rounded-[2.5rem] border-2 border-dashed border-gray-200">
+                    <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <x-heroicon-o-folder class="w-8 h-8 text-indigo-600" />
+                    </div>
+                    <p class="text-gray-500 font-bold text-lg">No hay categorías registradas.</p>
+                    <p class="text-gray-400 font-medium mt-1">Crea tu primera categoría para empezar.</p>
+                </div>
+            @endforelse
         </div>
 
-        {{-- MODAL CREACIÓN CATEGORIA --}}
+        {{-- ============================================= --}}
+        {{-- MODAL CREAR CATEGORÍA --}}
+        {{-- ============================================= --}}
         <template x-if="createModal">
-            <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <div @click="createModal = false" class="absolute inset-0 bg-gray-900/60 backdrop-blur-xl"></div>
-                <div
-                    class="relative bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-200">
-                    <div class="flex justify-between items-center mb-10 text-left">
+            <div class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+                 x-data="{
+                    errores: {},
+                    submitForm(e) {
+                        this.errores = {};
+
+                        const nombre = e.target.querySelector('input[name=nombre_categoria]').value.trim();
+                        if (!nombre) this.errores.nombre_categoria = true;
+
+                        if (Object.keys(this.errores).length > 0) {
+                            e.preventDefault();
+                            return;
+                        }
+
+                        e.target.submit();
+                    }
+                 }">
+                <div @click="createModal = false" class="absolute inset-0 bg-gray-900/40 backdrop-blur-md"></div>
+                <div class="relative bg-white rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl">
+                    <div class="flex justify-between items-start mb-8">
                         <div>
-                            <h2 class="text-3xl font-black text-gray-900">Nueva Categoría</h2>
-                            <p class="text-gray-400 mt-1 font-medium italic">Segmenta tu catálogo.</p>
+                            <h2 class="text-2xl font-bold text-gray-900">Nueva Categoría</h2>
+                            <p class="text-gray-500 mt-1 text-sm font-medium">Crea una nueva categoría para tus productos.</p>
                         </div>
-                        <button @click="createModal = false"
-                            class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-500 transition shadow-sm">
+                        <button @click="createModal = false" class="text-gray-500 transition -mt-1">
                             <x-heroicon-o-x-mark class="w-6 h-6" />
                         </button>
                     </div>
-                    <form action="{{ route('admin.categorias.store') }}" method="POST" class="space-y-8 text-left">
+
+                    <form action="{{ route('admin.categorias.store') }}" method="POST" class="space-y-4"
+                          @submit.prevent="submitForm($event)">
                         @csrf
+
                         <div>
-                            <label
-                                class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Nombre</label>
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-5 flex items-center text-gray-300">
-                                    <x-heroicon-o-tag class="w-6 h-6" />
-                                </span>
-                                <input type="text" name="nombre_categoria" required autofocus placeholder="Ej: Poleras"
-                                    class="w-full pl-14 pr-6 py-5 bg-gray-50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-indigo-500 transition-all outline-none text-lg font-bold shadow-inner">
-                            </div>
+                            <label class="block text-sm font-bold text-gray-800 mb-2 ml-1">Nombre</label>
+                            <input type="text" name="nombre_categoria" autofocus
+                                class="w-full px-4 py-1.5 bg-gray-50 border rounded-full focus:outline-none focus:border-gray-400 text-[14px] font-medium transition-colors"
+                                :class="errores.nombre_categoria ? 'border-rose-500' : 'border-gray-200'">
                         </div>
-                        <div class="flex gap-4 pt-4">
+
+                        <div class="flex gap-3 pt-2">
                             <button type="button" @click="createModal = false"
-                                class="flex-1 px-4 py-5 bg-gray-100 text-gray-500 font-bold rounded-2xl hover:bg-gray-200 transition">Cancelar</button>
+                                class="flex-1 py-3.5 bg-gray-100 text-gray-700 font-bold rounded-full text-sm transition">
+                                Cancelar
+                            </button>
                             <button type="submit"
-                                class="flex-[2] px-4 py-5 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 shadow-lg transition-all active:scale-95">Crear
-                                Categoría</button>
+                                class="flex-1 py-3.5 bg-black text-white font-bold rounded-full text-sm transition">
+                                Aceptar
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </template>
 
+        {{-- ============================================= --}}
+        {{-- MODAL EDITAR CATEGORÍA --}}
+        {{-- ============================================= --}}
+        <div x-data="{
+                editModal: false,
+                categoria: {},
+                estadoEdit: '1',
+                estadoTextoEdit: 'Activo',
+                errores: {},
+                submitEdit(e) {
+                    this.errores = {};
+
+                    const nombre = e.target.querySelector('input[name=nombre_categoria]').value.trim();
+                    if (!nombre) this.errores.nombre_categoria = true;
+
+                    if (Object.keys(this.errores).length > 0) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    e.target.submit();
+                }
+            }"
+            @open-edit-categoria.window="
+                categoria = $event.detail;
+                estadoEdit = String(categoria.estado_categoria ?? 0);
+                estadoTextoEdit = (estadoEdit === '1') ? 'Activo' : 'Inactivo';
+                errores = {};
+                editModal = true;
+            ">
+            <template x-if="editModal">
+                <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div @click="editModal = false" class="absolute inset-0 bg-gray-900/40 backdrop-blur-md"></div>
+                    <div class="relative bg-white rounded-[2.5rem] p-10 max-w-2xl w-full shadow-2xl">
+
+                        <div class="flex justify-between items-start mb-8">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900">Editar Categoría</h2>
+                                <p class="text-gray-500 mt-1 text-sm font-medium">Modifica los datos de la categoría.</p>
+                            </div>
+                            <button @click="editModal = false" class="text-gray-500 transition -mt-1">
+                                <x-heroicon-o-x-mark class="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <form :action="`/admin/categorias/${categoria.id_categoria}`" method="POST" class="space-y-4"
+                              @submit.prevent="submitEdit($event)">
+                            @csrf
+                            <input type="hidden" name="_method" value="PUT">
+
+                            {{-- Nombre y Estado en UNA SOLA FILA --}}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {{-- Nombre --}}
+                                <div class="flex items-center gap-2">
+                                    <label class="text-[14px] font-bold text-gray-800 shrink-0">Nombre:</label>
+                                    <input type="text" name="nombre_categoria" :value="categoria.nombre_categoria"
+                                        class="w-full px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 font-medium transition-colors"
+                                        :class="errores.nombre_categoria ? 'border-rose-500' : 'border-gray-200'">
+                                </div>
+
+                                {{-- Estado con dropdown --}}
+                                <div class="flex items-center gap-2" x-data="{ open: false }">
+                                    <label class="text-[14px] font-bold text-gray-800 shrink-0">Estado:</label>
+                                    <input type="hidden" name="estado_categoria" :value="estadoEdit">
+                                    <div class="relative w-full">
+                                        <button type="button" @click="open = !open"
+                                            class="w-full flex items-center justify-between gap-2 pl-4 pr-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 cursor-pointer focus:outline-none focus:border-gray-400 transition-colors">
+                                            <span x-text="estadoTextoEdit"></span>
+                                            <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
+                                        </button>
+
+                                        <div x-show="open" @click.outside="open = false"
+                                             x-transition:enter="transition ease-out duration-150"
+                                             x-transition:enter-start="opacity-0 -translate-y-1"
+                                             x-transition:enter-end="opacity-100 translate-y-0"
+                                             x-transition:leave="transition ease-in duration-100"
+                                             x-transition:leave-start="opacity-100"
+                                             x-transition:leave-end="opacity-0"
+                                             class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                                            <div class="max-h-64 overflow-y-auto py-1">
+                                                <button type="button" @click="estadoEdit = '1'; estadoTextoEdit = 'Activo'; open = false"
+                                                    class="w-full text-left px-4 py-2 text-sm text-gray-600 transition">
+                                                    Activo
+                                                </button>
+                                                <button type="button" @click="estadoEdit = '0'; estadoTextoEdit = 'Inactivo'; open = false"
+                                                    class="w-full text-left px-4 py-2 text-sm text-gray-600 transition">
+                                                    Inactivo
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-3 pt-2">
+                                <button type="button" @click="editModal = false"
+                                    class="flex-1 py-3.5 bg-gray-100 text-gray-700 font-bold rounded-full text-sm transition">
+                                    Cancelar
+                                </button>
+                                <button type="submit"
+                                    class="flex-1 py-3.5 bg-black text-white font-bold rounded-full text-sm transition">
+                                    Aceptar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        {{-- ============================================= --}}
+        {{-- MODAL ELIMINAR CATEGORÍA --}}
+        {{-- ============================================= --}}
+        <div x-data="{ deleteModal: false, categoriaDelete: {} }"
+             @open-delete-categoria.window="categoriaDelete = $event.detail; deleteModal = true">
+            <template x-if="deleteModal">
+                <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div @click="deleteModal = false" class="absolute inset-0 bg-gray-900/40 backdrop-blur-md"></div>
+                    <div class="relative bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl text-center">
+                        <div class="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <x-heroicon-o-exclamation-triangle class="w-10 h-10" />
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">¿Estás seguro?</h3>
+                        <p class="text-gray-500 font-medium mb-8">
+                            Vas a eliminar <span class="font-bold text-gray-800" x-text="categoriaDelete.nombre_categoria"></span>.
+                            Se eliminarán también todos sus productos asociados. Esta acción no se puede deshacer.
+                        </p>
+                        <form :action="`/admin/categorias/${categoriaDelete.id_categoria}`" method="POST" class="flex gap-3">
+                            @csrf @method('DELETE')
+                            <button type="button" @click="deleteModal = false"
+                                class="flex-1 py-3.5 bg-gray-100 text-gray-700 font-bold rounded-full text-sm transition">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                class="flex-1 py-3.5 bg-black text-white font-bold rounded-full text-sm transition">
+                                Aceptar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </template>
+        </div>
+
     </div>
 
     <style>
-        [x-cloak] {
-            display: none !important;
-        }
+        [x-cloak] { display: none !important; }
     </style>
-
 @endsection

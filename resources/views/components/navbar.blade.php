@@ -1,4 +1,6 @@
 {{-- resources/views/components/navbar.blade.php --}}
+@props(['modoCarrito' => false])
+
 <nav class="border-b border-gray-200 bg-white"
     x-data="{
         searchOpen: false,
@@ -52,125 +54,133 @@
                         <x-heroicon-o-x-mark x-show="searchOpen" x-cloak class="h-7 w-7 text-black" />
                     </button>
 
-                    {{-- USUARIO --}}
-                    @auth
-                        <a href="{{ route('perfil.index') }}" class="p-1" title="Mi cuenta">
-                            <x-heroicon-o-user class="h-7 w-7 text-black" />
+                    @if($modoCarrito)
+                        {{-- MODO CARRITO: solo "SEGUIR COMPRANDO" --}}
+                        <a href="{{ route('home') }}"
+                           class="flex items-center gap-2 text-black font-bold text-xs tracking-widest uppercase hover:opacity-70 transition-opacity">
+                            <x-heroicon-o-shopping-bag class="h-6 w-6 text-black" />
+                            Seguir comprando
                         </a>
-                    @endauth
-                    @guest
-                        <a href="{{ route('login') }}" class="p-1" title="Iniciar sesión">
-                            <x-heroicon-o-user class="h-7 w-7 text-black" />
-                        </a>
-                    @endguest
-
-                    {{-- CARRITO --}}
-                    <a href="{{ route('carrito.index') }}" class="relative p-1" title="Carrito">
-                        <x-heroicon-o-shopping-bag class="h-7 w-7 text-black" />
-                        @php
-                            $totalItems = session('carrito') ? count(session('carrito')) : 0;
-                        @endphp
-                        @if($totalItems > 0)
-                            <span class="absolute -top-1 -right-0 bg-red-500 text-white text-[9px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
-                                {{ $totalItems }}
-                            </span>
-                        @endif
-                    </a>
-
-                    {{-- ADMIN --}}
-                    @auth
-                        @if(auth()->user()->id_rol == 1)
-                            <a href="{{ route('admin.dashboard') }}" class="hidden xl:block text-xs font-bold text-black border border-black px-3 py-1.5 rounded-full hover:bg-black hover:text-white transition-all duration-200 ml-1">
-                                Admin
+                    @else
+                        {{-- MODO NORMAL: usuario + carrito + admin --}}
+                        @auth
+                            <a href="{{ route('perfil.index') }}" class="p-1" title="Mi cuenta">
+                                <x-heroicon-o-user class="h-7 w-7 text-black" />
                             </a>
-                        @endif
-                    @endauth
+                        @endauth
+                        @guest
+                            <a href="{{ route('login') }}" class="p-1" title="Iniciar sesión">
+                                <x-heroicon-o-user class="h-7 w-7 text-black" />
+                            </a>
+                        @endguest
+
+                        {{-- CARRITO (solo cuenta items si está logueado) --}}
+                        @php
+                            $totalItems = 0;
+                            if (Auth::check()) {
+                                $carrito = \App\Models\Carrito::where('id_usuario', Auth::id())->first();
+                                $totalItems = $carrito ? $carrito->detalles()->sum('cantidad') : 0;
+                            }
+                        @endphp
+
+                        <a href="{{ route('carrito.index') }}" class="relative p-1" title="Carrito">
+                            <x-heroicon-o-shopping-bag class="h-7 w-7 text-black" />
+
+                            @if($totalItems > 0)
+                                <span class="absolute top-0 right-0 bg-red-500 text-white text-[9px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                                    {{ $totalItems }}
+                                </span>
+                            @endif
+                        </a>
+
+                        @auth
+                            @if(auth()->user()->id_rol == 1)
+                                <a href="{{ route('admin.dashboard') }}" class="hidden xl:block text-xs font-bold text-black border border-black px-3 py-1.5 rounded-full hover:bg-black hover:text-white transition-all duration-200 ml-1">
+                                    Admin
+                                </a>
+                            @endif
+                        @endauth
+                    @endif
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- LÍNEA SEPARADORA --}}
-    <div class="border-t border-gray-200"></div>
+    @unless($modoCarrito)
+        {{-- LÍNEA SEPARADORA --}}
+        <div class="border-t border-gray-200"></div>
 
-    {{-- FILA DE CATEGORÍAS CON FONDO #f1f1f1 --}}
-    <div class="bg-[#f1f1f1]">
-        <div class="w-full px-5 sm:px-8">
-            <div class="hidden md:flex items-center justify-center space-x-8 lg:space-x-10 py-3">
-                
-                {{-- LO NUEVO --}}
-                <a href="{{ route('home') }}" 
-                    class="text-base font-normal text-black">
-                    Lo nuevo
-                </a>
-
-                {{-- ✅ DROPDOWN DINÁMICO DE CATEGORÍAS --}}
-                @if(isset($categoriasMenu) && $categoriasMenu->count() > 0)
-                <div class="relative" 
-                     x-data="{ open: false }" 
-                     @mouseenter="open = true" 
-                     @mouseleave="open = false">
+        {{-- FILA DE CATEGORÍAS CON FONDO #f1f1f1 --}}
+        <div class="bg-[#f1f1f1]">
+            <div class="w-full px-5 sm:px-8">
+                <div class="hidden md:flex items-center justify-center space-x-8 lg:space-x-10 py-3">
                     
-                    <button class="text-base font-normal text-black flex items-center gap-1">
-                        Categorías
-                    </button>
+                    {{-- LO NUEVO --}}
+                    <a href="{{ route('home') }}" 
+                        class="text-base font-normal text-black">
+                        Lo nuevo
+                    </a>
 
-                    {{-- DROPDOWN --}}
-                    <div 
-                        x-show="open"
-                        x-cloak
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 -translate-y-2"
-                        x-transition:enter-end="opacity-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100"
-                        x-transition:leave-end="opacity-0 -translate-y-2"
-                        class="absolute top-full left-0 pt-2 z-50"
-                    >
-                        <div class="bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px]">
-                            @foreach($categoriasMenu as $cat)
-                                <a href="{{ route('home', ['categoria' => $cat->nombre_categoria]) }}"
-                                    class="block px-4 py-2.5 text-sm text-black hover:bg-[#f1f1f1] transition-colors">
-                                    {{ $cat->nombre_categoria }}
-                                </a>
-                            @endforeach
+                    {{-- DROPDOWN DINÁMICO DE CATEGORÍAS --}}
+                    @if(isset($categoriasMenu) && $categoriasMenu->count() > 0)
+                    <div class="relative" 
+                         x-data="{ open: false }" 
+                         @mouseenter="open = true" 
+                         @mouseleave="open = false">
+                        
+                        <button class="text-base font-normal text-black flex items-center gap-1">
+                            Categorías
+                        </button>
+
+                        {{-- DROPDOWN --}}
+                        <div 
+                            x-show="open"
+                            x-cloak
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-2"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0 -translate-y-2"
+                            class="absolute top-full left-0 pt-2 z-50"
+                        >
+                            <div class="bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px]">
+                                @foreach($categoriasMenu as $cat)
+                                    <a href="{{ route('home', ['categoria' => $cat->nombre_categoria]) }}"
+                                        class="block px-4 py-2.5 text-sm text-black hover:bg-[#f1f1f1] transition-colors">
+                                        {{ $cat->nombre_categoria }}
+                                    </a>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
-                </div>
-                @endif
+                    @endif
 
-                {{-- ACCESORIOS (categoría dinámica) --}}
-                <a href="{{ route('home', ['categoria' => 'Accesorios']) }}"
-                    class="text-base font-normal text-black">
-                    Accesorios
-                </a>
-
-                {{-- PROMOCIONES --}}
-                <a href="{{ route('home', ['promocion' => 1]) }}"
-                    class="text-base font-normal text-black">
-                    Promociones
-                </a>
-            </div>
-
-            {{-- MENÚ MÓVIL --}}
-            <div class="md:hidden flex items-center justify-center py-2">
-                <div class="flex space-x-4 text-xs font-normal">
-                    <a href="{{ route('home') }}" class="text-black">
-                        Inicio
-                    </a>
-                    <a href="{{ route('home') }}" class="text-black">
-                        Categorías
-                    </a>
-                    <a href="{{ route('home', ['categoria' => 'Accesorios']) }}" class="text-black">
+                    {{-- ACCESORIOS --}}
+                    <a href="{{ route('home', ['categoria' => 'Accesorios']) }}"
+                        class="text-base font-normal text-black">
                         Accesorios
                     </a>
-                    <a href="{{ route('home', ['promocion' => 1]) }}" class="text-black">
-                        Ofertas
+
+                    {{-- PROMOCIONES --}}
+                    <a href="{{ route('home', ['promocion' => 1]) }}"
+                        class="text-base font-normal text-black">
+                        Promociones
                     </a>
+                </div>
+
+                {{-- MENÚ MÓVIL --}}
+                <div class="md:hidden flex items-center justify-center py-2">
+                    <div class="flex space-x-4 text-xs font-normal">
+                        <a href="{{ route('home') }}" class="text-black">Inicio</a>
+                        <a href="{{ route('home') }}" class="text-black">Categorías</a>
+                        <a href="{{ route('home', ['categoria' => 'Accesorios']) }}" class="text-black">Accesorios</a>
+                        <a href="{{ route('home', ['promocion' => 1]) }}" class="text-black">Ofertas</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    @endunless
 
     {{-- BUSCADOR MÓVIL --}}
     <div

@@ -21,7 +21,7 @@ class Banner extends Model
     ];
 
     protected $casts = [
-        'estado' => 'boolean',
+        'estado' => 'integer',  // ← ✅ cambiado de 'boolean' a 'integer'
     ];
 
     public function scopeActivos($query)

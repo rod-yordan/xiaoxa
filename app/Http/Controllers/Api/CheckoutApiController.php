@@ -214,7 +214,7 @@ class CheckoutApiController extends Controller
 
     /**
      * Generar número de pedido único
-     * Formato: CLK-YYYYMMDD-XXX
+     * Formato: YYYYMMDD-XXX
      */
     private function generarNumeroPedido(): string
     {
@@ -222,6 +222,6 @@ class CheckoutApiController extends Controller
         $cantidad    = Pedido::whereDate('created_at', today())->count() + 1;
         $correlativo = str_pad($cantidad, 3, '0', STR_PAD_LEFT);
 
-        return "CLK-{$fecha}-{$correlativo}";
+        return "{$fecha}-{$correlativo}";
     }
 }

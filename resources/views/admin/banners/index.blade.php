@@ -4,298 +4,366 @@
 <div x-data="{ createModal: {{ $errors->any() ? 'true' : 'false' }} }">
 
     {{-- HEADER --}}
-    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-6">
         <div>
-            <p class="text-xs font-black uppercase tracking-widest text-indigo-500 mb-2">Marketing</p>
-            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">Banners</h1>
-            <p class="text-gray-500 mt-2 text-base sm:text-lg font-medium">Gestiona los banners del carrusel principal.</p>
+            <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Banners</h1>
+            <p class="text-gray-500 mt-2 text-lg font-medium">Gestiona los banners del carrusel principal.</p>
         </div>
+
         <button @click="createModal = true"
-            class="inline-flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3.5 sm:px-7 sm:py-4 rounded-2xl font-bold shadow-xl shadow-indigo-200 transition-all hover:-translate-y-1 active:scale-95 w-full sm:w-auto">
-            <x-heroicon-o-plus class="w-5 h-5" />
+            class="inline-flex items-center gap-3 bg-indigo-600 text-white px-7 py-4 rounded-2xl font-bold transition-colors duration-200">
+            <x-heroicon-o-plus class="w-6 h-6" />
             Nuevo Banner
         </button>
     </div>
 
-    <hr class="border-gray-100 mb-8">
-
-    {{-- GRID DE BANNERS --}}
+    {{-- GRID --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         @forelse($banners as $banner)
-            <div x-data="{ confirmDelete: false }"
-                class="group relative bg-white border border-gray-100 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500">
+            <div class="group relative bg-white border border-gray-200 overflow-hidden shadow-sm transition-all duration-300">
 
-                {{-- Imagen --}}
-                <div class="relative h-44 sm:h-52 bg-gray-100 overflow-hidden">
-
+                <div class="relative w-full h-56 bg-gray-100 overflow-hidden">
                     <img src="{{ url('/api/imagen/' . $banner->imagen) }}"
                          alt="{{ $banner->titulo }}"
-                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                         class="w-full h-full object-cover"
                          onerror="this.src='https://placehold.co/800x400/e5e7eb/9ca3af?text=Sin+imagen'">
 
-                    {{-- Badge Orden --}}
-                    <div class="absolute top-3 left-3 flex gap-2 flex-wrap">
-                        <span class="bg-black/60 backdrop-blur-sm text-white text-xs font-black px-3 py-1.5 rounded-full">
-                            # {{ $banner->orden }}
+                    <div class="absolute top-4 left-4 right-32">
+                        <span class="inline-block bg-black/70 backdrop-blur-sm text-white text-sm font-bold px-3 py-1.5 rounded-full truncate max-w-full shadow-lg">
+                            {{ $banner->titulo }}
                         </span>
                     </div>
 
-                    {{-- Estado --}}
-                    <div class="absolute top-3 right-3">
-                        <span class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-black uppercase tracking-wider
-                            {{ $banner->estado ? 'bg-emerald-500/90 text-white' : 'bg-gray-400/80 text-white' }}">
-                            <span class="w-1.5 h-1.5 rounded-full {{ $banner->estado ? 'bg-white' : 'bg-gray-200' }}"></span>
+                    <div class="absolute top-4 right-4">
+                        <span class="inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-md
+                            {{ $banner->estado
+                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                : 'bg-gray-100 text-gray-500 border border-gray-200' }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $banner->estado ? 'bg-emerald-500' : 'bg-gray-400' }}"></span>
                             {{ $banner->estado ? 'Activo' : 'Inactivo' }}
                         </span>
                     </div>
-                </div>
 
-                {{-- Contenido --}}
-                <div class="p-5 sm:p-6">
-                    <h3 class="text-lg sm:text-xl font-black text-gray-900 leading-tight">{{ $banner->titulo }}</h3>
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-12">
 
-                    @if($banner->url_boton)
-                    <div class="mt-3">
-                        <span class="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl truncate max-w-full">
-                            <x-heroicon-o-link class="w-3.5 h-3.5 flex-shrink-0" />
-                            <span class="truncate">{{ $banner->url_boton }}</span>
-                        </span>
-                    </div>
-                    @endif
-
-                    {{-- Acciones --}}
-                    <div class="pt-4 mt-4 border-t border-gray-50 flex flex-wrap items-center justify-between gap-3">
-                        <button @click="$dispatch('open-edit-banner', {{ $banner->toJson() }})"
-                            class="font-bold text-gray-600 hover:text-indigo-600 flex items-center gap-2 transition-colors text-sm">
-                            <x-heroicon-o-pencil-square class="w-4 h-4" />
-                            Editar
+                        <button @click="$dispatch('open-edit-banner', @js($banner))"
+                            class="flex flex-col items-center gap-2 transition-all hover:scale-110"
+                            title="Editar">
+                            <span class="w-14 h-14 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg">
+                                <x-heroicon-o-pencil-square class="w-7 h-7 text-white" />
+                            </span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-white">Editar</span>
                         </button>
-                        <div class="flex items-center gap-4">
-                            <form action="{{ route('admin.banners.toggle', $banner->id_banner) }}" method="POST">
-                                @csrf @method('PATCH')
-                                <button type="submit"
-                                    class="font-bold text-sm transition-colors {{ $banner->estado ? 'text-amber-500 hover:text-amber-600' : 'text-emerald-500 hover:text-emerald-600' }}">
-                                    {{ $banner->estado ? 'Desactivar' : 'Activar' }}
-                                </button>
-                            </form>
-                            <button @click="confirmDelete = true"
-                                class="font-bold text-sm text-rose-500 hover:text-rose-600 transition-colors">
-                                Eliminar
-                            </button>
-                        </div>
+
+                        <button @click="$dispatch('open-delete-banner', @js($banner))"
+                            class="flex flex-col items-center gap-2 transition-all hover:scale-110"
+                            title="Eliminar">
+                            <span class="w-14 h-14 rounded-full bg-rose-500 flex items-center justify-center shadow-lg">
+                                <x-heroicon-o-trash class="w-7 h-7 text-white" />
+                            </span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-white">Eliminar</span>
+                        </button>
                     </div>
                 </div>
-
-                {{-- Modal Confirmar Eliminar --}}
-                <template x-if="confirmDelete">
-                    <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                        <div @click="confirmDelete = false" class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"></div>
-                        <div class="relative bg-white rounded-[2rem] p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center mx-4">
-                            <div class="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <x-heroicon-o-trash class="w-8 h-8" />
-                            </div>
-                            <h3 class="text-xl font-black text-gray-900 mb-2">¿Eliminar banner?</h3>
-                            <p class="text-gray-500 font-medium mb-6 text-sm">
-                                Estás a punto de eliminar <span class="font-bold text-gray-800">"{{ $banner->titulo }}"</span>.
-                                Esta acción no se puede deshacer.
-                            </p>
-                            <form action="{{ route('admin.banners.destroy', $banner->id_banner) }}" method="POST" class="flex gap-3">
-                                @csrf @method('DELETE')
-                                <button type="button" @click="confirmDelete = false"
-                                    class="flex-1 py-3 bg-gray-100 text-gray-500 font-bold rounded-xl text-sm">Cancelar</button>
-                                <button type="submit"
-                                    class="flex-1 py-3 bg-rose-500 text-white font-bold rounded-xl shadow-lg text-sm">Eliminar</button>
-                            </form>
-                        </div>
-                    </div>
-                </template>
             </div>
         @empty
-            <div class="col-span-full py-16 text-center bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-200">
-                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <x-heroicon-o-photo class="w-8 h-8 text-gray-300" />
+            <div class="col-span-full py-20 text-center bg-white border-2 border-dashed border-gray-200">
+                <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <x-heroicon-o-photo class="w-8 h-8 text-indigo-600" />
                 </div>
-                <p class="text-gray-400 font-bold">No hay banners registrados.</p>
-                <p class="text-gray-300 font-medium mt-1 text-sm">Crea tu primer banner para el carrusel.</p>
+                <p class="text-gray-500 font-bold text-lg">No hay banners registrados.</p>
+                <p class="text-gray-400 font-medium mt-1">Crea tu primer banner para el carrusel.</p>
             </div>
         @endforelse
     </div>
 
-    {{-- ===================== MODAL CREAR BANNER ===================== --}}
+    {{-- MODAL CREAR --}}
     <template x-if="createModal">
-        <div class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
-            <div @click="createModal = false" class="absolute inset-0 bg-gray-900/60 backdrop-blur-xl"></div>
-            <div class="relative bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-10 w-full sm:max-w-2xl shadow-2xl max-h-[92vh] overflow-y-auto">
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+             x-data="{
+                errores: {},
+                submitForm(e) {
+                    this.errores = {};
 
-                <div class="flex justify-between items-start mb-6">
+                    const titulo = e.target.querySelector('input[name=titulo]').value.trim();
+                    if (!titulo) this.errores.titulo = true;
+
+                    const imagen = e.target.querySelector('input[name=imagen]').files.length;
+                    if (imagen === 0) this.errores.imagen = true;
+
+                    if (Object.keys(this.errores).length > 0) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    e.target.submit();
+                }
+             }">
+            <div @click="createModal = false" class="absolute inset-0 bg-gray-900/40 backdrop-blur-md"></div>
+            <div class="relative bg-white rounded-[2.5rem] p-10 max-w-2xl w-full shadow-2xl max-h-[92vh] overflow-y-auto">
+
+                <div class="flex justify-between items-start mb-8">
                     <div>
-                        <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Nuevo Banner</h2>
-                        <p class="text-gray-400 mt-1 font-medium italic text-sm">Configura el banner para el carrusel.</p>
+                        <h2 class="text-2xl font-bold text-gray-900">Nuevo Banner</h2>
+                        <p class="text-gray-500 mt-1 text-sm font-medium">Configura el banner para el carrusel.</p>
                     </div>
-                    <button @click="createModal = false"
-                        class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-500 transition ml-4 flex-shrink-0">
-                        <x-heroicon-o-x-mark class="w-5 h-5" />
+                    <button @click="createModal = false" class="text-gray-500 transition -mt-1">
+                        <x-heroicon-o-x-mark class="w-6 h-6" />
                     </button>
                 </div>
 
-                <form action="{{ route('admin.banners.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <form action="{{ route('admin.banners.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4"
+                      @submit.prevent="submitForm($event)">
                     @csrf
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {{-- Título --}}
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                Título * <span class="font-medium normal-case text-gray-300">(solo uso interno)</span>
-                            </label>
-                            <input type="text" name="titulo" required value="{{ old('titulo') }}" placeholder="Ej: Banner Verano 2026"
-                                class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-bold transition-all text-sm sm:text-base">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-800 mb-2 ml-1">Título:</label>
+                        <input type="text" name="titulo" value="{{ old('titulo') }}"
+                            class="w-full px-4 py-1.5 bg-gray-50 border rounded-full focus:outline-none focus:border-gray-400 text-[14px] font-medium transition-colors"
+                            :class="errores.titulo ? 'border-rose-500' : 'border-gray-200'">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-800 mb-2 ml-1">URL de redireccionamiento:</label>
+                        <input type="text" name="url_boton" value="{{ old('url_boton') }}"
+                            class="w-full px-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:border-gray-400 text-[14px] font-medium transition-colors">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div class="flex items-center gap-2">
+                            <label class="text-[14px] font-bold text-gray-800 shrink-0">Orden de aparición:</label>
+                            <input name="orden" type="text" inputmode="numeric" value="{{ old('orden', 0) }}"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors">
                         </div>
 
-                        {{-- URL del Botón --}}
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                URL del Banner <span class="font-medium normal-case text-gray-300">(a dónde redirige al hacer clic)</span>
-                            </label>
-                            <input type="text" name="url_boton" value="{{ old('url_boton') }}" placeholder="Ej: https://xiaoxa.com/?categoria=Blusas o https://xiaoxa.com/producto/15"
-                                class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
-                            <p class="text-xs text-gray-400 mt-1 ml-1">💡 Copia la URL desde el navegador y pégala aquí. El banner completo será clickeable.</p>
-                        </div>
+                        <div class="flex items-center gap-2" x-data="{ open: false, estado: '{{ old('estado', 1) }}', estadoTexto: '{{ old('estado', 1) == 1 ? 'Activo' : 'Inactivo' }}' }">
+                            <label class="text-[14px] font-bold text-gray-800 shrink-0">Estado:</label>
+                            <input type="hidden" name="estado" :value="estado">
+                            <div class="relative w-full">
+                                <button type="button" @click="open = !open"
+                                    class="w-full flex items-center justify-between gap-2 pl-4 pr-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 cursor-pointer focus:outline-none focus:border-gray-400 transition-colors">
+                                    <span x-text="estadoTexto"></span>
+                                    <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
+                                </button>
 
-                        {{-- Orden --}}
-                        <div>
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Orden</label>
-                            <input type="number" name="orden" value="{{ old('orden', 0) }}" min="0"
-                                class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-bold transition-all text-sm">
+                                <div x-show="open" @click.outside="open = false"
+                                     x-transition:enter="transition ease-out duration-150"
+                                     x-transition:enter-start="opacity-0 -translate-y-1"
+                                     x-transition:enter-end="opacity-100 translate-y-0"
+                                     x-transition:leave="transition ease-in duration-100"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0"
+                                     class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                                    <div class="max-h-64 overflow-y-auto py-1">
+                                        <button type="button" @click="estado = '1'; estadoTexto = 'Activo'; open = false"
+                                            class="w-full text-left px-4 py-2 text-sm text-gray-600 transition">
+                                            Activo
+                                        </button>
+                                        <button type="button" @click="estado = '0'; estadoTexto = 'Inactivo'; open = false"
+                                            class="w-full text-left px-4 py-2 text-sm text-gray-600 transition">
+                                            Inactivo
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                    </div>
 
-                        {{-- Estado --}}
-                        <div>
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Estado</label>
-                            <select name="estado"
-                                class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
-                                <option value="1" {{ old('estado', 1) == 1 ? 'selected' : '' }}>Activo</option>
-                                <option value="0" {{ old('estado') === '0' ? 'selected' : '' }}>Inactivo</option>
-                            </select>
-                        </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-800 mb-2 ml-1">Imagen:</label>
+                        <label x-data="{ fileName: '' }"
+                            class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-2xl cursor-pointer transition-all"
+                            :class="errores.imagen ? 'border-rose-500 bg-rose-50/30' : 'border-gray-300 bg-gray-50 hover:border-indigo-400'">
 
-                        {{-- Imagen --}}
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Imagen *</label>
-                            <label x-data="{ fileName: '' }"
-                                class="flex flex-col items-center justify-center w-full h-28 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/40 transition-all group">
-                                <x-heroicon-o-cloud-arrow-up class="w-8 h-8 text-gray-300 group-hover:text-indigo-400 transition-colors mb-2" />
-                                <span class="text-sm font-bold text-gray-400 group-hover:text-indigo-500 px-4 text-center"
-                                    x-text="fileName || 'Haz clic para subir imagen'"></span>
-                                <span class="text-xs text-gray-300 mt-1">JPG, PNG, WEBP — Max 2MB</span>
-                                <input type="file" name="imagen" required accept="image/jpeg,image/png,image/webp" class="hidden"
-                                    @change="fileName = $event.target.files[0]?.name || ''">
-                            </label>
-                        </div>
+                            <div :class="errores.imagen ? 'text-rose-500' : 'text-gray-300'" class="transition-colors mb-2">
+                                <x-heroicon-o-cloud-arrow-up class="w-8 h-8" />
+                            </div>
+
+                            <span class="text-sm font-bold px-4 text-center"
+                                :class="errores.imagen ? 'text-rose-500' : 'text-gray-400'"
+                                x-text="fileName || 'Haz clic para subir imagen'"></span>
+                            <span class="text-xs mt-1"
+                                :class="errores.imagen ? 'text-rose-400' : 'text-gray-300'">JPG, PNG, WEBP — Max 2MB</span>
+                            <input type="file" name="imagen" accept="image/jpeg,image/png,image/webp" class="hidden"
+                                @change="fileName = $event.target.files[0]?.name || ''; delete errores.imagen">
+                        </label>
                     </div>
 
                     <div class="flex gap-3 pt-2">
                         <button type="button" @click="createModal = false"
-                            class="flex-1 py-4 bg-gray-100 text-gray-500 font-bold rounded-2xl hover:bg-gray-200 transition text-sm">Cancelar</button>
+                            class="flex-1 py-3.5 bg-gray-100 text-gray-700 font-bold rounded-full text-sm transition">
+                            Cancelar
+                        </button>
                         <button type="submit"
-                            class="flex-[2] py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 shadow-lg transition-all active:scale-95 text-sm">Crear Banner</button>
+                            class="flex-1 py-3.5 bg-black text-white font-bold rounded-full text-sm transition">
+                            Aceptar
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </template>
 
-    {{-- ===================== MODAL EDITAR BANNER ===================== --}}
-    <div x-data="{ editModal: false, banner: {} }"
-         @open-edit-banner.window="banner = $event.detail; editModal = true">
-        <template x-if="editModal">
-            <div class="fixed inset-0 z-[110] flex items-end sm:items-center justify-center">
-                <div @click="editModal = false" class="absolute inset-0 bg-gray-900/60 backdrop-blur-xl"></div>
-                <div class="relative bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-10 w-full sm:max-w-2xl shadow-2xl max-h-[92vh] overflow-y-auto">
+    {{-- MODAL EDITAR --}}
+    <div x-data="{
+            editModal: false,
+            banner: {},
+            estadoEdit: '1',
+            estadoTextoEdit: 'Activo',
+            errores: {},
+            submitEdit(e) {
+                this.errores = {};
 
-                    <div class="flex justify-between items-start mb-6">
+                const titulo = e.target.querySelector('input[name=titulo]').value.trim();
+                if (!titulo) this.errores.titulo = true;
+
+                if (Object.keys(this.errores).length > 0) {
+                    e.preventDefault();
+                    return;
+                }
+
+                e.target.submit();
+            }
+        }"
+        @open-edit-banner.window="
+            banner = $event.detail;
+            estadoEdit = String(banner.estado);
+            estadoTextoEdit = (banner.estado == 1) ? 'Activo' : 'Inactivo';
+            errores = {};
+            editModal = true;
+        ">
+        <template x-if="editModal">
+            <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                <div @click="editModal = false" class="absolute inset-0 bg-gray-900/40 backdrop-blur-md"></div>
+                <div class="relative bg-white rounded-[2.5rem] p-10 max-w-2xl w-full shadow-2xl max-h-[92vh] overflow-y-auto">
+
+                    <div class="flex justify-between items-start mb-8">
                         <div>
-                            <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Editar Banner</h2>
-                            <p class="text-gray-400 mt-1 font-medium italic text-sm">Modifica los datos del banner.</p>
+                            <h2 class="text-2xl font-bold text-gray-900">Editar Banner</h2>
+                            <p class="text-gray-500 mt-1 text-sm font-medium">Modifica los datos del banner.</p>
                         </div>
-                        <button @click="editModal = false"
-                            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-500 transition ml-4 flex-shrink-0">
-                            <x-heroicon-o-x-mark class="w-5 h-5" />
+                        <button @click="editModal = false" class="text-gray-500 transition -mt-1">
+                            <x-heroicon-o-x-mark class="w-6 h-6" />
                         </button>
                     </div>
 
-                    <form :action="`/admin/banners/${banner.id_banner}`" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <form :action="`/admin/banners/${banner.id_banner}`" method="POST" enctype="multipart/form-data" class="space-y-4"
+                          @submit.prevent="submitEdit($event)">
                         @csrf
                         <input type="hidden" name="_method" value="PUT">
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {{-- Título --}}
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                    Título * <span class="font-medium normal-case text-gray-300">(solo uso interno)</span>
-                                </label>
-                                <input type="text" name="titulo" :value="banner.titulo" required
-                                    class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-bold transition-all text-sm sm:text-base">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-800 mb-2 ml-1">Título:</label>
+                            <input type="text" name="titulo" :value="banner.titulo"
+                                class="w-full px-4 py-1.5 bg-gray-50 border rounded-full focus:outline-none focus:border-gray-400 text-[14px] font-medium transition-colors"
+                                :class="errores.titulo ? 'border-rose-500' : 'border-gray-200'">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-800 mb-2 ml-1">URL de redireccionamiento:</label>
+                            <input type="text" name="url_boton" :value="banner.url_boton"
+                                class="w-full px-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:border-gray-400 text-[14px] font-medium transition-colors">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Orden de aparición:</label>
+                                <input name="orden" type="text" inputmode="numeric" :value="banner.orden"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                    class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors">
                             </div>
 
-                            {{-- URL del Botón --}}
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                    URL del Banner <span class="font-medium normal-case text-gray-300">(a dónde redirige al hacer clic)</span>
-                                </label>
-                                <input type="text" name="url_boton" :value="banner.url_boton"
-                                    class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm">
-                            </div>
+                            <div class="flex items-center gap-2" x-data="{ open: false }">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Estado:</label>
+                                <input type="hidden" name="estado" :value="estadoEdit">
+                                <div class="relative w-full">
+                                    <button type="button" @click="open = !open"
+                                        class="w-full flex items-center justify-between gap-2 pl-4 pr-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 cursor-pointer focus:outline-none focus:border-gray-400 transition-colors">
+                                        <span x-text="estadoTextoEdit"></span>
+                                        <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
+                                    </button>
 
-                            {{-- Orden --}}
-                            <div>
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Orden</label>
-                                <input type="number" name="orden" :value="banner.orden" min="0"
-                                    class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-bold transition-all text-sm">
-                            </div>
-
-                            {{-- Estado --}}
-                            <div>
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Estado</label>
-                                <select name="estado"
-                                    class="w-full px-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 outline-none font-semibold transition-all text-sm"
-                                    x-init="$el.value = banner.estado">
-                                    <option value="1">Activo</option>
-                                    <option value="0">Inactivo</option>
-                                </select>
-                            </div>
-
-                            {{-- Preview imagen actual --}}
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Imagen actual</label>
-                                <div class="relative w-full h-32 rounded-2xl overflow-hidden bg-gray-100">
-                                    <img :src="`/api/imagen/${banner.imagen}`"
-                                         :alt="banner.titulo"
-                                         class="w-full h-full object-cover">
+                                    <div x-show="open" @click.outside="open = false"
+                                         x-transition:enter="transition ease-out duration-150"
+                                         x-transition:enter-start="opacity-0 -translate-y-1"
+                                         x-transition:enter-end="opacity-100 translate-y-0"
+                                         x-transition:leave="transition ease-in duration-100"
+                                         x-transition:leave-start="opacity-100"
+                                         x-transition:leave-end="opacity-0"
+                                         class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                                        <div class="max-h-64 overflow-y-auto py-1">
+                                            <button type="button" @click="estadoEdit = '1'; estadoTextoEdit = 'Activo'; open = false"
+                                                class="w-full text-left px-4 py-2 text-sm text-gray-600 transition">
+                                                Activo
+                                            </button>
+                                            <button type="button" @click="estadoEdit = '0'; estadoTextoEdit = 'Inactivo'; open = false"
+                                                class="w-full text-left px-4 py-2 text-sm text-gray-600 transition">
+                                                Inactivo
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
 
-                            {{-- Reemplazar imagen --}}
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                    Reemplazar Imagen <span class="font-medium normal-case text-gray-300">(opcional)</span>
-                                </label>
-                                <label x-data="{ fileName: '' }"
-                                    class="flex flex-col items-center justify-center w-full h-24 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/40 transition-all group">
-                                    <x-heroicon-o-arrow-path class="w-7 h-7 text-gray-300 group-hover:text-indigo-400 transition-colors mb-1" />
-                                    <span class="text-sm font-bold text-gray-400 group-hover:text-indigo-500 px-4 text-center"
-                                        x-text="fileName || 'Haz clic para cambiar imagen'"></span>
-                                    <input type="file" name="imagen" accept="image/jpeg,image/png,image/webp" class="hidden"
-                                        @change="fileName = $event.target.files[0]?.name || ''">
-                                </label>
-                            </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-800 mb-2 ml-1">Imagen:</label>
+                            <label x-data="{ fileName: '' }" class="relative block w-full h-48 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200 cursor-pointer group">
+                                <img :src="`/api/imagen/${banner.imagen}`"
+                                     :alt="banner.titulo"
+                                     class="w-full h-full object-cover">
+
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                                    <x-heroicon-o-arrow-path class="w-8 h-8 mb-2" />
+                                    <span class="text-sm font-bold" x-text="fileName || 'Cambiar imagen'"></span>
+                                </div>
+
+                                <input type="file" name="imagen" accept="image/jpeg,image/png,image/webp" class="hidden"
+                                    @change="fileName = $event.target.files[0]?.name || ''">
+                            </label>
                         </div>
 
                         <div class="flex gap-3 pt-2">
                             <button type="button" @click="editModal = false"
-                                class="flex-1 py-4 bg-gray-100 text-gray-500 font-bold rounded-2xl hover:bg-gray-200 transition text-sm">Cancelar</button>
+                                class="flex-1 py-3.5 bg-gray-100 text-gray-700 font-bold rounded-full text-sm transition">
+                                Cancelar
+                            </button>
                             <button type="submit"
-                                class="flex-[2] py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 shadow-lg transition-all active:scale-95 text-sm">Guardar Cambios</button>
+                                class="flex-1 py-3.5 bg-black text-white font-bold rounded-full text-sm transition">
+                                Aceptar
+                            </button>
                         </div>
+                    </form>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    {{-- MODAL ELIMINAR --}}
+    <div x-data="{ deleteModal: false, bannerDelete: {} }"
+         @open-delete-banner.window="bannerDelete = $event.detail; deleteModal = true">
+        <template x-if="deleteModal">
+            <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                <div @click="deleteModal = false" class="absolute inset-0 bg-gray-900/40 backdrop-blur-md"></div>
+                <div class="relative bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl text-center">
+                    <div class="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <x-heroicon-o-exclamation-triangle class="w-10 h-10" />
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">¿Estás seguro?</h3>
+                    <p class="text-gray-500 font-medium mb-8">
+                        Vas a eliminar <span class="font-bold text-gray-800" x-text="bannerDelete.titulo"></span>.
+                    </p>
+                    <form :action="`/admin/banners/${bannerDelete.id_banner}`" method="POST" class="flex gap-3">
+                        @csrf @method('DELETE')
+                        <button type="button" @click="deleteModal = false"
+                            class="flex-1 py-3.5 bg-gray-100 text-gray-700 font-bold rounded-full text-sm transition">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="flex-1 py-3.5 bg-black text-white font-bold rounded-full text-sm transition">
+                            Aceptar
+                        </button>
                     </form>
                 </div>
             </div>

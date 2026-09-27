@@ -22,27 +22,34 @@
 
     <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-10 text-center max-w-lg mx-auto">
 
-        {{-- Icono éxito --}}
-        <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        {{-- Icono fallo --}}
+        <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </div>
 
         <h1 class="text-3xl font-bold text-gray-900 mb-3">
-            ¡Compra exitosa!
+            El pago no se pudo procesar
         </h1>
 
         <p class="text-gray-500 text-sm leading-relaxed mb-8">
-            Su pedido fue registrado. Una vez sea enviado, podrá ver en
-            <span class="font-semibold text-gray-700">"Mis pedidos"</span>
-            la dirección donde deberá recoger su pedido.
+            Tu pago fue rechazado. Puedes intentar nuevamente desde tu
+            <span class="font-semibold text-gray-700">"Mi bolsa"</span>
+            o contactar a tu banco si el problema persiste.
         </p>
 
-        <a href="{{ route('perfil.index') }}?seccion=pedidos"
-           class="block w-full border border-gray-200 rounded-full py-3.5 text-sm font-semibold hover:bg-gray-50 transition-colors">
-            Ver mis pedidos
-        </a>
+        <div class="space-y-3">
+            <a href="{{ route('carrito.index') }}"
+               class="block w-full bg-gray-900 text-white rounded-full py-3.5 text-sm font-semibold hover:bg-gray-800 transition-colors">
+                Volver a intentar
+            </a>
+
+            <a href="{{ route('perfil.index') }}?seccion=pedidos"
+               class="block w-full border border-gray-200 rounded-full py-3.5 text-sm font-semibold hover:bg-gray-50 transition-colors">
+                Ver mis pedidos
+            </a>
+        </div>
 
     </div>
 </div>

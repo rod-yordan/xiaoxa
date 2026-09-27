@@ -24,6 +24,16 @@
         ]))
         ->unique('ruta')
         ->values();
+
+    $esColorClaro = function ($hex) {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) !== 6) return false;
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+        $luminancia = (0.299 * $r + 0.587 * $g + 0.114 * $b);
+        return $luminancia > 230;
+    };
 @endphp
 
 {{-- ===== BREADCRUMB ===== --}}
@@ -56,7 +66,6 @@
         <div class="w-full lg:w-[65%] min-w-0">
             <div class="flex min-w-0">
 
-                {{-- Miniaturas verticales --}}
                 <div class="flex flex-col gap-2 w-[72px] shrink-0 max-h-[800px] overflow-y-auto scroll-gallery pr-1">
                     @foreach($todasLasImagenes as $index => $img)
                         <button type="button"
@@ -67,7 +76,6 @@
                     @endforeach
                 </div>
 
-                {{-- Imagen principal --}}
                 <div class="flex-1 min-w-0 relative overflow-hidden flex items-start justify-center">
                     <div class="imagen-principal-wrapper">
                         <img id="imagen-principal"
@@ -137,10 +145,11 @@
                     @foreach($coloresUnicos as $c)
                         <button type="button"
                                 onclick="seleccionarColor(this, '{{ $c['nombre'] }}', '{{ $c['hex'] }}')"
-                                class="color-btn w-9 h-9 rounded-full border-2 border-gray-200 hover:border-gray-400 transition-all box-border"
-                                style="background-color: {{ $c['hex'] }};"
+                                class="color-btn w-10 h-10 rounded-full transition-all box-border {{ $esColorClaro($c['hex']) ? 'color-claro' : '' }}"
+                                style="--color: {{ $c['hex'] }}; background-color: var(--color);"
                                 data-color="{{ $c['nombre'] }}"
                                 data-color-hex="{{ $c['hex'] }}"
+                                data-claro="{{ $esColorClaro($c['hex']) ? '1' : '0' }}"
                                 title="{{ $c['nombre'] }}">
                         </button>
                     @endforeach
@@ -207,7 +216,6 @@
 
 @push('styles')
 <style>
-    /* ===== Imagen principal: contenedor con aspect 4/5 fijo y altura máxima ===== */
     .imagen-principal-wrapper {
         position: relative;
         width: 100%;
@@ -230,13 +238,33 @@
     .thumbnail-btn { transition: all 0.2s ease; }
     .thumbnail-active { border-color: #111 !important; border-width: 2px !important; }
 
+    /* ===== Color-btn ===== */
+    /* Sin borde. El anillo se pinta solo con inset box-shadow dejando ver 3px del color del fondo como borde */
     .color-btn {
         box-sizing: border-box;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        border: 0;
+        transition: box-shadow 0.2s ease;
     }
+
+    /* Anillo blanco a 3px del borde: los 3px exteriores son color del fondo */
     .color-btn.color-activo {
-        border-color: #111 !important;
-        box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px #111;
+        box-shadow: inset 0 0 0 2px var(--color), inset 0 0 0 4px #fff;
+    }
+
+    /* Anillo negro para colores claros */
+    .color-btn.color-activo-negro {
+        box-shadow: inset 0 0 0 2px var(--color), inset 0 0 0 4px #111;
+    }
+
+    /* Colores claros: borde gris muy sutil para que se distingan del fondo blanco */
+    .color-btn.color-claro {
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+    }
+    .color-btn.color-claro.color-activo {
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08), inset 0 0 0 3px var(--color), inset 0 0 0 5px #fff;
+    }
+    .color-btn.color-claro.color-activo-negro {
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08), inset 0 0 0 3px var(--color), inset 0 0 0 5px #111;
     }
 
     .talla-btn {
@@ -259,7 +287,6 @@
         cursor: not-allowed;
     }
 
-    /* ===== Scrollbar de la galería: solo vertical, sin línea horizontal ===== */
     .scroll-gallery { overflow-x: hidden; }
     .scroll-gallery::-webkit-scrollbar { width: 3px; height: 0; }
     .scroll-gallery::-webkit-scrollbar-track { background: transparent; }
@@ -336,9 +363,14 @@
         document.getElementById('input-color').value = nombre;
 
         document.querySelectorAll('.color-btn').forEach(btn => {
-            btn.classList.remove('color-activo');
+            btn.classList.remove('color-activo', 'color-activo-negro');
         });
-        elemento.classList.add('color-activo');
+
+        if (elemento.dataset.claro === '1') {
+            elemento.classList.add('color-activo-negro');
+        } else {
+            elemento.classList.add('color-activo');
+        }
 
         mostrarPrimeraImagenDelColor(nombre);
 
@@ -454,8 +486,15 @@
             colorSeleccionado = primera.color;
             document.getElementById('color-seleccionado').innerText = primera.color;
             document.getElementById('input-color').value = primera.color;
-            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('color-activo'));
-            btnColor.classList.add('color-activo');
+
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('color-activo', 'color-activo-negro'));
+
+            if (btnColor.dataset.claro === '1') {
+                btnColor.classList.add('color-activo-negro');
+            } else {
+                btnColor.classList.add('color-activo');
+            }
+
             bloquearTallasPorColor();
         }
 
