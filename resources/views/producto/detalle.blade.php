@@ -239,32 +239,31 @@
     .thumbnail-active { border-color: #111 !important; border-width: 2px !important; }
 
     /* ===== Color-btn ===== */
-    /* Sin borde. El anillo se pinta solo con inset box-shadow dejando ver 3px del color del fondo como borde */
     .color-btn {
         box-sizing: border-box;
         border: 0;
         transition: box-shadow 0.2s ease;
     }
 
-    /* Anillo blanco a 3px del borde: los 3px exteriores son color del fondo */
+    /* Color oscuro seleccionado: anillo color 3px + anillo exterior blanco 1.5px */
     .color-btn.color-activo {
-        box-shadow: inset 0 0 0 2px var(--color), inset 0 0 0 4px #fff;
+        box-shadow: inset 0 0 0 3px var(--color), inset 0 0 0 4.5px #fff;
     }
 
-    /* Anillo negro para colores claros */
+    /* Color claro seleccionado: anillo color 3px + anillo exterior gris 1.5px */
     .color-btn.color-activo-negro {
-        box-shadow: inset 0 0 0 2px var(--color), inset 0 0 0 4px #111;
+        box-shadow: inset 0 0 0 3px var(--color), inset 0 0 0 4.5px #aaa;
     }
 
-    /* Colores claros: borde gris muy sutil para que se distingan del fondo blanco */
+    /* Colores claros sin seleccionar: borde gris muy sutil */
     .color-btn.color-claro {
         box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
     }
     .color-btn.color-claro.color-activo {
-        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08), inset 0 0 0 3px var(--color), inset 0 0 0 5px #fff;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08), inset 0 0 0 4px var(--color), inset 0 0 0 5.5px #fff;
     }
     .color-btn.color-claro.color-activo-negro {
-        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08), inset 0 0 0 3px var(--color), inset 0 0 0 5px #111;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08), inset 0 0 0 4px var(--color), inset 0 0 0 5.5px #aaa;
     }
 
     .talla-btn {

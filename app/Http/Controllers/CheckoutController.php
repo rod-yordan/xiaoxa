@@ -37,7 +37,7 @@ class CheckoutController extends Controller
             ->where('id_usuario', Auth::id())
             ->first();
         $departamentos  = Departamento::all();
-        $tiposEntrega   = TipoEntrega::where('estado', 1)->get();
+        $tiposEntrega   = TipoEntrega::all();
         $tiposDocumento = TipoDocumento::all();
 
         return view('carrito.checkout', compact(
@@ -61,6 +61,7 @@ class CheckoutController extends Controller
             'id_departamento'    => 'nullable|integer|exists:departamento,id_departamento',
             'provincia'          => 'nullable|string|max:100',
             'distrito'           => 'nullable|string|max:100',
+            'costo_envio'        => 'nullable|numeric|min:0', // ← nuevo
         ]);
 
         // ✅ Guardar datos personales del usuario (permanente)
@@ -87,14 +88,14 @@ class CheckoutController extends Controller
             }
         }
 
-        // ── Calcular total e items para MP ──────────────────────────────────
-        $total = 0;
-        $items = [];
+        // ── Calcular subtotal e items para MP ───────────────────────────────
+        $subtotal = 0;
+        $items    = [];
 
         foreach ($carrito->detalles as $detalle) {
             $producto = $detalle->variante->producto;
             $precio   = $producto->precio_oferta ?? $producto->precio;
-            $total   += $precio * $detalle->cantidad;
+            $subtotal += $precio * $detalle->cantidad;
 
             $items[] = [
                 "title"       => $producto->nombre_producto
@@ -108,18 +109,40 @@ class CheckoutController extends Controller
 
         $esEnvio = (int) $request->id_tipo_entrega === 2;
 
+        // ── Calcular costo de envío (recalculado en backend por seguridad) ──
+        $costoEnvio = 0;
+        if ($esEnvio && $request->id_departamento) {
+            $dep = Departamento::find($request->id_departamento);
+            $costoEnvio = $dep ? (float) $dep->costo_envio : 0;
+        }
+
+        // ── Total final = subtotal + envío ──────────────────────────────────
+        $total = $subtotal + $costoEnvio;
+
+        // Si hay costo de envío, agregarlo como item a MP (para que el total cuadre)
+        if ($costoEnvio > 0) {
+            $items[] = [
+                "title"       => "Costo de envío",
+                "quantity"    => 1,
+                "unit_price"  => (float) $costoEnvio,
+                "currency_id" => "PEN",
+            ];
+        }
+
         // ── Guardar TODO el checkout en caché (2 horas) ─────────────────────
         $referencia = 'CHK-' . Auth::id() . '-' . uniqid();
 
         $checkoutData = [
-            'id_usuario'       => Auth::id(),
-            'total'            => $total,
-            'id_tipo_entrega'  => (int) $request->id_tipo_entrega,
-            'id_departamento'  => $esEnvio ? (int) $request->id_departamento : null,
-            'provincia'        => $esEnvio ? $request->provincia : null,
-            'distrito'         => $esEnvio ? $request->distrito : null,
-            'lugar_recojo'     => $esEnvio ? null : 'Jr. Cajamarca N° 396 - Huancayo',
-            'items'            => collect($carrito->detalles)->map(fn($d) => [
+            'id_usuario'        => Auth::id(),
+            'subtotal'          => $subtotal,
+            'costo_envio'       => $costoEnvio,   // ← nuevo
+            'total'             => $total,
+            'id_tipo_entrega'   => (int) $request->id_tipo_entrega,
+            'id_departamento'   => $esEnvio ? (int) $request->id_departamento : null,
+            'provincia'         => $esEnvio ? $request->provincia : null,
+            'distrito'          => $esEnvio ? $request->distrito : null,
+            'direccion_entrega' => $esEnvio ? null : 'Jr. Cajamarca N° 396 - Huancayo',
+            'items'             => collect($carrito->detalles)->map(fn($d) => [
                 'id_variante'     => $d->id_variante,
                 'cantidad'        => $d->cantidad,
                 'precio_unitario' => $d->variante->producto->precio_oferta
@@ -129,14 +152,16 @@ class CheckoutController extends Controller
 
         Cache::put("checkout:{$referencia}", $checkoutData, now()->addHours(2));
 
-        // 🔍 TEMPORAL: log para debug (ver la referencia en el log)
+        // 🔍 Log de debug
         \Log::info('Checkout guardado', [
-            'referencia'      => $referencia,
-            'id_tipo_entrega' => $checkoutData['id_tipo_entrega'],   // ← AGREGAR
-            'lugar_recojo'    => $checkoutData['lugar_recojo'],       // ← AGREGAR
-            'total'           => $total,
-            'items_count'     => count($checkoutData['items']),
-            'id_usuario'      => Auth::id(),
+            'referencia'        => $referencia,
+            'id_tipo_entrega'   => $checkoutData['id_tipo_entrega'],
+            'id_departamento'   => $checkoutData['id_departamento'],
+            'subtotal'          => $subtotal,
+            'costo_envio'       => $costoEnvio,
+            'total'             => $total,
+            'items_count'       => count($checkoutData['items']),
+            'id_usuario'        => Auth::id(),
         ]);
 
         // ── Crear preferencia en MP ─────────────────────────────────────────
@@ -162,7 +187,6 @@ class CheckoutController extends Controller
             ],
         ];
 
-        // auto_return solo en producción con HTTPS (MP lo rechaza en local)
         if (app()->environment('production') && str_starts_with(config('app.url'), 'https://')) {
             $preferenceData['auto_return'] = 'approved';
         }
@@ -176,7 +200,6 @@ class CheckoutController extends Controller
             ]);
         }
 
-        // URL según entorno
         $url = app()->environment('production')
             ? $preference->init_point
             : $preference->sandbox_init_point;

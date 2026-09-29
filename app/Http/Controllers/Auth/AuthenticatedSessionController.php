@@ -24,16 +24,19 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        // Sin try/catch: el LoginRequest ya lanza los errores específicos
+        // con las claves 'correo' o 'contrasena' según corresponda.
         $request->authenticate();
 
         $request->session()->regenerate();
+
         if ((int) Auth::user()->id_rol === 1) {
             return redirect()->intended(route('admin.dashboard'));
         }
 
-        // Si es un usuario normal va a la interfaz inicial
         return redirect()->intended('/');
     }
+
     /**
      * Destroy an authenticated session.
      */

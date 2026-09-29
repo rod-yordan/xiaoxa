@@ -8,41 +8,26 @@ return new class extends Migration
 {
     public function up(): void
     {
-        /*
-        =====================================
-        ROLES
-        =====================================
-        */
+        // Roles
         Schema::create('rol', function (Blueprint $table) {
             $table->id('id_rol');
             $table->string('nombre_rol', 50);
         });
 
-        /*
-        =====================================
-        TIPO DOCUMENTO
-        =====================================
-        */
+        // Tipo documento
         Schema::create('tipo_documento', function (Blueprint $table) {
             $table->id('id_tipo_documento');
             $table->string('nombre_tipo_documento', 50);
         });
 
-        /*
-        =====================================
-        DEPARTAMENTO (lista fija)
-        =====================================
-        */
+        // Departamento 
         Schema::create('departamento', function (Blueprint $table) {
             $table->id('id_departamento');
             $table->string('nombre_departamento', 100);
+            $table->decimal('costo_envio', 10, 2)->default(0);
         });
 
-        /*
-        =====================================
-        USUARIO
-        =====================================
-        */
+        // Usuario
         Schema::create('usuario', function (Blueprint $table) {
             $table->id('id_usuario');
 
@@ -56,11 +41,10 @@ return new class extends Migration
             $table->string('numero_documento', 20)->nullable();
             $table->string('telefono', 20)->nullable();
 
-            // Ubicación del usuario (opcional, texto libre + departamento)
+            // Ubicación del usuario
             $table->unsignedBigInteger('id_departamento')->nullable();
             $table->string('provincia', 100)->nullable();
             $table->string('distrito', 100)->nullable();
-            $table->string('direccion', 255)->nullable();
 
             $table->unsignedBigInteger('id_tipo_documento')->nullable();
             $table->unsignedBigInteger('id_rol')->default(2);
@@ -78,21 +62,7 @@ return new class extends Migration
                   ->references('id_rol')->on('rol');
         });
 
-        /*
-        =====================================
-        GENERO
-        =====================================
-        */
-        Schema::create('genero', function (Blueprint $table) {
-            $table->id('id_genero');
-            $table->string('nombre_genero', 20);
-        });
-
-        /*
-        =====================================
-        CATEGORIA
-        =====================================
-        */
+        // Categoria
         Schema::create('categoria', function (Blueprint $table) {
             $table->id('id_categoria');
             $table->string('nombre_categoria', 50);
@@ -100,26 +70,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        /*
-        =====================================
-        PROMOCIONES
-        =====================================
-        */
-        Schema::create('promociones', function (Blueprint $table) {
-            $table->id('id_promocion');
-            $table->string('nombre_promocion', 50);
-            $table->text('descripcion')->nullable();
-            $table->decimal('descuento', 6, 2);
-            $table->dateTime('fecha_inicio');
-            $table->dateTime('fecha_fin');
-            $table->boolean('estado_promocion')->default(1);
-        });
-
-        /*
-        =====================================
-        PRODUCTO
-        =====================================
-        */
+        // Producto
         Schema::create('producto', function (Blueprint $table) {
             $table->id('id_producto');
 
@@ -132,22 +83,14 @@ return new class extends Migration
             $table->string('marca', 50)->nullable();
             $table->boolean('estado_producto')->default(1);
 
-            $table->unsignedBigInteger('id_genero')->nullable();
             $table->unsignedBigInteger('id_categoria')->nullable();
-            $table->unsignedBigInteger('id_promocion')->nullable();
 
             $table->timestamps();
 
-            $table->foreign('id_genero')->references('id_genero')->on('genero');
             $table->foreign('id_categoria')->references('id_categoria')->on('categoria');
-            $table->foreign('id_promocion')->references('id_promocion')->on('promociones');
         });
 
-        /*
-        =====================================
-        VARIANTES
-        =====================================
-        */
+        // Variantes
         Schema::create('producto_variante', function (Blueprint $table) {
             $table->id('id_variante');
 
@@ -163,11 +106,7 @@ return new class extends Migration
             $table->foreign('id_producto')->references('id_producto')->on('producto');
         });
 
-        /*
-        =====================================
-        IMÁGENES DE VARIANTE
-        =====================================
-        */
+        // Imágenes de variante
         Schema::create('producto_variante_imagen', function (Blueprint $table) {
             $table->id('id_imagen');
 
@@ -183,11 +122,7 @@ return new class extends Migration
                   ->onDelete('cascade');
         });
 
-        /*
-        =====================================
-        CUPONES
-        =====================================
-        */
+        // Cupones
         Schema::create('cupones', function (Blueprint $table) {
             $table->id('id_cupon');
             $table->string('codigo_cupon', 50)->unique();
@@ -197,54 +132,44 @@ return new class extends Migration
             $table->boolean('estado_cupon')->default(1);
         });
 
-        /*
-        =====================================
-        TIPO ENTREGA
-        =====================================
-        */
+        // Tipo entrega
         Schema::create('tipo_entrega', function (Blueprint $table) {
             $table->id('id_tipo_entrega');
             $table->string('nombre_tipo_entrega', 100);
-            $table->boolean('estado')->default(1);
         });
 
-        /*
-        =====================================
-        PEDIDO
-        =====================================
-        */
+        // Pedido
         Schema::create('pedido', function (Blueprint $table) {
             $table->id('id_pedido');
 
             $table->string('numero_pedido', 20)->unique();
             $table->dateTime('fecha_pedido')->useCurrent();
+
+            // Desglose económico
+            $table->decimal('subtotal', 10, 2)->default(0);
+            $table->decimal('costo_envio', 10, 2)->default(0);
+            $table->decimal('descuento', 10, 2)->default(0);
             $table->decimal('total_pedido', 10, 2);
 
             $table->enum('estado_pedido', [
                 'Pendiente',
-                'Pagado',
-                'Confirmado',
                 'En camino',
                 'Listo para recoger',
-                'Entregado',
-                'Anulado'
+                'Entregado'
             ])->default('Pendiente');
 
             $table->string('payment_id')->nullable();
 
-            // 👇 Ubicación del CLIENTE (solo depto + provincia + distrito)
+            // Ubicación del cliente
             $table->unsignedBigInteger('id_departamento')->nullable();
             $table->string('provincia', 100)->nullable();
             $table->string('distrito', 100)->nullable();
-            // ❌ SIN 'direccion'
 
-            // 👇 Lugar de RECOJO (lo llena el admin, un solo campo)
-            $table->text('lugar_recojo')->nullable();
+            // Dirección de entrega
+            $table->text('direccion_entrega')->nullable();
 
-            // Fechas de logística
-            $table->dateTime('fecha_envio')->nullable();
-            $table->date('fecha_entrega_estimada')->nullable();
-            $table->dateTime('fecha_entrega_real')->nullable();
+            // Fecha de logística
+            $table->date('fecha_entrega')->nullable();
 
             // FKs
             $table->unsignedBigInteger('id_usuario')->nullable();
@@ -259,15 +184,14 @@ return new class extends Migration
             $table->foreign('id_usuario')
                 ->references('id_usuario')->on('usuario');
 
+            $table->foreign('id_cupon')
+                ->references('id_cupon')->on('cupones');
+
             $table->foreign('id_tipo_entrega')
                 ->references('id_tipo_entrega')->on('tipo_entrega');
         });
 
-        /*
-        =====================================
-        DETALLE PEDIDO
-        =====================================
-        */
+        // Detalle pedido
         Schema::create('detalle_pedido', function (Blueprint $table) {
             $table->id('id_detalle_pedido');
 
@@ -282,11 +206,7 @@ return new class extends Migration
             $table->foreign('id_variante')->references('id_variante')->on('producto_variante');
         });
 
-        /*
-        =====================================
-        CARRITO
-        =====================================
-        */
+        // Carrito
         Schema::create('carrito', function (Blueprint $table) {
             $table->id('id_carrito');
             $table->unsignedBigInteger('id_usuario')->unique();
@@ -295,6 +215,7 @@ return new class extends Migration
             $table->foreign('id_usuario')->references('id_usuario')->on('usuario');
         });
 
+        // Detalle carrito
         Schema::create('detalle_carrito', function (Blueprint $table) {
             $table->id('id_detalle_carrito');
 
@@ -310,11 +231,7 @@ return new class extends Migration
             $table->foreign('id_variante')->references('id_variante')->on('producto_variante');
         });
 
-        /*
-        =====================================
-        FAVORITOS
-        =====================================
-        */
+        // Favoritos
         Schema::create('favoritos', function (Blueprint $table) {
             $table->id('id_favorito');
 
@@ -329,11 +246,25 @@ return new class extends Migration
             $table->foreign('id_producto')->references('id_producto')->on('producto');
         });
 
-        /*
-        =====================================
-        SANCTUM
-        =====================================
-        */
+        // Ventas
+        Schema::create('ventas', function (Blueprint $table) {
+            $table->id('id_venta');
+            $table->decimal('total', 10, 2)->default(0);
+            $table->timestamps();
+        });
+
+        // Detalle ventas
+        Schema::create('venta_detalles', function (Blueprint $table) {
+            $table->id('id_venta_detalle');
+            $table->foreignId('id_venta')->constrained('ventas', 'id_venta')->cascadeOnDelete();
+            $table->foreignId('id_variante')->constrained('producto_variante', 'id_variante');
+            $table->integer('cantidad');
+            $table->decimal('precio_unitario', 10, 2);
+            $table->decimal('subtotal', 10, 2);
+            $table->timestamps();
+        });
+
+        // Sanctum
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
             $table->morphs('tokenable');
@@ -345,22 +276,14 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        /*
-        =====================================
-        BANNERS
-        =====================================
-        */
+        // Banners
         Schema::create('banners', function (Blueprint $table) {
             $table->id('id_banner');
-            $table->string('titulo', 100);
-            $table->string('subtitulo', 150)->nullable();
-            $table->text('descripcion')->nullable();
-            $table->string('etiqueta', 50)->nullable();
-            $table->string('texto_boton', 50)->nullable();
-            $table->string('url_boton', 255)->nullable();
-            $table->string('imagen', 255);
+            $table->string('titulo', 100)->unique();
+            $table->string('url_boton', 500)->nullable();
             $table->integer('orden')->default(0);
             $table->boolean('estado')->default(1);
+            $table->string('imagen', 255);
             $table->timestamps();
         });
     }
@@ -369,6 +292,8 @@ return new class extends Migration
     {
         Schema::dropIfExists('banners');
         Schema::dropIfExists('personal_access_tokens');
+        Schema::dropIfExists('venta_detalles');
+        Schema::dropIfExists('ventas');
         Schema::dropIfExists('favoritos');
         Schema::dropIfExists('detalle_carrito');
         Schema::dropIfExists('carrito');
@@ -379,9 +304,7 @@ return new class extends Migration
         Schema::dropIfExists('producto_variante_imagen');
         Schema::dropIfExists('producto_variante');
         Schema::dropIfExists('producto');
-        Schema::dropIfExists('promociones');
         Schema::dropIfExists('categoria');
-        Schema::dropIfExists('genero');
         Schema::dropIfExists('usuario');
         Schema::dropIfExists('departamento');
         Schema::dropIfExists('tipo_documento');

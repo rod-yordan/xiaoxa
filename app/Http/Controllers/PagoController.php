@@ -15,9 +15,7 @@ use MercadoPago\Client\Payment\PaymentClient;
 
 class PagoController extends Controller
 {
-    /**
-     * MP redirige aquí cuando el pago fue aprobado.
-     */
+
     public function exito(Request $request)
     {
         $pedido = null;
@@ -35,9 +33,6 @@ class PagoController extends Controller
         return view('pagos.exito', compact('pedido'));
     }
 
-    /**
-     * MP redirige aquí cuando el pago fue rechazado.
-     */
     public function fallo(Request $request)
     {
         if ($request->external_reference) {
@@ -47,17 +42,11 @@ class PagoController extends Controller
         return view('pagos.fallo');
     }
 
-    /**
-     * MP redirige aquí cuando el pago quedó pendiente.
-     */
     public function pendiente(Request $request)
     {
         return view('pagos.pendiente');
     }
 
-    /**
-     * Webhook: MP llama a esta URL desde sus servidores.
-     */
     public function webhook(Request $request)
     {
         $paymentId = $request->input('data.id') ?? $request->input('id');
@@ -94,40 +83,17 @@ class PagoController extends Controller
         return response()->json(['status' => 'ok'], 200);
     }
 
-
-    // ── Helper: crear pedido una sola vez (idempotente) ─────────────────────
-
     private function crearPedidoSiNoExiste(string $referencia, string $paymentId): ?Pedido
     {
-        // 🔍 LOG 1: entró al método
-        \Log::info('DEBUG crearPedidoSiNoExiste', [
-            'paso'       => 1,
-            'referencia' => $referencia,
-            'payment_id' => $paymentId,
-        ]);
-
-        // 🔒 Si ya existe un pedido con ese payment_id, devolverlo
         $existente = Pedido::with('detalles.variante.producto')
             ->where('payment_id', $paymentId)
             ->first();
 
         if ($existente) {
-            \Log::info('DEBUG crearPedidoSiNoExiste', [
-                'paso'      => 2,
-                'mensaje'   => 'Ya existe pedido con ese payment_id',
-                'pedido_id' => $existente->id_pedido,
-            ]);
             return $existente;
         }
 
-        // Buscar los datos del checkout en caché
         $data = Cache::get("checkout:{$referencia}");
-
-        \Log::info('DEBUG crearPedidoSiNoExiste', [
-            'paso'       => 3,
-            'en_cache'   => $data ? 'SÍ' : 'NO',
-            'cache_data' => $data ? array_keys($data) : null,
-        ]);
 
         if (!$data) {
             \Log::warning('Checkout no encontrado en caché', [
@@ -140,13 +106,11 @@ class PagoController extends Controller
         try {
             $pedido = DB::transaction(function () use ($data, $paymentId, $referencia) {
 
-                // 🔒 Re-verificar dentro de la transacción
                 $existe = Pedido::where('payment_id', $paymentId)->first();
                 if ($existe) {
                     return $existe;
                 }
 
-                // 🔒 Validar stock
                 foreach ($data['items'] as $item) {
                     $variante = ProductoVariante::find($item['id_variante']);
                     if (!$variante || $variante->stock < $item['cantidad']) {
@@ -156,42 +120,27 @@ class PagoController extends Controller
                     }
                 }
 
-                // ✅ Determinar tipo de entrega
                 $esRetiro = (int) $data['id_tipo_entrega'] === 1;
 
-                \Log::info('DEBUG crearPedidoSiNoExiste', [
-                    'paso'            => 4,
-                    'mensaje'         => 'Antes de crear pedido',
-                    'esRetiro'        => $esRetiro,
-                    'id_tipo_entrega' => $data['id_tipo_entrega'],
-                    'total'           => $data['total'],
-                ]);
-
-                // Crear el pedido
                 $pedido = Pedido::create([
-                    'numero_pedido'           => $this->generarNumeroPedido(),
-                    'fecha_pedido'            => now(),
-                    'total_pedido'            => $data['total'],
-                    'estado_pedido'           => $esRetiro ? 'Listo para recoger' : 'Pendiente',
-                    'payment_id'              => $paymentId,
-                    'id_usuario'              => $data['id_usuario'],
-                    'id_tipo_entrega'         => $data['id_tipo_entrega'],
-                    'id_departamento'         => $data['id_departamento'],
-                    'provincia'               => $data['provincia'],
-                    'distrito'                => $data['distrito'],
-                    'lugar_recojo'            => $data['lugar_recojo'],
-                    'fecha_entrega_estimada'  => $esRetiro ? null : now()->addDays(5),
+                    'numero_pedido'      => $this->generarNumeroPedido(),
+                    'fecha_pedido'       => now(),
+                    'subtotal'           => $data['subtotal'] ?? $data['total'],
+                    'costo_envio'        => $data['costo_envio'] ?? 0,
+                    'total_pedido'       => $data['total'],
+                    'estado_pedido'      => 'Pendiente', // ← Todos nacen en Pendiente
+                    'payment_id'         => $paymentId,
+                    'id_usuario'         => $data['id_usuario'],
+                    'id_tipo_entrega'    => $data['id_tipo_entrega'],
+                    'id_departamento'    => $data['id_departamento'],
+                    'provincia'          => $data['provincia'],
+                    'distrito'           => $data['distrito'],
+                    'direccion_entrega'  => $esRetiro
+                        ? 'Jr. Cajamarca N° 396 - Huancayo'
+                        : null,
+                    'fecha_entrega'      => null,
                 ]);
 
-                \Log::info('DEBUG crearPedidoSiNoExiste', [
-                    'paso'           => 5,
-                    'mensaje'        => 'Pedido creado',
-                    'id_pedido'      => $pedido->id_pedido,
-                    'numero_pedido'  => $pedido->numero_pedido,
-                    'estado_pedido'  => $pedido->estado_pedido,
-                ]);
-
-                // Detalles + descuento de stock
                 foreach ($data['items'] as $item) {
                     DetallePedido::create([
                         'id_pedido'       => $pedido->id_pedido,
@@ -205,13 +154,11 @@ class PagoController extends Controller
                         ->decrement('stock', $item['cantidad']);
                 }
 
-                // Vaciar carrito
                 $carrito = Carrito::where('id_usuario', $data['id_usuario'])->first();
                 if ($carrito) {
                     $carrito->detalles()->delete();
                 }
 
-                // Limpiar caché
                 Cache::forget("checkout:{$referencia}");
 
                 return $pedido;
@@ -231,15 +178,19 @@ class PagoController extends Controller
         }
     }
 
-
-    // ── Helper ──────────────────────────────────────────────────────────────
-
     private function generarNumeroPedido(): string
     {
-        $fecha       = now()->format('Ymd');
-        $cantidad    = Pedido::whereDate('created_at', today())->count() + 1;
-        $correlativo = str_pad($cantidad, 3, '0', STR_PAD_LEFT);
+        $prefijo = 'XIA-';
 
-        return "{$fecha}-{$correlativo}";
+        $ultimo = Pedido::where('numero_pedido', 'like', $prefijo . '%')
+            ->orderByDesc('id_pedido')
+            ->lockForUpdate()
+            ->value('numero_pedido');
+
+        $siguiente = $ultimo
+            ? ((int) str_replace($prefijo, '', $ultimo)) + 1
+            : 10001;
+
+        return $prefijo . $siguiente;
     }
 }

@@ -38,7 +38,7 @@
             {{-- Items --}}
             <div class="divide-y divide-gray-100">
                 @foreach($items as $id => $detalles)
-                <div class="relative grid grid-cols-1 sm:grid-cols-12 gap-4 items-center py-6 pb-12">
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center py-6">
 
                     {{-- PRODUCTO: toda la columna es un enlace al detalle --}}
                     <a href="{{ route('producto.show', $detalles['id_producto'] ?? '') }}"
@@ -91,10 +91,26 @@
                         @endif
                     </div>
 
-                    {{-- CANTIDAD --}}
-                    <div class="col-span-1 text-center">
-                        <span class="sm:hidden text-xs text-gray-400 mr-1">Cantidad:</span>
-                        <span class="text-sm text-gray-800">{{ $detalles['cantidad'] }}</span>
+                    {{-- CANTIDAD con botones +/- --}}
+                    <div class="col-span-1 flex flex-col items-center gap-1">
+                        <span class="sm:hidden text-xs text-gray-400 mb-1">Cantidad:</span>
+
+                        <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                            <a href="{{ route('carrito.disminuir', $id) }}"
+                               class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition">
+                                <x-heroicon-o-minus class="w-3.5 h-3.5" />
+                            </a>
+
+                            <span class="w-8 text-center text-sm font-semibold text-gray-800">
+                                {{ $detalles['cantidad'] }}
+                            </span>
+
+                            <a href="{{ route('carrito.aumentar', $id) }}"
+                               class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition
+                                      {{ ($detalles['cantidad'] ?? 0) >= ($detalles['stock'] ?? 0) ? 'pointer-events-none opacity-40' : '' }}">
+                                <x-heroicon-o-plus class="w-3.5 h-3.5" />
+                            </a>
+                        </div>
                     </div>
 
                     {{-- SUBTOTAL --}}
@@ -104,12 +120,6 @@
                             S/ {{ number_format($detalles['precio'] * $detalles['cantidad'], 2) }}
                         </span>
                     </div>
-
-                    {{-- BOTÓN ELIMINAR (abajo a la derecha, rojo fijo) --}}
-                    <a href="{{ route('carrito.eliminar', $id) }}"
-                       class="absolute bottom-3 right-0 text-xs text-rose-600 font-medium">
-                        Eliminar
-                    </a>
 
                 </div>
                 @endforeach

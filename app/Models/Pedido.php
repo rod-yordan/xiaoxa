@@ -12,26 +12,28 @@ class Pedido extends Model
     public $timestamps = true;
 
     protected $casts = [
-        'fecha_pedido'           => 'datetime',
-        'fecha_envio'            => 'datetime',
-        'fecha_entrega_estimada' => 'date',
-        'fecha_entrega_real'     => 'datetime',
-        'total_pedido'           => 'decimal:2',
+        'fecha_pedido'  => 'datetime',
+        'fecha_entrega' => 'date',
+        'total_pedido'  => 'decimal:2',
+        'subtotal'      => 'decimal:2',
+        'costo_envio'   => 'decimal:2',
+        'descuento'     => 'decimal:2',
     ];
 
     protected $fillable = [
         'numero_pedido',
         'fecha_pedido',
+        'subtotal',
+        'costo_envio',
+        'descuento',
         'total_pedido',
         'estado_pedido',
         'payment_id',
         'id_departamento',
         'provincia',
         'distrito',
-        'lugar_recojo',
-        'fecha_envio',
-        'fecha_entrega_estimada',
-        'fecha_entrega_real',
+        'direccion_entrega',
+        'fecha_entrega',
         'id_usuario',
         'id_cupon',
         'id_tipo_entrega',

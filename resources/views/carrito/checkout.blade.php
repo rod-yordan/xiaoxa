@@ -30,9 +30,29 @@
             $total += $precio * $detalle->cantidad;
         }
     }
+
+    // Texto inicial para el botón de tipo de documento
+    $tipoDocumentoTextoInicial = 'Tipo de documento';
+    if (auth()->user()->id_tipo_documento) {
+        $td = $tiposDocumento->firstWhere('id_tipo_documento', auth()->user()->id_tipo_documento)
+            ?? $tiposDocumento->firstWhere('id', auth()->user()->id_tipo_documento);
+        if ($td) {
+            $tipoDocumentoTextoInicial = $td->nombre_tipo_documento ?? $td->nombre;
+        }
+    }
+
+    // Mapa de costos de envío por departamento: { id_departamento: costo }
+    $costosEnvio = $departamentos->mapWithKeys(function ($dep) {
+        return [$dep->id_departamento => (float) $dep->costo_envio];
+    })->toArray();
+
+    // Mapa de nombres de departamentos: { id_departamento: nombre }
+    $nombresDepartamentos = $departamentos->mapWithKeys(function ($dep) {
+        return [$dep->id_departamento => $dep->nombre_departamento];
+    })->toArray();
 @endphp
 
-<div x-data="checkoutData()" x-cloak
+<div x-data="checkoutData({{ Js::from($costosEnvio) }}, {{ $total }}, {{ Js::from($nombresDepartamentos) }})" x-cloak
     class="max-w-7xl mx-auto px-4 sm:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
 
     {{-- ===== IZQUIERDA: FORMULARIO ===== --}}
@@ -44,22 +64,37 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-                {{-- Tipo de documento --}}
+                {{-- Tipo de documento (dropdown custom) --}}
                 <div>
                     <label class="block text-sm font-normal text-gray-700 mb-2">Tipo de documento</label>
-                    <div class="relative">
-                        <select name="id_tipo_documento"
-                            x-model="idTipoDocumento"
-                            class="w-full border border-gray-200 rounded-full px-4 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:border-gray-400 transition-colors appearance-none pr-10">
-                            <option value="">Seleccionar</option>
-                            @foreach($tiposDocumento as $td)
-                                <option value="{{ $td->id_tipo_documento ?? $td->id }}"
-                                    {{ (auth()->user()->id_tipo_documento ?? null) == ($td->id_tipo_documento ?? $td->id) ? 'selected' : '' }}>
-                                    {{ $td->nombre_tipo_documento ?? $td->nombre }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <x-heroicon-o-chevron-down class="w-4 h-4 text-gray-700 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+
+                    <div x-data="{ open: false }" class="relative">
+                        <input type="hidden" name="id_tipo_documento" :value="idTipoDocumento">
+
+                        <button type="button" @click="open = !open"
+                            class="w-full flex items-center justify-between gap-2 pl-4 pr-4 py-2.5 border border-gray-200 rounded-full bg-white text-sm text-gray-700 cursor-pointer focus:outline-none focus:border-gray-400 transition-colors">
+                            <span x-text="idTipoDocumentoTexto"></span>
+                            <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
+                        </button>
+
+                        <div x-show="open" @click.outside="open = false"
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 -translate-y-1"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-100"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0"
+                             class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                            <div class="max-h-64 overflow-y-auto py-1">
+                                @foreach($tiposDocumento as $td)
+                                    <button type="button"
+                                        @click="idTipoDocumento = '{{ $td->id_tipo_documento ?? $td->id }}'; idTipoDocumentoTexto = '{{ addslashes($td->nombre_tipo_documento ?? $td->nombre) }}'; open = false"
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition">
+                                        {{ $td->nombre_tipo_documento ?? $td->nombre }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -112,18 +147,37 @@
             {{-- Selects: Departamento / Provincia / Distrito (solo envío a provincia) --}}
             <div x-show="tipoEntrega == 2" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-                {{-- Departamento --}}
+                {{-- Departamento (dropdown custom) --}}
                 <div>
                     <label class="block text-sm font-normal text-gray-700 mb-2">Departamento</label>
-                    <div class="relative">
-                        <select x-model="departamento"
-                            class="w-full border border-gray-200 rounded-full px-4 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:border-gray-400 transition-colors appearance-none pr-10">
-                            <option value="">Seleccionar</option>
-                            @foreach($departamentos as $dep)
-                                <option value="{{ $dep->id_departamento }}">{{ $dep->nombre_departamento }}</option>
-                            @endforeach
-                        </select>
-                        <x-heroicon-o-chevron-down class="w-4 h-4 text-gray-700 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+
+                    <div x-data="{ open: false }" class="relative">
+                        <input type="hidden" name="id_departamento" :value="departamento">
+
+                        <button type="button" @click="open = !open"
+                            class="w-full flex items-center justify-between gap-2 pl-4 pr-4 py-2.5 border border-gray-200 rounded-full bg-white text-sm text-gray-700 cursor-pointer focus:outline-none focus:border-gray-400 transition-colors">
+                            <span x-text="departamentoTexto"></span>
+                            <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
+                        </button>
+
+                        <div x-show="open" @click.outside="open = false"
+                            x-transition:enter="transition ease-out duration-150"
+                            x-transition:enter-start="opacity-0 translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-100"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="absolute z-50 bottom-full mb-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                            <div class="max-h-64 overflow-y-auto py-1">
+                                @foreach($departamentos as $dep)
+                                    <button type="button"
+                                        @click="seleccionarDepartamento('{{ $dep->id_departamento }}', '{{ addslashes($dep->nombre_departamento) }}'); open = false"
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition">
+                                        {{ $dep->nombre_departamento }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -209,15 +263,27 @@
                 </div>
                 <div class="flex justify-between">
                     <span>Envío</span>
-                    <span class="text-gray-500 italic text-xs">A calcular</span>
+
+                    {{-- Envío a provincia con departamento elegido --}}
+                    <template x-if="tipoEntrega == 2 && costoEnvio > 0">
+                        <span x-text="'S/ ' + costoEnvio.toFixed(2)"></span>
+                    </template>
+
+                    {{-- Envío a provincia sin departamento elegido --}}
+                    <template x-if="tipoEntrega == 2 && costoEnvio == 0">
+                        <span class="text-gray-500 italic text-xs">Por calcular</span>
+                    </template>
+
+                    {{-- Retiro en tienda --}}
+                    <template x-if="tipoEntrega != 2">
+                        <span class="text-gray-500 italic text-xs">Gratis</span>
+                    </template>
                 </div>
             </div>
 
             <div class="mt-5 pt-5 flex justify-between items-center">
                 <span class="font-bold text-gray-800 text-base">Total</span>
-                <span class="font-bold text-gray-800 text-lg">
-                    S/ {{ number_format($total, 2) }}
-                </span>
+                <span class="font-bold text-gray-800 text-lg" x-text="'S/ ' + totalFinal.toFixed(2)"></span>
             </div>
 
             {{-- Botón pagar desktop --}}
@@ -246,6 +312,7 @@
         <input type="hidden" name="id_tipo_documento"  x-bind:value="idTipoDocumento">
         <input type="hidden" name="numero_documento"   x-bind:value="numeroDocumento">
         <input type="hidden" name="telefono"           x-bind:value="telefono">
+        <input type="hidden" name="costo_envio"        x-bind:value="costoEnvio">
     </form>
 
 </div>
@@ -254,27 +321,58 @@
 
 @push('scripts')
 <script>
-    function checkoutData() {
+    function checkoutData(costosEnvio, totalProductos, nombresDepartamentos) {
         return {
             tipoEntrega:         {{ $tiposEntrega->first()->id_tipo_entrega ?? 1 }},
             departamento:        '',
+            departamentoTexto:   'Seleccionar',
             provincia:           '',
             distrito:            '',
-            totalProductos:      {{ $total }},
+            totalProductos:      totalProductos,
+            costoEnvio:          0,
             procesando:          false,
 
-            // ── Datos personales precargados desde el usuario autenticado
-            idTipoDocumento:  '{{ auth()->user()->id_tipo_documento ?? '' }}',
-            numeroDocumento:  '{{ auth()->user()->numero_documento ?? '' }}',
-            telefono:         '{{ auth()->user()->telefono ?? '' }}',
+            // Mapas que vienen desde el backend
+            costosEnvio:         costosEnvio,
+            nombresDepartamentos: nombresDepartamentos,
 
-            // ── Resetear envío si cambia a recojo en tienda
+            // ── Datos personales precargados desde el usuario autenticado
+            idTipoDocumento:      '{{ auth()->user()->id_tipo_documento ?? '' }}',
+            idTipoDocumentoTexto: '{{ addslashes($tipoDocumentoTextoInicial) }}',
+            numeroDocumento:      '{{ auth()->user()->numero_documento ?? '' }}',
+            telefono:             '{{ auth()->user()->telefono ?? '' }}',
+
+            // ── Seleccionar departamento desde el dropdown custom
+            seleccionarDepartamento(id, nombre) {
+                this.departamento      = id;
+                this.departamentoTexto = nombre;
+                this.actualizarCostoEnvio();
+            },
+
             calcularEnvioPorTipo() {
                 if (this.tipoEntrega != 2) {
-                    this.departamento = '';
-                    this.provincia    = '';
-                    this.distrito     = '';
+                    this.departamento      = '';
+                    this.departamentoTexto = 'Seleccionar';
+                    this.provincia         = '';
+                    this.distrito          = '';
+                    this.costoEnvio        = 0;
+                } else {
+                    this.actualizarCostoEnvio();
                 }
+            },
+
+            // ── Actualizar costo de envío según el departamento
+            actualizarCostoEnvio() {
+                if (this.tipoEntrega == 2 && this.departamento) {
+                    this.costoEnvio = this.costosEnvio[this.departamento] ?? 0;
+                } else {
+                    this.costoEnvio = 0;
+                }
+            },
+
+            // ── Total dinámico (productos + envío)
+            get totalFinal() {
+                return (parseFloat(this.totalProductos) || 0) + (parseFloat(this.costoEnvio) || 0);
             },
 
             // ── Enviar pedido

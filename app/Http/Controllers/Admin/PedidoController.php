@@ -30,7 +30,7 @@ class PedidoController extends Controller
             $query->where('estado_pedido', $request->estado);
         }
 
-        // ✅ NUEVO: Filtro por tipo de entrega (1 = Retiro en tienda, 2 = Envío a provincia)
+        // Filtro por tipo de entrega (1 = Retiro en tienda, 2 = Envío a provincia)
         if ($request->filled('tipo_entrega')) {
             $query->where('id_tipo_entrega', $request->tipo_entrega);
         }
@@ -63,30 +63,35 @@ class PedidoController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'estado_pedido' => 'required|in:Pendiente,En camino,Listo para recoger,Entregado',
+            'estado_pedido'    => 'required|in:Pendiente,En camino,Listo para recoger,Entregado',
+            'fecha_entrega'    => 'nullable|date',
+            'direccion_entrega'=> 'nullable|string|max:500',
+            'accion'           => 'nullable|in:guardar,estado',
         ]);
 
         $pedido = Pedido::findOrFail($id);
 
         $data = ['estado_pedido' => $request->estado_pedido];
 
-        // Solo actualizar fecha estimada si viene con valor
-        if ($request->filled('fecha_entrega_estimada')) {
-            $data['fecha_entrega_estimada'] = $request->fecha_entrega_estimada;
+        // Actualizar fecha de entrega si viene con valor
+        if ($request->filled('fecha_entrega')) {
+            $data['fecha_entrega'] = $request->fecha_entrega;
         }
 
-        // Auto-registrar fecha de envío
-        if ($request->estado_pedido === 'En camino' && !$pedido->fecha_envio) {
-            $data['fecha_envio'] = now();
-        }
-
-        // Auto-registrar fecha real de entrega
-        if ($request->estado_pedido === 'Entregado' && !$pedido->fecha_entrega_real) {
-            $data['fecha_entrega_real'] = now();
+        // Actualizar dirección de entrega (incluso si viene vacío, para permitir borrarlo)
+        if ($request->has('direccion_entrega')) {
+            $data['direccion_entrega'] = $request->input('direccion_entrega');
         }
 
         $pedido->update($data);
 
-        return back()->with('success', "Pedido #{$pedido->numero_pedido} actualizado a '{$request->estado_pedido}'.");
+        // Mensaje dinámico según la acción (sin #)
+        if ($request->input('accion') === 'estado') {
+            $mensaje = "Pedido {$pedido->numero_pedido} actualizado a '{$request->estado_pedido}'.";
+        } else {
+            $mensaje = "Pedido {$pedido->numero_pedido} actualizado correctamente.";
+        }
+
+        return back()->with('success', $mensaje);
     }
 }

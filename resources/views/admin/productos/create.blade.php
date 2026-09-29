@@ -57,7 +57,6 @@
                     this.variantes.forEach((variante, index) => {
                         const vErr = {};
 
-                        if (!variante.sku || !variante.sku.trim()) vErr.sku = true;
                         if (!variante.talla || !variante.talla.trim()) vErr.talla = true;
                         if (!variante.color || !variante.color.trim()) vErr.color = true;
 
@@ -285,8 +284,7 @@
                                     <div class="flex items-center gap-2 flex-1">
                                         <label class="text-[14px] font-bold text-gray-800 shrink-0">SKU:</label>
                                         <input type="text" :name="`variantes[${index}][sku]`" x-model="variante.sku"
-                                            class="w-full px-3 py-1.5 border rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors"
-                                            :class="erroresVariantes[index]?.sku ? 'border-rose-500' : 'border-gray-200'">
+                                            class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] focus:outline-none focus:border-gray-400 transition-colors">
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <label class="text-[14px] font-bold text-gray-800 shrink-0">Talla:</label>
@@ -327,7 +325,6 @@
                                     </div>
                                 </div>
 
-                                {{-- ⬇️ CAMBIO: aspect-[3/4] y grid-cols-4/5 para igualar al edit --}}
                                 <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 pt-3">
                                     <template x-for="(file, imgIndex) in variante.files" :key="imgIndex">
                                         <div class="relative group/img aspect-[3/4]">

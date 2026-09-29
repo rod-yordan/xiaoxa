@@ -7,7 +7,6 @@
     <title>@yield('title', 'Xiaoxa')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    {{-- ✅ Stack para CSS adicional --}}
     @stack('styles')
 </head>
 
@@ -17,14 +16,14 @@
         <x-navbar :modoCarrito="request()->routeIs('carrito.*') || request()->routeIs('checkout.*') || request()->routeIs('pago.*')" />
     </div>
 
-    <main class="flex-1">
+    <main class="flex-1 flex flex-col"
+        style="min-height: calc(100vh - 160px);">
         @yield('content')
     </main>
 
     {{-- FOOTER --}}
     <x-footer />
 
-    {{-- ✅ Stack para JavaScript adicional --}}
     @stack('scripts')
 </body>
 </html>

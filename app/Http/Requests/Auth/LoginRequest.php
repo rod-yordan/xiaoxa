@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -21,13 +23,11 @@ class LoginRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'correo' => ['required', 'string', 'email'],
+            'correo'     => ['required', 'string', 'email'],
             'contrasena' => ['required', 'string'],
         ];
     }
@@ -39,14 +39,32 @@ class LoginRequest extends FormRequest
      */
     public function authenticate(): void
     {
-        if (!Auth::attempt([
-            'correo' => $this->correo,
-            'password' => $this->contrasena
-        ])){
+        $this->ensureIsNotRateLimited();
+
+        // 1. Verificamos si el correo existe
+        $usuario = User::where('correo', $this->correo)->first();
+
+        if (! $usuario) {
+            RateLimiter::hit($this->throttleKey());
+
             throw ValidationException::withMessages([
-                'correo' => 'Correo o contraseña incorrectos',
+                'correo' => 'El correo electrónico es incorrecto.',
             ]);
         }
+
+        // 2. Verificamos si la contraseña es correcta
+        if (! Hash::check($this->contrasena, $usuario->contrasena)) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'contrasena' => 'La contraseña es incorrecta.',
+            ]);
+        }
+
+        // 3. Credenciales correctas → iniciamos sesión
+        Auth::login($usuario, $this->boolean('remember'));
+
+        RateLimiter::clear($this->throttleKey());
     }
 
     /**
@@ -65,10 +83,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'correo' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'correo' => "Demasiados intentos. Inténtalo de nuevo en {$seconds} segundos.",
         ]);
     }
 

@@ -270,7 +270,7 @@
                     </div>
                 </div>
 
-                {{-- ✅ NUEVO: Select custom: Tipo de entrega --}}
+                {{-- Select custom: Tipo de entrega --}}
                 <div x-data="{ open: false }" class="relative w-full max-w-[180px]">
                     <input type="hidden" name="tipo_entrega" :value="tipoEntrega">
 
@@ -335,7 +335,7 @@
                             <th class="px-8 py-5 text-base font-black text-gray-800 text-left border-b border-gray-200">Código</th>
                             <th class="px-8 py-5 text-base font-black text-gray-800 text-left border-b border-gray-200">Cliente</th>
                             <th class="px-8 py-5 text-base font-black text-gray-800 text-center border-b border-gray-200">Fecha</th>
-                            <th class="px-8 py-5 text-base font-black text-gray-800 text-center border-b border-gray-200">Total</th>
+                            <th class="px-8 py-5 text-base font-black text-gray-800 text-center border-b border-gray-200">Tipo de entrega</th>
                             <th class="px-8 py-5 text-base font-black text-gray-800 text-center border-b border-gray-200">Estado</th>
                             <th class="px-8 py-5 text-base font-black text-gray-800 text-right border-b border-gray-200">Acciones</th>
                         </tr>
@@ -364,7 +364,7 @@
 
                                 <td class="px-8 py-5 text-center">
                                     <span class="font-normal text-gray-800 text-base">
-                                        S/ {{ number_format($pedido->total_pedido, 2) }}
+                                        {{ $pedido->tipoEntrega?->nombre_tipo_entrega ?? '—' }}
                                     </span>
                                 </td>
 

@@ -5,21 +5,47 @@
 @section('content')
 <div class="min-h-[calc(100vh-200px)] flex items-center justify-center py-16 px-4 bg-[#fbfaf8]">
     <div class="w-full max-w-md">
-        
-        {{-- CONTENEDOR --}}
-        <div class="p-8 sm:p-10">
-            
-            {{-- TÍTULO --}}
+
+        <div class="p-8 sm:p-10"
+             x-data="{
+                correo: '{{ old('correo') }}',
+                contrasena: '',
+                errores: {},
+
+                init() {
+                    @if ($errors->has('correo'))
+                        this.errores.correo = '{{ $errors->first('correo') }}';
+                    @endif
+                    @if ($errors->has('contrasena'))
+                        this.errores.contrasena = '{{ $errors->first('contrasena') }}';
+                    @endif
+                },
+
+                validar(e) {
+                    this.errores = {};
+
+                    if (!this.correo.trim()) {
+                        this.errores.correo = 'El correo electrónico es obligatorio.';
+                    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.correo.trim())) {
+                        this.errores.correo = 'Ingresa un correo electrónico válido.';
+                    }
+
+                    if (!this.contrasena.trim()) {
+                        this.errores.contrasena = 'La contraseña es obligatoria.';
+                    }
+
+                    if (Object.keys(this.errores).length > 0) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    e.target.submit();
+                }
+             }">
+
             <h1 class="text-2xl font-bold text-center text-black mb-8">Iniciar sesión</h1>
 
-            {{-- Mensaje de error general --}}
-            @if ($errors->has('correo'))
-                <div class="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg mb-6">
-                    {{ $errors->first('correo') }}
-                </div>
-            @endif
-
-            <form method="POST" action="{{ route('login') }}">
+            <form method="POST" action="{{ route('login') }}" @submit.prevent="validar($event)" novalidate>
                 @csrf
 
                 {{-- CORREO ELECTRÓNICO --}}
@@ -27,36 +53,45 @@
                     <label for="correo" class="block text-sm font-medium text-gray-700 mb-2">
                         Correo electrónico
                     </label>
-                    <input 
-                        type="email" 
-                        name="correo" 
+                    <input
+                        type="email"
+                        name="correo"
                         id="correo"
-                        value="{{ old('correo') }}" 
+                        x-model="correo"
+                        @input="if (errores.correo) delete errores.correo"
+                        value="{{ old('correo') }}"
                         placeholder="Ingresar correo"
-                        class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-black placeholder-gray-400 focus:outline-none focus:border-gray-400 transition @error('correo') border-red-500 @enderror" 
-                        required 
+                        class="w-full border rounded-lg px-4 py-2.5 text-sm text-black placeholder-gray-400 focus:outline-none transition"
+                        :class="errores.correo ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-gray-400'"
                         autofocus
                     >
+                    {{-- ✅ Mensaje con ícono --}}
+                    <p x-show="errores.correo" x-cloak
+                       class="flex items-center gap-1.5 text-xs text-red-600 mt-1.5 font-medium">
+                        <x-heroicon-s-exclamation-circle class="w-3.5 h-3.5 shrink-0" />
+                        <span x-text="errores.correo"></span>
+                    </p>
                 </div>
 
-                {{-- CONTRASEÑA CON ALPINE.JS --}}
+                {{-- CONTRASEÑA --}}
                 <div class="mb-3" x-data="{ verPassword: false }">
                     <label for="contrasena" class="block text-sm font-medium text-gray-700 mb-2">
                         Contraseña
                     </label>
                     <div class="relative">
-                        <input 
+                        <input
                             :type="verPassword ? 'text' : 'password'"
-                            name="contrasena" 
+                            name="contrasena"
                             id="contrasena"
+                            x-model="contrasena"
+                            @input="if (errores.contrasena) delete errores.contrasena"
                             placeholder="Ingresar contraseña"
-                            class="w-full border border-gray-200 rounded-lg px-4 py-2.5 pr-10 text-sm text-black placeholder-gray-400 focus:outline-none focus:border-gray-400 transition @error('correo') border-red-500 @enderror" 
-                            required
+                            class="w-full border rounded-lg px-4 py-2.5 pr-10 text-sm text-black placeholder-gray-400 focus:outline-none transition"
+                            :class="errores.contrasena ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-gray-400'"
                         >
-                        {{-- Botón con iconos Heroicons alternados --}}
-                        <button 
-                            type="button" 
-                            @click="verPassword = !verPassword" 
+                        <button
+                            type="button"
+                            @click="verPassword = !verPassword"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
                             aria-label="Mostrar contraseña"
                         >
@@ -64,27 +99,30 @@
                             <x-heroicon-o-eye-slash x-show="verPassword" x-cloak class="w-5 h-5" />
                         </button>
                     </div>
+                    {{-- ✅ Mensaje con ícono --}}
+                    <p x-show="errores.contrasena" x-cloak
+                       class="flex items-center gap-1.5 text-xs text-red-600 mt-1.5 font-medium">
+                        <x-heroicon-s-exclamation-circle class="w-3.5 h-3.5 shrink-0" />
+                        <span x-text="errores.contrasena"></span>
+                    </p>
                 </div>
 
-                {{-- OLVIDÉ MI CONTRASEÑA --}}
                 <div class="text-right mb-6">
                     <a href="#" class="text-sm text-gray-500 hover:text-black transition">
                         ¿Olvidaste tu contraseña?
                     </a>
                 </div>
 
-                {{-- BOTÓN INICIAR SESIÓN --}}
-                <button 
-                    type="submit" 
+                <button
+                    type="submit"
                     class="w-full bg-black text-white text-sm font-bold uppercase tracking-wider py-3 rounded-lg hover:bg-gray-800 transition-colors duration-200"
                 >
                     Iniciar sesión
                 </button>
             </form>
 
-            {{-- LINK REGISTRARSE --}}
             <p class="text-center text-sm text-gray-500 mt-6">
-                ¿No tienes una cuenta? 
+                ¿No tienes una cuenta?
                 <a href="{{ route('register') }}" class="text-black font-semibold hover:underline">
                     Registrarse
                 </a>

@@ -141,39 +141,29 @@
         }
     </style>
 
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-7xl mx-auto" x-data="pedidoEstado({{ Js::from($pedido->estado_pedido) }})">
 
         {{-- Header --}}
         <div class="flex items-center justify-between gap-4 mb-6">
             <div>
                 <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Detalles del Pedido</h1>
             </div>
-
-            <div class="flex items-center gap-3 shrink-0">
-                <a href="{{ route('admin.pedidos.index') }}"
-                    class="px-14 py-3.5 bg-gray-100 text-gray-700 border border-gray-200 text-sm font-bold tracking-wider rounded-full transition-colors duration-200">
-                    Cancelar
-                </a>
-
-                <button type="submit" form="form-actualizar-pedido"
-                    class="px-14 py-3.5 bg-indigo-600 text-white text-sm font-bold tracking-wider rounded-full transition-colors duration-200">
-                    Aceptar
-                </button>
-            </div>
         </div>
 
         <form id="form-actualizar-pedido" action="{{ route('admin.pedidos.update', $pedido->id_pedido) }}" method="POST">
             @csrf @method('PUT')
 
+            <input type="hidden" name="estado_pedido" id="estado_pedido_input" x-model="estadoActual" value="{{ $pedido->estado_pedido }}">
+            <input type="hidden" name="accion" id="accion_input" value="guardar">
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                {{-- ============================================= --}}
                 {{-- COLUMNA IZQUIERDA: PEDIDO --}}
-                {{-- ============================================= --}}
                 <div class="lg:col-span-2 space-y-6">
 
                     <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
 
+                        {{-- HEADER: Pedido + código + Fecha --}}
                         <div class="flex items-center justify-between gap-4 mb-6">
                             <div class="flex items-center gap-3">
                                 <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
@@ -183,14 +173,13 @@
                                 <span class="inline-block px-3 py-1 bg-gray-100 text-gray-900 rounded-lg text-sm font-bold">{{ $pedido->numero_pedido }}</span>
                             </div>
 
-                            <div class="flex items-center gap-2">
-                                <p class="text-[14px] font-bold text-gray-800">Fecha:</p>
-                                <span class="text-[14px] text-gray-800">{{ \Carbon\Carbon::parse($pedido->created_at)->format('d/m/Y') }}</span>
-                            </div>
+                            <p class="text-sm font-medium italic text-gray-500">
+                                {{ \Carbon\Carbon::parse($pedido->created_at)->translatedFormat('d \d\e F \d\e\l Y') }}
+                            </p>
                         </div>
 
-                        {{-- Datos del cliente --}}
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        {{-- Fila 1: Cliente | Tipo de entrega --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div class="flex items-center gap-2">
                                 <label class="text-[14px] font-bold text-gray-800 shrink-0">Cliente:</label>
                                 <input type="text" readonly
@@ -199,12 +188,15 @@
                             </div>
 
                             <div class="flex items-center gap-2">
-                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Teléfono:</label>
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Tipo de entrega:</label>
                                 <input type="text" readonly
-                                    value="{{ $pedido->usuario->telefono ?? 'N/A' }}"
+                                    value="{{ $pedido->tipoEntrega?->nombre_tipo_entrega ?? '—' }}"
                                     class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 focus:outline-none">
                             </div>
+                        </div>
 
+                        {{-- Fila 2: Tipo de documento | Número de documento --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div class="flex items-center gap-2">
                                 <label class="text-[14px] font-bold text-gray-800 shrink-0">Tipo de documento:</label>
                                 <input type="text" readonly
@@ -220,15 +212,28 @@
                             </div>
                         </div>
 
-                        @if($pedido->id_tipo_entrega == 2)
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        {{-- Fila 3: Teléfono | Departamento (solo envío) --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0">Teléfono:</label>
+                                <input type="text" readonly
+                                    value="{{ $pedido->usuario->telefono ?? 'N/A' }}"
+                                    class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 focus:outline-none">
+                            </div>
+
+                            @if($pedido->id_tipo_entrega == 2)
                                 <div class="flex items-center gap-2">
                                     <label class="text-[14px] font-bold text-gray-800 shrink-0">Departamento:</label>
                                     <input type="text" readonly
                                         value="{{ $pedido->departamento?->nombre_departamento ?? '—' }}"
                                         class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 focus:outline-none">
                                 </div>
+                            @endif
+                        </div>
 
+                        {{-- Fila 4: Provincia | Distrito (solo envío) --}}
+                        @if($pedido->id_tipo_entrega == 2)
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div class="flex items-center gap-2">
                                     <label class="text-[14px] font-bold text-gray-800 shrink-0">Provincia:</label>
                                     <input type="text" readonly
@@ -243,17 +248,20 @@
                                         class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 focus:outline-none">
                                 </div>
                             </div>
+                        @else
+                            {{-- Retiro: solo dejamos el mb-6 en la fila anterior --}}
+                            <div class="mb-2"></div>
                         @endif
 
-                        {{-- Tabla de productos --}}
+                        {{-- TABLA DE PRODUCTOS --}}
                         <div class="overflow-hidden rounded-2xl border border-gray-100">
-                            <table class="w-full text-left border-collapse">
+                            <table class="w-full text-left border-collapse table-fixed">
                                 <thead>
                                     <tr class="bg-[#f1f1f1]">
-                                        <th class="px-6 py-4 text-base font-black text-gray-800 text-left border-b border-gray-200">Producto</th>
-                                        <th class="px-6 py-4 text-base font-black text-gray-800 text-center border-b border-gray-200">Precio</th>
-                                        <th class="px-6 py-4 text-base font-black text-gray-800 text-center border-b border-gray-200">Cantidad</th>
-                                        <th class="px-6 py-4 text-base font-black text-gray-800 text-right border-b border-gray-200">Subtotal</th>
+                                        <th class="w-[45%] px-5 py-4 text-base font-black text-gray-800 text-left border-b border-gray-200">Producto</th>
+                                        <th class="w-[18%] px-2 py-4 text-base font-black text-gray-800 text-center border-b border-gray-200">Precio Unit.</th>
+                                        <th class="w-[17%] px-2 py-4 text-base font-black text-gray-800 text-center border-b border-gray-200">Cantidad</th>
+                                        <th class="w-[20%] px-5 py-4 text-base font-black text-gray-800 text-right border-b border-gray-200">Subtotal</th>
                                     </tr>
                                 </thead>
 
@@ -264,29 +272,30 @@
                                             $producto = $variante?->producto;
                                         @endphp
                                         <tr class="border-b border-gray-200">
-                                            <td class="px-6 py-4">
+                                            <td class="px-5 py-4">
                                                 <p class="font-normal text-gray-800 text-base leading-tight">
                                                     {{ $producto->nombre_producto ?? 'Producto eliminado' }}
                                                 </p>
                                                 <p class="text-xs text-gray-500 mt-1">
-                                                    Talla: {{ $variante?->talla ?? '—' }} · Color: {{ $variante?->color ?? '—' }}
+                                                    <span>Color: {{ $variante?->color ?? '—' }}</span>
+                                                    <span class="ml-2">Talla: {{ $variante?->talla ?? '—' }}</span>
                                                 </p>
                                             </td>
 
-                                            <td class="px-6 py-4 text-center">
-                                                <span class="font-normal text-gray-800 text-base">
+                                            <td class="px-2 py-4 text-center">
+                                                <span class="font-normal text-gray-800 text-base whitespace-nowrap">
                                                     S/ {{ number_format($detalle->precio_unitario, 2) }}
                                                 </span>
                                             </td>
 
-                                            <td class="px-6 py-4 text-center">
+                                            <td class="px-2 py-4 text-center">
                                                 <span class="font-normal text-gray-800 text-base">
                                                     {{ $detalle->cantidad }}
                                                 </span>
                                             </td>
 
-                                            <td class="px-6 py-4 text-right">
-                                                <span class="font-normal text-gray-800 text-base">
+                                            <td class="px-5 py-4 text-right">
+                                                <span class="font-normal text-gray-800 text-base whitespace-nowrap">
                                                     S/ {{ number_format($detalle->subtotal, 2) }}
                                                 </span>
                                             </td>
@@ -295,17 +304,35 @@
                                 </tbody>
 
                                 <tfoot>
+                                    @if($pedido->id_tipo_entrega == 2)
+                                        <tr class="border-t border-gray-200">
+                                            <td class="px-5 py-4"></td>
+                                            <td class="px-2 py-4"></td>
+                                            <td class="px-2 py-4 text-center text-base text-gray-800 font-normal">
+                                                Envío
+                                            </td>
+                                            <td class="px-5 py-4 text-right text-base font-normal text-gray-800 whitespace-nowrap">
+                                                @if($pedido->costo_envio > 0)
+                                                    S/ {{ number_format($pedido->costo_envio, 2) }}
+                                                @else
+                                                    Gratis
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endif
+
                                     <tr class="border-t border-gray-200">
-                                        <td colspan="3" class="px-6 py-5 text-right text-base text-gray-800 uppercase tracking-wider">
+                                        <td class="px-5 py-4"></td>
+                                        <td class="px-2 py-4"></td>
+                                        <td class="px-2 py-4 text-center text-base font-bold text-gray-800">
                                             Total
                                         </td>
-                                        <td class="px-6 py-5 text-right">
-                                            <span class="text-xl text-gray-900 tracking-tight">
-                                                S/ {{ number_format($pedido->total_pedido, 2) }}
-                                            </span>
+                                        <td class="px-5 py-4 text-right text-base font-bold text-gray-800 whitespace-nowrap">
+                                            S/ {{ number_format($pedido->total_pedido, 2) }}
                                         </td>
                                     </tr>
                                 </tfoot>
+
                             </table>
                         </div>
 
@@ -313,34 +340,17 @@
 
                 </div>
 
-                {{-- ============================================= --}}
                 {{-- COLUMNA DERECHA: ESTADO + ENTREGA --}}
-                {{-- ============================================= --}}
                 <div class="space-y-6">
 
                     {{-- ESTADO --}}
                     <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
 
-                        <div class="flex items-center justify-between gap-3 mb-6">
-                            <div class="flex items-center gap-3">
-                                <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                                    <x-heroicon-o-arrow-path class="w-5 h-5" />
-                                </div>
-                                <h2 class="text-xl font-bold text-gray-800">Estado</h2>
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                                <x-heroicon-o-arrow-path class="w-5 h-5" />
                             </div>
-
-                            @php
-                                $estilos = [
-                                    'Pendiente'          => 'bg-amber-50 text-amber-600 border-amber-100',
-                                    'En camino'          => 'bg-blue-50 text-blue-600 border-blue-100',
-                                    'Listo para recoger' => 'bg-violet-50 text-violet-600 border-violet-100',
-                                    'Entregado'          => 'bg-emerald-50 text-emerald-600 border-emerald-100',
-                                ];
-                                $estilo = $estilos[$pedido->estado_pedido] ?? 'bg-gray-100 text-gray-500 border-gray-200';
-                            @endphp
-                            <span class="inline-flex items-center gap-1.5 py-1.5 px-4 rounded-full text-[10px] font-bold uppercase tracking-wider border {{ $estilo }}">
-                                {{ $pedido->estado_pedido }}
-                            </span>
+                            <h2 class="text-xl font-bold text-gray-800">Estado</h2>
                         </div>
 
                         @php
@@ -353,87 +363,63 @@
                                 ];
                             } else {
                                 $pasos = [
+                                    ['nombre' => 'Pendiente',          'icono' => 'clock'],
                                     ['nombre' => 'Listo para recoger', 'icono' => 'building-storefront'],
                                     ['nombre' => 'Entregado',          'icono' => 'check-badge'],
                                 ];
                             }
-                            $nombresPasos = array_column($pasos, 'nombre');
-                            $indiceActual = array_search($pedido->estado_pedido, $nombresPasos);
+                            $esRetiroTienda = $pedido->id_tipo_entrega != 2;
                         @endphp
 
+                        <div x-init="init({{ Js::from($pasos) }}, {{ $esRetiroTienda ? 'true' : 'false' }})"></div>
+
+                        {{-- PASOS --}}
                         <div class="flex items-start mb-6">
-                            @foreach($pasos as $i => $paso)
-                                @php
-                                    $completado = $i <= $indiceActual;
-                                @endphp
-
-                                <div class="flex flex-col items-center" style="width: 36px;">
-                                    @if($completado)
-                                        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-900 text-white">
-                                            @if($paso['icono'] === 'clock')
+                            <template x-for="(paso, i) in pasos" :key="i">
+                                <div class="contents">
+                                    <div class="flex flex-col items-center" style="width: 56px;">
+                                        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                                            :class="i <= indiceActual ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400'">
+                                            <template x-if="paso.icono === 'clock'">
                                                 <x-heroicon-s-clock class="w-4 h-4" />
-                                            @elseif($paso['icono'] === 'truck')
+                                            </template>
+                                            <template x-if="paso.icono === 'truck'">
                                                 <x-heroicon-s-truck class="w-4 h-4" />
-                                            @elseif($paso['icono'] === 'check-badge')
+                                            </template>
+                                            <template x-if="paso.icono === 'check-badge'">
                                                 <x-heroicon-s-check-badge class="w-4 h-4" />
-                                            @elseif($paso['icono'] === 'building-storefront')
+                                            </template>
+                                            <template x-if="paso.icono === 'building-storefront'">
                                                 <x-heroicon-s-building-storefront class="w-4 h-4" />
-                                            @endif
+                                            </template>
                                         </div>
-                                    @else
-                                        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-white border-2 border-gray-900 text-gray-900">
-                                            @if($paso['icono'] === 'clock')
-                                                <x-heroicon-s-clock class="w-4 h-4" />
-                                            @elseif($paso['icono'] === 'truck')
-                                                <x-heroicon-s-truck class="w-4 h-4" />
-                                            @elseif($paso['icono'] === 'check-badge')
-                                                <x-heroicon-s-check-badge class="w-4 h-4" />
-                                            @elseif($paso['icono'] === 'building-storefront')
-                                                <x-heroicon-s-building-storefront class="w-4 h-4" />
-                                            @endif
-                                        </div>
-                                    @endif
+                                        <span class="text-[10px] mt-1.5 text-center leading-tight whitespace-nowrap"
+                                            :class="i <= indiceActual ? 'font-bold text-gray-900' : 'font-normal text-gray-400'">
+                                            <template x-if="paso.nombre === 'Listo para recoger'">
+                                                <span>Listo para<br>recoger</span>
+                                            </template>
+                                            <template x-if="paso.nombre !== 'Listo para recoger'">
+                                                <span x-text="paso.nombre"></span>
+                                            </template>
+                                        </span>
+                                    </div>
 
-                                    <span class="text-[10px] mt-1.5 text-center leading-tight
-                                        {{ $completado ? 'font-bold text-gray-900' : 'font-normal text-gray-900' }}">
-                                        {{ $paso['nombre'] }}
-                                    </span>
+                                    {{-- Conector --}}
+                                    <template x-if="i < pasos.length - 1">
+                                        <div class="flex-1 mt-[18px] h-px"
+                                            :class="i < indiceActual ? 'bg-gray-900' : 'bg-gray-300'"></div>
+                                    </template>
                                 </div>
-
-                                @if($i < count($pasos) - 1)
-                                    @if($i < $indiceActual)
-                                        <div class="flex-1 h-0.5 mt-[17px] bg-gray-900"></div>
-                                    @else
-                                        <div class="flex-1 h-px mt-[18px] bg-gray-900"></div>
-                                    @endif
-                                @endif
-                            @endforeach
+                            </template>
                         </div>
 
-                        @if($pedido->estado_pedido !== 'Entregado')
-                            @php
-                                $siguiente = $pasos[$indiceActual + 1]['nombre'] ?? null;
-                            @endphp
-
-                            @if($siguiente)
-                                <form method="POST" action="{{ route('admin.pedidos.update', $pedido->id_pedido) }}">
-                                    @csrf @method('PUT')
-                                    <input type="hidden" name="estado_pedido" value="{{ $siguiente }}">
-                                    <button type="submit"
-                                        class="w-full py-3.5 bg-indigo-600 text-white text-sm font-bold tracking-wider rounded-full transition-colors duration-200">
-                                        Actualizar estado
-                                    </button>
-                                </form>
-                            @endif
-                        @else
-                            <div class="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
-                                <x-heroicon-s-check-badge class="w-6 h-6 text-emerald-500 flex-shrink-0" />
-                                <div>
-                                    <p class="font-bold text-emerald-800 text-sm">Pedido completado</p>
-                                    <p class="text-emerald-600 text-xs mt-0.5">No puede modificarse.</p>
-                                </div>
-                            </div>
-                        @endif
+                        {{-- BOTÓN ACTUALIZAR ESTADO --}}
+                        <button type="submit" form="form-actualizar-pedido"
+                            onclick="document.getElementById('accion_input').value = 'estado';"
+                            :disabled="estadoActual === 'Entregado'"
+                            class="w-full py-3.5 bg-indigo-600 text-white text-sm font-bold tracking-wider rounded-2xl transition-colors duration-200 disabled:cursor-not-allowed">
+                            Actualizar estado
+                        </button>
 
                     </div>
 
@@ -444,31 +430,53 @@
                             <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
                                 <x-heroicon-o-map-pin class="w-5 h-5" />
                             </div>
-                            <h2 class="text-xl font-bold text-gray-800">Datos de entrega</h2>
+                            <h2 class="text-xl font-bold text-gray-800">Entrega</h2>
                         </div>
 
                         <div class="space-y-5">
 
+                            @php
+                                $fechaEntregaFormateada = $pedido->fecha_entrega
+                                    ? \Carbon\Carbon::parse($pedido->fecha_entrega)->format('d/m/Y')
+                                    : 'Seleccionar';
+                            @endphp
+
+                            {{-- Fecha --}}
                             <div class="flex items-center gap-2">
                                 <label class="text-[14px] font-bold text-gray-800 shrink-0">Fecha:</label>
 
-                                <input type="text" name="fecha_entrega_estimada" id="fechaFiltro"
-                                    value="{{ $pedido->fecha_entrega_estimada ? \Carbon\Carbon::parse($pedido->fecha_entrega_estimada)->format('Y-m-d') : '' }}"
+                                <input type="text" name="fecha_entrega" id="fechaFiltro"
+                                    value="{{ $pedido->fecha_entrega ? \Carbon\Carbon::parse($pedido->fecha_entrega)->format('Y-m-d') : '' }}"
                                     class="sr-only" readonly>
 
                                 <button type="button" id="fechaBtn"
                                     class="flex-1 flex items-center justify-between gap-2 pl-4 pr-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 cursor-pointer focus:outline-none focus:border-gray-400 transition-colors">
-                                    <span id="fechaTexto">Fecha</span>
+                                    <span id="fechaTexto">{{ $fechaEntregaFormateada }}</span>
                                     <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
                                 </button>
                             </div>
 
-                            <div>
-                                <label class="text-[14px] font-bold text-gray-800 block mb-2">Lugar de entrega:</label>
-                                <textarea name="lugar_recojo" rows="3"
-                                    class="w-full px-4 py-3 border border-gray-200 rounded-2xl bg-gray-50 text-[14px] text-gray-600 focus:outline-none focus:border-gray-400 transition-colors resize-none">{{ $pedido->lugar_recojo ?? '' }}</textarea>
+                            {{-- Dirección --}}
+                            <div class="flex items-start gap-2">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0 mt-3">Dirección:</label>
+                                <textarea name="direccion_entrega" rows="3"
+                                    class="flex-1 px-4 py-3 border border-gray-200 rounded-2xl bg-gray-50 text-[14px] text-gray-600 focus:outline-none focus:border-gray-400 transition-colors resize-none">{{ $pedido->direccion_entrega ?? '' }}</textarea>
                             </div>
 
+                        </div>
+
+                        {{-- BOTONES --}}
+                        <div class="flex gap-3 mt-6">
+                            <a href="{{ route('admin.pedidos.index') }}"
+                                class="flex-1 py-3.5 bg-white text-gray-700 border border-gray-300 rounded-2xl text-sm font-bold tracking-wider text-center transition-colors duration-200 hover:bg-gray-50">
+                                Cancelar
+                            </a>
+
+                            <button type="submit" form="form-actualizar-pedido"
+                                onclick="document.getElementById('accion_input').value = 'guardar';"
+                                class="flex-1 py-3.5 bg-indigo-600 text-white text-sm font-bold tracking-wider rounded-2xl transition-colors duration-200">
+                                Guardar
+                            </button>
                         </div>
 
                     </div>
@@ -497,16 +505,21 @@
                 firstDayOfWeek: 0,
                 monthSelectorType: 'static',
                 yearSelectorType: 'input',
+
+                // 👇 Forzar que se recalcule la posición al abrir
+                onOpen: function (selectedDates, dateStr, instance) {
+                    // Mover el calendario para que se alinee con el botón
+                    instance._positionCalendar();
+
+                    botonFecha.classList.add('border-indigo-400', 'ring-2', 'ring-indigo-100');
+                },
                 onChange: function (selectedDates, dateStr) {
                     if (dateStr) {
                         const [y, m, d] = dateStr.split('-');
                         textoFecha.textContent = `${d}/${m}/${y}`;
                     } else {
-                        textoFecha.textContent = 'Fecha';
+                        textoFecha.textContent = 'Seleccionar';
                     }
-                },
-                onOpen: function () {
-                    botonFecha.classList.add('border-indigo-400', 'ring-2', 'ring-indigo-100');
                 },
                 onClose: function () {
                     botonFecha.classList.remove('border-indigo-400', 'ring-2', 'ring-indigo-100');
@@ -515,9 +528,43 @@
 
             botonFecha.addEventListener('click', function (e) {
                 e.preventDefault();
+
+                // 👇 Forzar que el positionElement esté actualizado antes de abrir
+                picker.set('positionElement', botonFecha);
+
+                // 👇 Recalcular posición y abrir
                 picker.open();
             });
         });
+
+        function pedidoEstado(estadoInicial) {
+            return {
+                estadoActual: estadoInicial,
+                pasos: [],
+                esRetiroTienda: false,
+                indiceActual: 0,
+
+                init(pasos, esRetiro) {
+                    this.pasos = pasos;
+                    this.esRetiroTienda = esRetiro;
+                    this.actualizarIndice();
+                },
+
+                actualizarIndice() {
+                    const nombres = this.pasos.map(p => p.nombre);
+                    const idx = nombres.indexOf(this.estadoActual);
+                    this.indiceActual = idx === -1 ? -1 : idx;
+                },
+
+                siguienteEstado() {
+                    const nombres = this.pasos.map(p => p.nombre);
+                    const idx = nombres.indexOf(this.estadoActual);
+                    if (idx === -1 || idx >= nombres.length - 1) return;
+                    this.estadoActual = nombres[idx + 1];
+                    this.actualizarIndice();
+                }
+            };
+        }
     </script>
 
 @endsection

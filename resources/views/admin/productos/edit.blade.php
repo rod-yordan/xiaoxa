@@ -345,20 +345,26 @@
                                 <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 pt-3">
 
                                     <template x-for="(img, imgIndex) in variante.imagenes_existentes" :key="img.id_imagen">
-                                        <div class="relative group/img aspect-[3/4]">
+                                        <div class="relative group/img aspect-[3/4]" x-data="{ marcada: false }">
                                             <img :src="'/api/imagen/' + img.imagen"
                                                  @click="pickColorFromExistingImage($event, index, imgIndex)"
                                                  class="w-full h-full object-cover cursor-crosshair"
                                                  title="Seleccionar color">
 
-                                            <label class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition shadow-md opacity-0 group-hover/img:opacity-100">
+                                            <label class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition shadow-md opacity-0 group-hover/img:opacity-100 z-10">
                                                 <input type="checkbox"
                                                        :name="`variantes[${index}][imagenes_eliminar][]`"
                                                        :value="img.id_imagen"
-                                                       class="hidden peer">
-                                                <span class="peer-checked:hidden">✕</span>
-                                                <span class="hidden peer-checked:block">✓</span>
+                                                       class="hidden"
+                                                       x-model="marcada">
+                                                <span>✕</span>
                                             </label>
+
+                                            <div x-show="marcada"
+                                                 x-transition.opacity
+                                                 class="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none z-20">
+                                                <x-heroicon-s-trash class="w-8 h-8 text-white" />
+                                            </div>
                                         </div>
                                     </template>
 
@@ -369,11 +375,9 @@
                                                  class="w-full h-full object-cover cursor-crosshair border-2 border-indigo-300"
                                                  title="Clic para tomar color">
 
-                                            <span class="absolute top-1 left-1 bg-indigo-500 text-white text-[7px] font-black uppercase px-1.5 py-0.5 rounded-full pointer-events-none">Nueva</span>
-
                                             <button type="button"
                                                     @click="removeNuevaImagen(index, newIndex)"
-                                                    class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold transition shadow-md opacity-0 group-hover/img:opacity-100">
+                                                    class="absolute -top-2 -right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold transition shadow-md opacity-0 group-hover/img:opacity-100 z-10">
                                                 ✕
                                             </button>
                                         </div>

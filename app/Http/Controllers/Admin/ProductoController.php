@@ -8,7 +8,6 @@ use App\Models\Producto;
 use App\Models\ProductoVariante;
 use App\Models\ProductoVarianteImagen;
 use App\Models\Categoria;
-use App\Models\Promocion;
 use Illuminate\Support\Facades\File;
 use App\Services\PusherBeamsService;
 
@@ -122,7 +121,7 @@ class ProductoController extends Controller
                 'color' => $v['color'] ?? null,
                 'color_hex' => $v['color_hex'] ?? null,
                 'stock' => $v['stock'],
-                'sku' => $v['sku'] ?? strtoupper(substr($producto->nombre_producto, 0, 3)) . '-' . uniqid(),
+                'sku' => $v['sku'] ?? $this->generarSku($producto->nombre_producto, $v['talla']),
             ]);
 
             // Guardar imágenes de la variante (solo si las hay)
@@ -153,9 +152,8 @@ class ProductoController extends Controller
     {
         $producto = Producto::with(['variantes.imagenes'])->findOrFail($id);
         $categorias = Categoria::all();
-        $promociones = Promocion::where('estado_promocion', 1)->get();
 
-        return view('admin.productos.edit', compact('producto', 'categorias', 'promociones'));
+        return view('admin.productos.edit', compact('producto', 'categorias'));
     }
 
     public function update(Request $request, $id)
@@ -199,8 +197,8 @@ class ProductoController extends Controller
             ->values()
             ->toArray();
 
-        // SIN descripcion
-        $datos = $request->only(['nombre_producto', 'precio', 'precio_oferta', 'marca', 'estado_producto', 'id_categoria', 'id_promocion']);
+        // SIN descripcion ni promocion
+        $datos = $request->only(['nombre_producto', 'precio', 'precio_oferta', 'marca', 'estado_producto', 'id_categoria']);
         $datos['detalles'] = $detalles;
 
         $producto->update($datos);
@@ -277,6 +275,26 @@ class ProductoController extends Controller
         $nombre = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
         $file->move(storage_path('app/public/' . $carpeta), $nombre);
         return $nombre;
+    }
+
+    private function generarSku($nombreProducto, $talla): string
+    {
+        $letras  = preg_replace('/[^A-Za-z]/', '', $nombreProducto);
+        $primera = strtoupper(substr($letras, 0, 1) ?: 'X');
+        $talla   = strtoupper($talla ?? '');
+
+        $faltan = 8 - 1 - strlen($talla);
+        $faltan = max($faltan, 0);
+
+        do {
+            $rand = '';
+            for ($i = 0; $i < $faltan; $i++) {
+                $rand .= random_int(0, 9);
+            }
+            $sku = $primera . $rand . $talla;
+        } while (ProductoVariante::where('sku', $sku)->exists());
+
+        return $sku;
     }
 
     public function destroy($id)

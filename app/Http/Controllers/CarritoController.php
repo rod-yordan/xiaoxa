@@ -7,26 +7,31 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Carrito;
 use App\Models\DetalleCarrito;
 use App\Models\ProductoVariante;
+use App\Models\ProductoVarianteImagen;
 
 class CarritoController extends Controller
 {
-    /**
-     * Devuelve el nombre de archivo de la primera imagen
-     * de la variante; si no tiene, cae al producto.
-     */
     private function obtenerImagen($variante)
     {
         $primeraImagen = $variante->imagenes->first();
         if ($primeraImagen && !empty($primeraImagen->imagen)) {
             return $primeraImagen->imagen;
         }
+
+        $imagenPorColor = ProductoVarianteImagen::whereHas('variante', function ($q) use ($variante) {
+                $q->where('id_producto', $variante->producto->id_producto)
+                  ->where('color', $variante->color);
+            })
+            ->whereNotNull('imagen')
+            ->first();
+
+        if ($imagenPorColor && !empty($imagenPorColor->imagen)) {
+            return $imagenPorColor->imagen;
+        }
+
         return $variante->producto->imagen ?? null;
     }
 
-    /**
-     * Devuelve el porcentaje de descuento calculado,
-     * o null si el producto no está en oferta.
-     */
     private function obtenerDescuento($producto)
     {
         if (!$producto->precio_oferta || $producto->precio_oferta <= 0) {
@@ -91,7 +96,7 @@ class CarritoController extends Controller
                     "nombre"        => $variante->producto->nombre_producto,
                     "cantidad"      => $cantidad,
                     "precio"        => $variante->producto->precio_oferta ?? $variante->producto->precio,
-                    "precio_normal" => $variante->producto->precio, // ✅ NUEVO
+                    "precio_normal" => $variante->producto->precio,
                     "precio_oferta" => $variante->producto->precio_oferta,
                     "descuento"     => $this->obtenerDescuento($variante->producto),
                     "imagen"        => $imagen,
@@ -130,12 +135,13 @@ class CarritoController extends Controller
                         "nombre"        => $producto->nombre_producto,
                         "cantidad"      => $detalle->cantidad,
                         "precio"        => $producto->precio_oferta ?? $producto->precio,
-                        "precio_normal" => $producto->precio, // ✅ NUEVO
+                        "precio_normal" => $producto->precio,
                         "precio_oferta" => $producto->precio_oferta,
                         "descuento"     => $this->obtenerDescuento($producto),
                         "imagen"        => $this->obtenerImagen($variante),
                         "talla"         => $variante->talla,
-                        "color"         => $variante->color
+                        "color"         => $variante->color,
+                        "stock"         => $variante->stock,
                     ];
 
                     $total += $items[$detalle->id_variante]['precio'] * $detalle->cantidad;
@@ -145,9 +151,19 @@ class CarritoController extends Controller
 
             $items = session()->get('carrito', []);
 
-            foreach ($items as $item) {
+            foreach ($items as $idVariante => $item) {
+                $variante = ProductoVariante::find($idVariante);
+                $items[$idVariante]['stock'] = $variante->stock ?? 0;
+
+                // Recalcular imagen por si la variante ahora tiene imagen
+                if ($variante) {
+                    $items[$idVariante]['imagen'] = $this->obtenerImagen($variante);
+                }
+
                 $total += $item['precio'] * $item['cantidad'];
             }
+
+            session()->put('carrito', $items);
         }
 
         return view('carrito.index', compact('items', 'total'));
@@ -174,15 +190,20 @@ class CarritoController extends Controller
             $carrito = session()->get('carrito', []);
 
             if (isset($carrito[$id_variante])) {
-                $carrito[$id_variante]['cantidad']++;
-                session()->put('carrito', $carrito);
+                $variante = ProductoVariante::find($id_variante);
+                $stock = $variante->stock ?? 0;
+
+                if ($carrito[$id_variante]['cantidad'] < $stock) {
+                    $carrito[$id_variante]['cantidad']++;
+                    session()->put('carrito', $carrito);
+                }
             }
         }
 
         return redirect()->route('carrito.index');
     }
 
-    // DISMINUIR
+    // DISMINUIR (si llega a 0, elimina el producto)
     public function disminuir($id_variante)
     {
         if (Auth::check()) {

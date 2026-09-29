@@ -25,16 +25,17 @@
                 </a>
             </div>
 
-            <nav class="flex-1 py-6 space-y-2 overflow-y-auto">
+            <nav class="flex-1 py-6 overflow-y-auto">
                 @php
                     $links = [
                         ['route' => 'admin.dashboard',          'pattern' => 'admin.dashboard',       'icon' => 'o-chart-bar',              'label' => 'Dashboard'],
+                        ['route' => 'admin.ventas.index',       'pattern' => 'admin.ventas.*',        'icon' => 'o-building-storefront',    'label' => 'Ventas'],
                         ['route' => 'admin.productos.index',    'pattern' => 'admin.productos.*',     'icon' => 'o-cube',                   'label' => 'Productos'],
                         ['route' => 'admin.categorias.index',   'pattern' => 'admin.categorias.*',    'icon' => 'o-tag',                    'label' => 'Categorías'],
                         ['route' => 'admin.pedidos.index',      'pattern' => 'admin.pedidos.*',       'icon' => 'o-clipboard-document-list','label' => 'Pedidos'],
                     ];
 
-                    $otrosRoutes = ['admin.banners.index', 'admin.cupones.index'];
+                    $otrosRoutes = ['admin.banners.index', 'admin.cupones.index', 'admin.envios.index'];
                     $otrosActive = request()->routeIs($otrosRoutes);
                 @endphp
 
@@ -46,19 +47,16 @@
                         ? 'bg-pink-600 text-white rounded-r-full'
                         : 'text-gray-700 rounded-full' }}">
                     <x-dynamic-component :component="'heroicon-' . $link['icon']" class="w-5 h-5 flex-shrink-0" />
-                    <span>{{ $link['label'] }}</span>
+                    <span class="text-[15px]">{{ $link['label'] }}</span>
                 </a>
                 @endforeach
 
-                <div x-data="{ otrosOpen: {{ $otrosActive ? 'true' : 'false' }} }" class="mr-4">
+                <div x-data="{ otrosOpen: {{ $otrosActive ? 'true' : 'false' }} }" class="mr-6">
                     <button @click="otrosOpen = !otrosOpen"
                         class="w-full flex items-center gap-3 py-3.5 pl-10 pr-5 font-medium transition-all
                         {{ $otrosActive ? 'bg-pink-600 text-white rounded-r-full' : 'text-gray-700 rounded-full' }}">
                         <x-heroicon-o-squares-2x2 class="w-5 h-5 flex-shrink-0" />
-                        <span class="flex-1 text-left">Otros</span>
-                        <x-heroicon-o-chevron-down
-                            :class="otrosOpen ? 'rotate-180' : ''"
-                            class="w-4 h-4 transition-transform duration-200" />
+                        <span class="flex-1 text-left text-[15px]">Otros</span>
                     </button>
 
                     <div x-show="otrosOpen"
@@ -68,20 +66,27 @@
                          x-transition:leave="transition ease-in duration-150"
                          x-transition:leave-start="opacity-100 translate-y-0"
                          x-transition:leave-end="opacity-0 -translate-y-2"
-                         class="mt-1 ml-4 pl-4 border-l border-gray-200 space-y-1">
+                         class="mt-1 ml-4 pl-4 space-y-1">
 
                         <a href="{{ route('admin.banners.index') }}"
                            class="flex items-center gap-3 px-4 py-3 rounded-full font-medium transition-all
-                           {{ request()->routeIs('admin.banners.index') ? 'bg-pink-100 text-pink-700' : 'text-gray-600' }}">
+                           {{ request()->routeIs('admin.banners.index') ? 'bg-pink-600 text-white' : 'text-gray-600' }}">
                             <x-heroicon-o-photo class="w-5 h-5 flex-shrink-0" />
-                            <span>Banners</span>
+                            <span class="text-[15px]">Banners</span>
                         </a>
 
                         <a href="{{ route('admin.cupones.index') }}"
                            class="flex items-center gap-3 px-4 py-3 rounded-full font-medium transition-all
-                           {{ request()->routeIs('admin.cupones.index') ? 'bg-pink-100 text-pink-700' : 'text-gray-600' }}">
+                           {{ request()->routeIs('admin.cupones.index') ? 'bg-pink-600 text-white' : 'text-gray-600' }}">
                             <x-heroicon-o-ticket class="w-5 h-5 flex-shrink-0" />
-                            <span>Cupones</span>
+                            <span class="text-[15px]">Cupones</span>
+                        </a>
+
+                        <a href="{{ route('admin.envios.index') }}"
+                           class="flex items-center gap-3 px-4 py-3 rounded-full font-medium transition-all
+                           {{ request()->routeIs('admin.envios.*') ? 'bg-pink-600 text-white' : 'text-gray-600' }}">
+                            <x-heroicon-o-truck class="w-5 h-5 flex-shrink-0" />
+                            <span class="text-[15px]">Costos de envío</span>
                         </a>
                     </div>
                 </div>
@@ -93,7 +98,7 @@
                     <button type="submit"
                         class="w-full flex items-center gap-3 py-3.5 pl-10 pr-5 rounded-full font-semibold text-gray-700 transition-all text-left">
                         <x-heroicon-o-arrow-left-on-rectangle class="w-5 h-5 flex-shrink-0" />
-                        <span class="text-sm">Cerrar sesión</span>
+                        <span class="text-[15px]">Cerrar sesión</span>
                     </button>
                 </form>
             </div>
@@ -113,7 +118,6 @@
                      x-transition:leave-end="opacity-0 scale-95"
                      class="pointer-events-auto flex items-center gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border border-emerald-100 min-w-[340px] max-w-md">
 
-                    {{-- ✅ Icono circular estilo éxito de pago --}}
                     <div class="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -142,7 +146,6 @@
                      x-transition:leave-end="opacity-0 scale-95"
                      class="pointer-events-auto flex items-center gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border border-rose-100 min-w-[340px] max-w-md">
 
-                    {{-- ❌ Icono circular estilo fallo --}}
                     <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>

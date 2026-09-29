@@ -12,10 +12,12 @@ use App\Http\Controllers\Admin\ProductoController;
 use App\Http\Controllers\Admin\CategoriaController;
 use App\Http\Controllers\Admin\PedidoController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\VentaController;
 use App\Models\Producto;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CuponController;
+use App\Http\Controllers\Admin\EnvioController;
 use App\Http\Controllers\Api\ImageController;
 
 // ── PÚBLICAS
@@ -85,6 +87,14 @@ Route::middleware(['auth', 'verified', 'role:1'])
         Route::resource('banners', BannerController::class)->except(['show']);
         Route::resource('cupones', CuponController::class)->except(['show']);
         Route::patch('cupones/{cupon}/toggle', [CuponController::class, 'toggle'])->name('cupones.toggle');
+
+        // ── VENTAS
+        Route::get('ventas',  [VentaController::class, 'index'])->name('ventas.index');
+        Route::post('ventas', [VentaController::class, 'store'])->name('ventas.store');
+
+        // ── ENVÍOS
+        Route::get('envios',              [EnvioController::class, 'index'])->name('envios.index');
+        Route::put('envios/{departamento}', [EnvioController::class, 'update'])->name('envios.update');
     });
 
 // ── PERFIL

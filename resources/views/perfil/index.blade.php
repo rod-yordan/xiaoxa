@@ -66,7 +66,7 @@
 
             </div>
 
-            {{-- CARD DERECHA (SCROLL PEGADO A ARRIBA Y ABAJO) --}}
+            {{-- CARD DERECHA --}}
             <div class="md:col-span-2 bg-[#f1f1f1] border border-gray-300 rounded-lg pl-10 pr-0 py-0 h-[430px] flex flex-col overflow-hidden">
 
                 {{-- ============ INFO CUENTA ============ --}}
@@ -243,10 +243,11 @@
                             @foreach($pedidos as $pedido)
 
                                 @php
-                                    $esRetiro = $pedido->id_tipo_entrega == 1;
+                                    $esRetiro = $pedido->id_tipo_entrega != 2;
 
                                     if ($esRetiro) {
                                         $pasos = [
+                                            ['nombre' => 'Pendiente',          'icono' => 'clock'],
                                             ['nombre' => 'Listo para recoger', 'icono' => 'building-storefront'],
                                             ['nombre' => 'Entregado',          'icono' => 'check-badge'],
                                         ];
@@ -261,12 +262,13 @@
 
                                     $nombresPasos = array_column($pasos, 'nombre');
                                     $indiceActual = array_search($pedido->estado_pedido, $nombresPasos);
+                                    $indiceActual = ($indiceActual === false) ? -1 : (int) $indiceActual;
                                 @endphp
 
                                 <div x-data="{ open: false }" class="bg-white rounded-lg border border-gray-300 overflow-hidden">
 
                                     {{-- HEADER --}}
-                                    <button @click="open = !open" class="w-full px-8 py-5 flex items-center justify-between hover:bg-gray-50 transition">
+                                    <button @click="open = !open" class="w-full px-8 py-3.5 flex items-center justify-between hover:bg-gray-50 transition">
 
                                         <div class="flex items-center gap-4 min-w-0">
                                             <div class="flex flex-col items-start gap-0.5 min-w-0">
@@ -294,111 +296,54 @@
                                     {{-- BODY --}}
                                     <div x-show="open" x-collapse class="border-t border-gray-200 px-12 py-10 space-y-7 bg-gray-50/50">
 
-                                        {{-- SEGUIMIENTO --}}
+                                        {{-- SEGUIMIENTO (mismo estilo que Detalles del Pedido) --}}
                                         <div class="px-4">
                                             <div class="flex items-start">
-                                                @if($esRetiro)
-                                                    <div class="flex-1"></div>
+                                                @foreach($pasos as $i => $paso)
+                                                    @php
+                                                        $completado = $i <= $indiceActual;
+                                                    @endphp
 
-                                                    <div class="flex flex-col items-center" style="width: 36px;">
-                                                        @if($indiceActual >= 0)
-                                                            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-600 text-white">
-                                                                <x-heroicon-s-building-storefront class="w-4 h-4" />
-                                                            </div>
-                                                        @else
-                                                            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-white border-2 border-indigo-600 text-indigo-600">
-                                                                <x-heroicon-s-building-storefront class="w-4 h-4" />
-                                                            </div>
-                                                        @endif
-                                                        <span class="text-[10px] mt-1.5 text-center leading-tight
-                                                            {{ $indiceActual >= 0 ? 'font-bold text-indigo-600' : 'font-normal text-indigo-600' }}">
-                                                            Listo para<br>recoger
-                                                        </span>
-                                                    </div>
-
-                                                    <div class="flex-1 {{ $indiceActual >= 1 ? 'h-0.5 bg-indigo-600' : 'h-px bg-indigo-600' }} mt-[17px]"></div>
-
-                                                    <div class="flex flex-col items-center" style="width: 36px;">
-                                                        @if($indiceActual >= 1)
-                                                            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-600 text-white">
+                                                    <div class="flex flex-col items-center" style="width: 56px;">
+                                                        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
+                                                            {{ $completado ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400' }}">
+                                                            @if($paso['icono'] === 'clock')
+                                                                <x-heroicon-s-clock class="w-4 h-4" />
+                                                            @elseif($paso['icono'] === 'truck')
+                                                                <x-heroicon-s-truck class="w-4 h-4" />
+                                                            @elseif($paso['icono'] === 'check-badge')
                                                                 <x-heroicon-s-check-badge class="w-4 h-4" />
-                                                            </div>
-                                                        @else
-                                                            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-white border-2 border-indigo-600 text-indigo-600">
-                                                                <x-heroicon-s-check-badge class="w-4 h-4" />
-                                                            </div>
-                                                        @endif
-                                                        <span class="text-[10px] mt-1.5 text-center leading-tight
-                                                            {{ $indiceActual >= 1 ? 'font-bold text-indigo-600' : 'font-normal text-indigo-600' }}">
-                                                            Entregado
-                                                        </span>
-                                                    </div>
-
-                                                    <div class="flex-1"></div>
-                                                @else
-                                                    @foreach($pasos as $i => $paso)
-                                                        @php
-                                                            $completado = $i <= $indiceActual;
-                                                        @endphp
-
-                                                        <div class="flex flex-col items-center" style="width: 36px;">
-                                                            @if($completado)
-                                                                <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-600 text-white">
-                                                                    @if($paso['icono'] === 'clock')
-                                                                        <x-heroicon-s-clock class="w-4 h-4" />
-                                                                    @elseif($paso['icono'] === 'truck')
-                                                                        <x-heroicon-s-truck class="w-4 h-4" />
-                                                                    @elseif($paso['icono'] === 'check-badge')
-                                                                        <x-heroicon-s-check-badge class="w-4 h-4" />
-                                                                    @elseif($paso['icono'] === 'building-storefront')
-                                                                        <x-heroicon-s-building-storefront class="w-4 h-4" />
-                                                                    @endif
-                                                                </div>
-                                                            @else
-                                                                <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-white border-2 border-indigo-600 text-indigo-600">
-                                                                    @if($paso['icono'] === 'clock')
-                                                                        <x-heroicon-s-clock class="w-4 h-4" />
-                                                                    @elseif($paso['icono'] === 'truck')
-                                                                        <x-heroicon-s-truck class="w-4 h-4" />
-                                                                    @elseif($paso['icono'] === 'check-badge')
-                                                                        <x-heroicon-s-check-badge class="w-4 h-4" />
-                                                                    @elseif($paso['icono'] === 'building-storefront')
-                                                                        <x-heroicon-s-building-storefront class="w-4 h-4" />
-                                                                    @endif
-                                                                </div>
+                                                            @elseif($paso['icono'] === 'building-storefront')
+                                                                <x-heroicon-s-building-storefront class="w-4 h-4" />
                                                             @endif
-
-                                                            <span class="text-[10px] mt-1.5 text-center leading-tight
-                                                                {{ $completado ? 'font-bold text-indigo-600' : 'font-normal text-indigo-600' }}">
-                                                                @if($paso['nombre'] === 'Listo para recoger')
-                                                                    Listo para<br>recoger
-                                                                @else
-                                                                    {{ $paso['nombre'] }}
-                                                                @endif
-                                                            </span>
                                                         </div>
-
-                                                        @if($i < count($pasos) - 1)
-                                                            @if($i < $indiceActual)
-                                                                <div class="flex-1 h-0.5 mt-[17px] bg-indigo-600"></div>
+                                                        <span class="text-[10px] mt-1.5 text-center leading-tight whitespace-nowrap
+                                                            {{ $completado ? 'font-bold text-indigo-600' : 'font-normal text-gray-400' }}">
+                                                            @if($paso['nombre'] === 'Listo para recoger')
+                                                                Listo para<br>recoger
                                                             @else
-                                                                <div class="flex-1 h-px mt-[18px] bg-indigo-600"></div>
+                                                                {{ $paso['nombre'] }}
                                                             @endif
-                                                        @endif
-                                                    @endforeach
-                                                @endif
+                                                        </span>
+                                                    </div>
+
+                                                    @if($i < count($pasos) - 1)
+                                                        <div class="flex-1 mt-[18px] h-px
+                                                            {{ $i < $indiceActual ? 'bg-indigo-600' : 'bg-gray-300' }}"></div>
+                                                    @endif
+                                                @endforeach
                                             </div>
                                         </div>
 
-                                        {{-- PRODUCTOS EN TABLA --}}
+                                        {{-- TABLA DE PRODUCTOS --}}
                                         <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                                            <table class="w-full">
+                                            <table class="w-full table-fixed">
                                                 <thead>
-                                                    <tr class="bg-gray-50 border-b border-gray-200">
-                                                        <th class="text-left px-4 py-3 text-[11px] font-bold text-black uppercase tracking-wider">Producto</th>
-                                                        <th class="text-center px-4 py-3 text-[11px] font-bold text-black uppercase tracking-wider">Precio</th>
-                                                        <th class="text-center px-4 py-3 text-[11px] font-bold text-black uppercase tracking-wider">Cant.</th>
-                                                        <th class="text-right px-4 py-3 text-[11px] font-bold text-black uppercase tracking-wider">Total</th>
+                                                    <tr class="bg-[#f1f1f1] border-b border-gray-200">
+                                                        <th class="w-[45%] text-left px-5 py-3 text-[11px] text-black tracking-wider">Producto</th>
+                                                        <th class="w-[18%] text-center px-2 py-3 text-[11px] text-black tracking-wider">Precio Unit.</th>
+                                                        <th class="w-[17%] text-center px-2 py-3 text-[11px] text-black tracking-wider">Cantidad</th>
+                                                        <th class="w-[20%] text-right px-5 py-3 text-[11px] text-black tracking-wider">Subtotal</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -408,32 +353,52 @@
                                                             $producto = $variante?->producto;
                                                         @endphp
                                                         <tr class="border-b border-gray-100 last:border-0">
-                                                            <td class="px-4 py-3">
-                                                                <p class="text-xs font-semibold text-black">
+                                                            <td class="px-5 py-3">
+                                                                <p class="text-[11px] text-black">
                                                                     {{ $producto->nombre_producto ?? 'Producto eliminado' }}
                                                                 </p>
-                                                                <p class="text-[10px] text-black mt-0.5">
-                                                                    Talla: {{ $variante?->talla ?? '—' }} · Color: {{ $variante?->color ?? '—' }}
+                                                                <p class="text-[10px] text-gray-500 mt-0.5">
+                                                                    <span>Color: {{ $variante?->color ?? '—' }}</span>
+                                                                    <span class="ml-1">Talla: {{ $variante?->talla ?? '—' }}</span>
                                                                 </p>
                                                             </td>
-                                                            <td class="px-4 py-3 text-center text-xs font-medium text-black">
+                                                            <td class="px-2 py-3 text-center text-[11px] text-black whitespace-nowrap">
                                                                 S/ {{ number_format($detalle->precio_unitario, 2) }}
                                                             </td>
-                                                            <td class="px-4 py-3 text-center text-xs font-medium text-black">
+                                                            <td class="px-2 py-3 text-center text-[11px] text-black">
                                                                 {{ $detalle->cantidad }}
                                                             </td>
-                                                            <td class="px-4 py-3 text-right text-xs font-medium text-black">
+                                                            <td class="px-5 py-3 text-right text-[11px] text-black whitespace-nowrap">
                                                                 S/ {{ number_format($detalle->subtotal, 2) }}
                                                             </td>
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
                                                 <tfoot>
-                                                    <tr class="border-t border-gray-100">
-                                                        <td colspan="3" class="px-4 py-3 text-right text-xs font-bold text-black uppercase tracking-wider">
+                                                    @if($pedido->id_tipo_entrega == 2)
+                                                        <tr class="border-t border-gray-200">
+                                                            <td class="px-5 py-3"></td>
+                                                            <td class="px-2 py-3"></td>
+                                                            <td class="px-2 py-3 text-center text-[11px] text-black">
+                                                                Envío
+                                                            </td>
+                                                            <td class="px-5 py-3 text-right text-[11px] text-black whitespace-nowrap">
+                                                                @if($pedido->costo_envio > 0)
+                                                                    S/ {{ number_format($pedido->costo_envio, 2) }}
+                                                                @else
+                                                                    Gratis
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @endif
+
+                                                    <tr class="border-t border-gray-200">
+                                                        <td class="px-5 py-4"></td>
+                                                        <td class="px-2 py-4"></td>
+                                                        <td class="px-2 py-4 text-center text-[11px] font-bold text-black tracking-wider">
                                                             Total
                                                         </td>
-                                                        <td class="px-4 py-3 text-right text-xs font-medium text-black">
+                                                        <td class="px-5 py-4 text-right text-[11px] font-bold text-black whitespace-nowrap">
                                                             S/ {{ number_format($pedido->total_pedido, 2) }}
                                                         </td>
                                                     </tr>
@@ -441,46 +406,55 @@
                                             </table>
                                         </div>
 
-                                        {{-- ENTREGA --}}
-                                        <div class="pt-2 border-t border-gray-200">
-                                            <p class="text-[10px] font-black text-black uppercase tracking-widest mb-2">Entrega</p>
+                                        {{-- DATOS DE ENTREGA --}}
+                                        <div class="bg-white border border-gray-200 rounded-lg px-5 py-4">
+                                            <p class="text-[10px] font-black text-black uppercase tracking-widest mb-3">Datos de entrega</p>
 
-                                            <div class="space-y-1.5">
+                                            <div class="space-y-2">
                                                 <div class="flex justify-between">
-                                                    <span class="text-xs text-black">Tipo de entrega</span>
+                                                    <span class="text-xs text-gray-600">Tipo de entrega</span>
                                                     <span class="text-xs font-semibold text-black">
                                                         {{ $pedido->tipoEntrega?->nombre_tipo_entrega ?? '—' }}
                                                     </span>
                                                 </div>
 
-                                                <div class="flex justify-between">
-                                                    <span class="text-xs text-black">
-                                                        {{ $esRetiro ? 'Lugar de recojo' : 'Dirección' }}
-                                                    </span>
-                                                    <span class="text-xs font-semibold text-black text-right max-w-[60%]">
-                                                        @if($esRetiro)
-                                                            {{ $pedido->lugar_recojo ?? 'Jr. Cajamarca N° 396 - Huancayo' }}
-                                                        @else
-                                                            {{ $pedido->departamento?->nombre_departamento ?? '—' }},
-                                                            {{ $pedido->provincia ?? '—' }},
-                                                            {{ $pedido->distrito ?? '—' }}
-                                                        @endif
-                                                    </span>
+                                                @unless($esRetiro)
+                                                    <div class="flex justify-between gap-4">
+                                                        <span class="text-xs text-gray-600 shrink-0">Destino</span>
+                                                        <span class="text-xs font-semibold text-black text-right max-w-[60%]">
+                                                            {{ collect([
+                                                                $pedido->departamento?->nombre_departamento,
+                                                                $pedido->provincia,
+                                                                $pedido->distrito,
+                                                            ])->filter()->implode(', ') ?: '—' }}
+                                                        </span>
+                                                    </div>
+                                                @endunless
+
+                                                <div class="flex justify-between gap-4">
+                                                    <span class="text-xs text-gray-600 shrink-0">Dirección</span>
+                                                    @if(!empty($pedido->direccion_entrega))
+                                                        <span class="text-xs font-semibold text-black text-right max-w-[60%]">
+                                                            {{ $pedido->direccion_entrega }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-xs font-semibold text-amber-600 italic text-right max-w-[60%]">
+                                                            En espera de asignación
+                                                        </span>
+                                                    @endif
                                                 </div>
 
                                                 <div class="flex justify-between">
-                                                    <span class="text-xs text-black">Fecha</span>
-                                                    <span class="text-xs font-semibold text-black">
-                                                        @if($pedido->fecha_entrega_real)
-                                                            {{ \Carbon\Carbon::parse($pedido->fecha_entrega_real)->format('d/m/Y') }}
-                                                        @elseif($pedido->fecha_entrega_estimada)
-                                                            Est. {{ \Carbon\Carbon::parse($pedido->fecha_entrega_estimada)->format('d/m/Y') }}
-                                                        @elseif($pedido->fecha_envio)
-                                                            Enviado {{ \Carbon\Carbon::parse($pedido->fecha_envio)->format('d/m/Y') }}
-                                                        @else
-                                                            —
-                                                        @endif
-                                                    </span>
+                                                    <span class="text-xs text-gray-600">Fecha</span>
+                                                    @if($pedido->fecha_entrega)
+                                                        <span class="text-xs font-semibold text-black">
+                                                            {{ \Carbon\Carbon::parse($pedido->fecha_entrega)->format('d/m/Y') }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-xs font-semibold text-amber-600 italic">
+                                                            En espera de asignación
+                                                        </span>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>
