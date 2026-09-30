@@ -16,7 +16,7 @@ class HomeController extends Controller
             return redirect()->route('admin.dashboard');
         }
 
-        $hayFiltros = $request->filled('buscar') 
+        $hayFiltros = $request->filled('buscar')
                    || ($request->filled('categoria') && $request->categoria != 'Todo')
                    || $request->has('promocion');
 
@@ -40,12 +40,23 @@ class HomeController extends Controller
             });
         }
 
-        // Filtro por búsqueda de texto
+        // ✅ Filtro por búsqueda de texto (mejorado)
         if ($request->filled('buscar')) {
-            $buscar = $request->buscar;
-            $query->where(function ($q) use ($buscar) {
-                $q->where('nombre_producto', 'like', "%{$buscar}%")
-                    ->orWhere('marca', 'like', "%{$buscar}%");
+            $buscar = trim($request->buscar);
+
+            // Separar por espacios y limpiar
+            $palabras = array_filter(
+                array_map(fn($p) => trim($p), explode(' ', $buscar)),
+                fn($p) => strlen($p) >= 2 // ignorar palabras de 1 letra
+            );
+
+            $query->where(function ($q) use ($palabras) {
+                foreach ($palabras as $palabra) {
+                    $q->where(function ($subQ) use ($palabra) {
+                        $subQ->where('nombre_producto', 'like', "%{$palabra}%")
+                             ->orWhere('marca', 'like', "%{$palabra}%");
+                    });
+                }
             });
         }
 
@@ -53,7 +64,7 @@ class HomeController extends Controller
         if ($hayFiltros) {
             $productos = $query->orderBy('created_at', 'desc')->get();
             $categorias = collect(); // vacío
-        } 
+        }
         // ✅ Si NO hay filtros → agrupar por categoría
         else {
             $categorias = Categoria::where('estado_categoria', 1)

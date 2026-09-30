@@ -159,24 +159,25 @@
 {{-- ===== GRID ÚNICO (CUANDO HAY FILTROS O BÚSQUEDA) ===== --}}
 @if(isset($productos) && $productos->count() > 0)
 
-<div class="max-w-7xl mx-auto px-4 sm:px-8 pt-6 pb-2">
-    {{-- BREADCRUMB (Inicio > Filtro) --}}
-    <div class="flex items-center gap-2">
-        <a href="{{ route('home') }}"
-           class="flex items-center gap-1"
-           title="Volver al inicio">
-            <span class="text-base font-normal text-black">Inicio</span>
-            <x-heroicon-o-chevron-right class="w-3 h-3 text-black" />
-        </a>
-
-        <span class="text-base font-normal text-black truncate">
-            @if(request('categoria')) {{ ucwords(strtolower(request('categoria'))) }}
-            @elseif(request('promocion')) Promociones
-            @elseif(request('buscar')) Resultados: "{{ request('buscar') }}"
-            @else Todos los Productos
-            @endif
-        </span>
-    </div>
+{{-- ✅ TÍTULO CON ANCHO COMPLETO + padding lateral cómodo → pegado a la izquierda sin verse apretado --}}
+<div class="w-full px-6 sm:px-16 pt-6 pb-2">
+    @if(request('buscar'))
+        <h1 class="text-xl font-normal text-black" style="text-align: left !important; margin: 0;">
+            Resultados para <span class="font-semibold">{{ request('buscar') }}</span>
+        </h1>
+    @elseif(request('categoria'))
+        <h1 class="text-xl font-normal text-black" style="text-align: left !important; margin: 0;">
+            {{ ucwords(strtolower(request('categoria'))) }}
+        </h1>
+    @elseif(request('promocion'))
+        <h1 class="text-xl font-normal text-black" style="text-align: left !important; margin: 0;">
+            Promociones
+        </h1>
+    @else
+        <h1 class="text-xl font-normal text-black" style="text-align: left !important; margin: 0;">
+            Todos los Productos
+        </h1>
+    @endif
 </div>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-8 py-8">
@@ -234,8 +235,36 @@
 {{-- SIN RESULTADOS --}}
 @elseif(isset($productos) && $productos->isEmpty() && (request('buscar') || request('categoria') || request('promocion')))
 <div class="max-w-7xl mx-auto px-4 sm:px-8 py-24 text-center">
-    <x-heroicon-o-shopping-bag class="w-12 h-12 mx-auto mb-3 text-gray-200" />
-    <p class="text-sm font-medium text-gray-400">No hay productos disponibles</p>
+    <x-heroicon-o-magnifying-glass class="w-16 h-16 mx-auto mb-4 text-gray-200" />
+
+    @if(request('buscar'))
+        <h3 class="text-lg font-bold text-gray-800 mb-2">
+            No encontramos resultados para "{{ request('buscar') }}"
+        </h3>
+        <p class="text-sm text-gray-500 mb-6">
+            Intenta con otras palabras o revisa la ortografía.
+        </p>
+    @elseif(request('categoria'))
+        <h3 class="text-lg font-bold text-gray-800 mb-2">
+            No hay productos en esta categoría
+        </h3>
+        <p class="text-sm text-gray-500 mb-6">
+            Vuelve pronto para ver novedades.
+        </p>
+    @elseif(request('promocion'))
+        <h3 class="text-lg font-bold text-gray-800 mb-2">
+            No hay promociones activas
+        </h3>
+        <p class="text-sm text-gray-500 mb-6">
+            Vuelve pronto para aprovechar nuestras ofertas.
+        </p>
+    @endif
+
+    <a href="{{ route('home') }}"
+       class="inline-flex items-center gap-2 bg-black text-white text-sm font-bold uppercase tracking-wider px-6 py-3 rounded-full hover:bg-gray-800 transition">
+        <x-heroicon-o-arrow-left class="w-4 h-4" />
+        Volver al inicio
+    </a>
 </div>
 @endif
 
