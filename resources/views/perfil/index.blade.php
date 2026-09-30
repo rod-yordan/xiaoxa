@@ -296,7 +296,7 @@
                                     {{-- BODY --}}
                                     <div x-show="open" x-collapse class="border-t border-gray-200 px-12 py-10 space-y-7 bg-gray-50/50">
 
-                                        {{-- SEGUIMIENTO (mismo estilo que Detalles del Pedido) --}}
+                                        {{-- SEGUIMIENTO --}}
                                         <div class="px-4">
                                             <div class="flex items-start">
                                                 @foreach($pasos as $i => $paso)
@@ -340,10 +340,10 @@
                                             <table class="w-full table-fixed">
                                                 <thead>
                                                     <tr class="bg-[#f1f1f1] border-b border-gray-200">
-                                                        <th class="w-[45%] text-left px-5 py-3 text-[11px] text-black tracking-wider">Producto</th>
-                                                        <th class="w-[18%] text-center px-2 py-3 text-[11px] text-black tracking-wider">Precio Unit.</th>
-                                                        <th class="w-[17%] text-center px-2 py-3 text-[11px] text-black tracking-wider">Cantidad</th>
-                                                        <th class="w-[20%] text-right px-5 py-3 text-[11px] text-black tracking-wider">Subtotal</th>
+                                                        <th class="w-[45%] text-left px-5 py-3 text-[12px] text-black">Producto</th>
+                                                        <th class="w-[18%] text-center px-2 py-3 text-[12px] text-black">Precio Unit.</th>
+                                                        <th class="w-[17%] text-center px-2 py-3 text-[12px] text-black">Cantidad</th>
+                                                        <th class="w-[20%] text-right px-5 py-3 text-[12px] text-black">Subtotal</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -395,10 +395,10 @@
                                                     <tr class="border-t border-gray-200">
                                                         <td class="px-5 py-4"></td>
                                                         <td class="px-2 py-4"></td>
-                                                        <td class="px-2 py-4 text-center text-[11px] font-bold text-black tracking-wider">
+                                                        <td class="px-2 py-4 text-center text-[12px] font-bold text-black">
                                                             Total
                                                         </td>
-                                                        <td class="px-5 py-4 text-right text-[11px] font-bold text-black whitespace-nowrap">
+                                                        <td class="px-5 py-4 text-right text-[12px] font-bold text-black whitespace-nowrap">
                                                             S/ {{ number_format($pedido->total_pedido, 2) }}
                                                         </td>
                                                     </tr>

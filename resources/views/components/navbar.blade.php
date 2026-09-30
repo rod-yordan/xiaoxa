@@ -20,7 +20,6 @@
     {{-- FILA SUPERIOR: BUSCADOR | LOGO | ICONOS --}}
     <div class="bg-white">
         <div class="w-full px-5 sm:px-8">
-            {{-- Grid de 3 columnas exactas --}}
             <div class="grid grid-cols-3 items-center h-20">
 
                 {{-- COLUMNA 1: BUSCADOR (izquierda) --}}
@@ -55,24 +54,19 @@
                     </button>
 
                     @if($modoCarrito)
-                        {{-- MODO CARRITO: solo "SEGUIR COMPRANDO" --}}
                         <a href="{{ route('home') }}"
                            class="flex items-center gap-2 text-black font-bold text-xs tracking-widest uppercase hover:opacity-70 transition-opacity">
                             <x-heroicon-o-shopping-bag class="h-6 w-6 text-black" />
                             Seguir comprando
                         </a>
                     @else
-                        {{-- MODO NORMAL: usuario + carrito --}}
-
                         {{-- ÍCONO DE USUARIO --}}
                         @auth
                             @if(auth()->user()->hasVerifiedEmail())
-                                {{-- Verificado → va a su perfil --}}
                                 <a href="{{ route('perfil.index') }}" class="p-1" title="Mi cuenta">
                                     <x-heroicon-o-user class="h-7 w-7 text-black" />
                                 </a>
                             @else
-                                {{-- No verificado → cierra sesión y va a login --}}
                                 <a href="{{ route('logout.redirect') }}" class="p-1" title="Iniciar sesión">
                                     <x-heroicon-o-user class="h-7 w-7 text-black" />
                                 </a>
@@ -84,7 +78,7 @@
                             </a>
                         @endguest
 
-                        {{-- CARRITO (solo cuenta items si está verificado) --}}
+                        {{-- CARRITO --}}
                         @php
                             $totalItems = 0;
                             if (Auth::check() && Auth::user()->hasVerifiedEmail()) {
@@ -109,16 +103,14 @@
     </div>
 
     @unless($modoCarrito)
-        {{-- LÍNEA SEPARADORA --}}
         <div class="border-t border-gray-200"></div>
 
-        {{-- FILA DE CATEGORÍAS CON FONDO #f1f1f1 --}}
         <div class="bg-[#f1f1f1]">
             <div class="w-full px-5 sm:px-8">
                 <div class="hidden md:flex items-center justify-center space-x-8 lg:space-x-10 py-3">
 
-                    {{-- LO NUEVO --}}
-                    <a href="{{ route('home') }}"
+                    {{-- ✅ LO NUEVO → apunta a ?nuevo=1 --}}
+                    <a href="{{ route('home', ['nuevo' => 1]) }}"
                         class="text-base font-normal text-black">
                         Lo nuevo
                     </a>
@@ -134,7 +126,6 @@
                             Categorías
                         </button>
 
-                        {{-- DROPDOWN --}}
                         <div
                             x-show="open"
                             x-cloak
@@ -174,7 +165,7 @@
                 {{-- MENÚ MÓVIL --}}
                 <div class="md:hidden flex items-center justify-center py-2">
                     <div class="flex space-x-4 text-xs font-normal">
-                        <a href="{{ route('home') }}" class="text-black">Inicio</a>
+                        <a href="{{ route('home', ['nuevo' => 1]) }}" class="text-black">Inicio</a>
                         <a href="{{ route('home') }}" class="text-black">Categorías</a>
                         <a href="{{ route('home', ['categoria' => 'Accesorios']) }}" class="text-black">Accesorios</a>
                         <a href="{{ route('home', ['promocion' => 1]) }}" class="text-black">Ofertas</a>

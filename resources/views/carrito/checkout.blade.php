@@ -31,7 +31,6 @@
         }
     }
 
-    // Texto inicial para el botón de tipo de documento
     $tipoDocumentoTextoInicial = 'Tipo de documento';
     if (auth()->user()->id_tipo_documento) {
         $td = $tiposDocumento->firstWhere('id_tipo_documento', auth()->user()->id_tipo_documento)
@@ -41,12 +40,10 @@
         }
     }
 
-    // Mapa de costos de envío por departamento: { id_departamento: costo }
     $costosEnvio = $departamentos->mapWithKeys(function ($dep) {
         return [$dep->id_departamento => (float) $dep->costo_envio];
     })->toArray();
 
-    // Mapa de nombres de departamentos: { id_departamento: nombre }
     $nombresDepartamentos = $departamentos->mapWithKeys(function ($dep) {
         return [$dep->id_departamento => $dep->nombre_departamento];
     })->toArray();
@@ -64,7 +61,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-                {{-- Tipo de documento (dropdown custom) --}}
+                {{-- Tipo de documento --}}
                 <div>
                     <label class="block text-sm font-normal text-gray-700 mb-2">Tipo de documento</label>
 
@@ -123,7 +120,7 @@
         <div>
             <h2 class="text-base font-normal text-gray-700 mb-5">Datos de entrega</h2>
 
-            {{-- Radio: envío a provincia / retiro en tienda --}}
+            {{-- Radio --}}
             <div class="flex items-center gap-8 mb-6 text-sm text-gray-700">
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="tipo_entrega" value="2"
@@ -144,10 +141,9 @@
                 </label>
             </div>
 
-            {{-- Selects: Departamento / Provincia / Distrito (solo envío a provincia) --}}
+            {{-- Selects de ubicación (solo envío a provincia) --}}
             <div x-show="tipoEntrega == 2" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-                {{-- Departamento (dropdown custom) --}}
                 <div>
                     <label class="block text-sm font-normal text-gray-700 mb-2">Departamento</label>
 
@@ -181,7 +177,6 @@
                     </div>
                 </div>
 
-                {{-- Provincia --}}
                 <div>
                     <label class="block text-sm font-normal text-gray-700 mb-2">Provincia</label>
                     <input type="text"
@@ -190,7 +185,6 @@
                         class="w-full border border-gray-200 rounded-full px-4 py-2.5 text-sm text-gray-700 placeholder-gray-400 bg-white focus:outline-none focus:border-gray-400 transition-colors">
                 </div>
 
-                {{-- Distrito --}}
                 <div>
                     <label class="block text-sm font-normal text-gray-700 mb-2">Distrito</label>
                     <input type="text"
@@ -201,31 +195,48 @@
 
             </div>
 
-            {{-- Mensaje dinámico según tipo de entrega --}}
+            {{-- ══════════════════════════════════════════════════════ --}}
+            {{-- MENSAJES DINÁMICOS                                     --}}
+            {{-- ══════════════════════════════════════════════════════ --}}
             <div class="mt-6">
 
-                {{-- Envío a provincia --}}
-                <div x-show="tipoEntrega == 2" class="space-y-3">
+                {{-- ── ENVÍO A PROVINCIA ── --}}
+                <div x-show="tipoEntrega == 2" class="space-y-4">
+
+                    {{-- Primer mensaje SIN contenedor --}}
                     <p class="text-sm text-gray-800">
-                        Su pedido llegará dentro de 2 a 5 días hábiles.
+                        Tu pedido llegará en un plazo de 2 a 5 días hábiles.
                     </p>
 
-                    <div class="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
-                        <p class="text-sm text-gray-700 leading-relaxed">
-                            Una vez recibido, podrá ver en <span class="font-semibold">"Mis pedidos"</span>
-                            la ubicación exacta donde deberá recoger su pedido.
-                        </p>
+                    {{-- Segundo mensaje CON contenedor negro --}}
+                    <div class="relative bg-gray-900 rounded-2xl p-4 overflow-hidden">
+                        <div class="flex items-start gap-3">
+                            <div class="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                                <x-heroicon-o-exclamation-circle class="w-5 h-5 text-white" />
+                            </div>
+                            <p class="text-gray-200 text-sm leading-relaxed pt-1">
+                                Cuando su pedido haya sido revisado, podrá ver la fecha y dirección donde deberá recoger su pedido en la lista de sus pedidos, ubicada en el apartado de su perfil.
+                            </p>
+                        </div>
                     </div>
+
                 </div>
 
-                {{-- Retiro en tienda --}}
-                <div x-show="tipoEntrega != 2">
-                    <div class="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
-                        <p class="text-sm text-gray-700 leading-relaxed">
-                            Puede acercarse en cualquier momento a recoger su pedido a la tienda ubicada en
-                            <span class="font-semibold">"Jr. Cajamarca N° 396 - Huancayo"</span>.
-                        </p>
+                {{-- ── RETIRO EN TIENDA ── --}}
+                <div x-show="tipoEntrega != 2" class="space-y-4">
+
+                    {{-- Solo el segundo mensaje CON contenedor negro --}}
+                    <div class="relative bg-gray-900 rounded-2xl p-4 overflow-hidden">
+                        <div class="flex items-start gap-3">
+                            <div class="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                                <x-heroicon-o-exclamation-circle class="w-5 h-5 text-white" />
+                            </div>
+                            <p class="text-gray-200 text-sm leading-relaxed pt-1">
+                                Cuando su pedido haya sido revisado, podrá ver la fecha en que deberá recogerlo en la lista de sus pedidos, ubicada en el apartado de su perfil.
+                            </p>
+                        </div>
                     </div>
+
                 </div>
 
             </div>
@@ -264,17 +275,14 @@
                 <div class="flex justify-between">
                     <span>Envío</span>
 
-                    {{-- Envío a provincia con departamento elegido --}}
                     <template x-if="tipoEntrega == 2 && costoEnvio > 0">
                         <span x-text="'S/ ' + costoEnvio.toFixed(2)"></span>
                     </template>
 
-                    {{-- Envío a provincia sin departamento elegido --}}
                     <template x-if="tipoEntrega == 2 && costoEnvio == 0">
                         <span class="text-gray-500 italic text-xs">Por calcular</span>
                     </template>
 
-                    {{-- Retiro en tienda --}}
                     <template x-if="tipoEntrega != 2">
                         <span class="text-gray-500 italic text-xs">Gratis</span>
                     </template>
@@ -286,7 +294,6 @@
                 <span class="font-bold text-gray-800 text-lg" x-text="'S/ ' + totalFinal.toFixed(2)"></span>
             </div>
 
-            {{-- Botón pagar desktop --}}
             <button @click="intentarPagar"
                 class="hidden lg:flex mt-7 items-center justify-center w-full bg-gray-900 text-white rounded-full py-4 text-xs font-bold tracking-widest hover:bg-gray-800 active:scale-[0.99] transition-all uppercase">
                 <span x-show="!procesando">Continuar con la compra</span>
@@ -302,7 +309,7 @@
         </div>
     </div>
 
-    {{-- Formulario oculto para enviar el pedido --}}
+    {{-- Formulario oculto --}}
     <form id="form-pedido" method="POST" action="{{ route('checkout.confirmar') }}">
         @csrf
         <input type="hidden" name="id_tipo_entrega"    x-bind:value="tipoEntrega">
@@ -332,17 +339,14 @@
             costoEnvio:          0,
             procesando:          false,
 
-            // Mapas que vienen desde el backend
             costosEnvio:         costosEnvio,
             nombresDepartamentos: nombresDepartamentos,
 
-            // ── Datos personales precargados desde el usuario autenticado
             idTipoDocumento:      '{{ auth()->user()->id_tipo_documento ?? '' }}',
             idTipoDocumentoTexto: '{{ addslashes($tipoDocumentoTextoInicial) }}',
             numeroDocumento:      '{{ auth()->user()->numero_documento ?? '' }}',
             telefono:             '{{ auth()->user()->telefono ?? '' }}',
 
-            // ── Seleccionar departamento desde el dropdown custom
             seleccionarDepartamento(id, nombre) {
                 this.departamento      = id;
                 this.departamentoTexto = nombre;
@@ -361,7 +365,6 @@
                 }
             },
 
-            // ── Actualizar costo de envío según el departamento
             actualizarCostoEnvio() {
                 if (this.tipoEntrega == 2 && this.departamento) {
                     this.costoEnvio = this.costosEnvio[this.departamento] ?? 0;
@@ -370,12 +373,10 @@
                 }
             },
 
-            // ── Total dinámico (productos + envío)
             get totalFinal() {
                 return (parseFloat(this.totalProductos) || 0) + (parseFloat(this.costoEnvio) || 0);
             },
 
-            // ── Enviar pedido
             intentarPagar() {
                 if (!this.idTipoDocumento) {
                     alert('Selecciona un tipo de documento.');

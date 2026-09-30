@@ -18,7 +18,8 @@ class HomeController extends Controller
 
         $hayFiltros = $request->filled('buscar')
                    || ($request->filled('categoria') && $request->categoria != 'Todo')
-                   || $request->has('promocion');
+                   || $request->has('promocion')
+                   || $request->has('nuevo');
 
         // ✅ Cargamos la relación con las imágenes de variantes
         $query = Producto::query()
@@ -40,14 +41,18 @@ class HomeController extends Controller
             });
         }
 
+        // ✅ Filtro "Lo nuevo" → 8 últimos productos creados
+        if ($request->has('nuevo')) {
+            $query->orderBy('created_at', 'desc')->limit(8);
+        }
+
         // ✅ Filtro por búsqueda de texto (mejorado)
         if ($request->filled('buscar')) {
             $buscar = trim($request->buscar);
 
-            // Separar por espacios y limpiar
             $palabras = array_filter(
                 array_map(fn($p) => trim($p), explode(' ', $buscar)),
-                fn($p) => strlen($p) >= 2 // ignorar palabras de 1 letra
+                fn($p) => strlen($p) >= 2
             );
 
             $query->where(function ($q) use ($palabras) {
@@ -62,8 +67,12 @@ class HomeController extends Controller
 
         // ✅ Si hay filtros → un solo array
         if ($hayFiltros) {
-            $productos = $query->orderBy('created_at', 'desc')->get();
-            $categorias = collect(); // vacío
+            // Si es "lo nuevo", ya tiene su orderBy y limit aplicado
+            if (!$request->has('nuevo')) {
+                $query->orderBy('created_at', 'desc');
+            }
+            $productos = $query->get();
+            $categorias = collect();
         }
         // ✅ Si NO hay filtros → agrupar por categoría
         else {
@@ -79,7 +88,7 @@ class HomeController extends Controller
                     return $cat->productos->count() > 0;
                 });
 
-            $productos = collect(); // vacío
+            $productos = collect();
         }
 
         $banners = Banner::where('estado', 1)

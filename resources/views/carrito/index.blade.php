@@ -18,7 +18,7 @@
     </div>
 </div>
 
-<main class="max-w-7xl mx-auto px-4 sm:px-8 py-8" x-data="carritoData()" x-cloak>
+<div class="max-w-7xl mx-auto px-4 sm:px-8 py-8" x-data="carritoData()" x-cloak>
 
     @if(count($items) > 0)
 
@@ -27,7 +27,6 @@
         {{-- ===== COLUMNA IZQUIERDA: LISTA DE PRODUCTOS ===== --}}
         <div class="lg:col-span-8 min-w-0">
 
-            {{-- Cabecera de columnas (solo desktop) --}}
             <div class="hidden sm:grid grid-cols-12 gap-4 pb-4 mb-2 border-b border-gray-200 text-sm text-gray-800">
                 <div class="col-span-7">Producto</div>
                 <div class="col-span-2 text-center">Precio</div>
@@ -35,12 +34,10 @@
                 <div class="col-span-2 text-center">Subtotal</div>
             </div>
 
-            {{-- Items --}}
             <div class="divide-y divide-gray-100">
                 @foreach($items as $id => $detalles)
                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center py-6">
 
-                    {{-- PRODUCTO: toda la columna es un enlace al detalle --}}
                     <a href="{{ route('producto.show', $detalles['id_producto'] ?? '') }}"
                        class="col-span-7 flex items-center gap-4 min-w-0">
                         <div class="relative shrink-0">
@@ -77,7 +74,6 @@
                         </div>
                     </a>
 
-                    {{-- PRECIO UNITARIO --}}
                     <div class="col-span-2 text-center">
                         <span class="sm:hidden text-xs text-gray-400 mr-1">Precio:</span>
 
@@ -91,7 +87,6 @@
                         @endif
                     </div>
 
-                    {{-- CANTIDAD con botones +/- --}}
                     <div class="col-span-1 flex flex-col items-center gap-1">
                         <span class="sm:hidden text-xs text-gray-400 mb-1">Cantidad:</span>
 
@@ -113,7 +108,6 @@
                         </div>
                     </div>
 
-                    {{-- SUBTOTAL --}}
                     <div class="col-span-2 text-center">
                         <span class="sm:hidden text-xs text-gray-400 mr-1">Subtotal:</span>
                         <span class="text-sm text-gray-800">
@@ -164,24 +158,17 @@
     @else
 
     {{-- ===== CARRITO VACÍO ===== --}}
-    <div class="bg-gray-50 rounded-2xl border border-gray-100 py-24 flex flex-col items-center text-center">
-        <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-5 border border-gray-200 shadow-sm">
-            <x-heroicon-o-shopping-bag class="w-7 h-7 text-gray-300" />
-        </div>
-        <h2 class="font-bold text-xl mb-2 text-gray-800">Tu bolsa está vacía</h2>
-        <p class="text-sm text-gray-400 mb-8 max-w-xs">
+    <div class="flex flex-col items-center justify-center text-center py-24">
+        <x-heroicon-o-shopping-bag class="w-16 h-16 mx-auto mb-4 text-gray-200" />
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Tu bolsa está vacía</h3>
+        <p class="text-sm text-gray-500 max-w-xs mx-auto">
             Aún no has agregado ningún producto. Descubre nuestra colección y encuentra algo que te guste.
         </p>
-        <a href="{{ route('home') }}"
-           class="inline-flex items-center gap-2 bg-gray-900 text-white rounded-full px-8 py-3 text-sm font-semibold hover:bg-gray-800 transition-all">
-            <x-heroicon-o-arrow-left class="w-4 h-4" />
-            Volver a la tienda
-        </a>
     </div>
 
     @endif
 
-</main>
+</div>
 
 @endsection
 
