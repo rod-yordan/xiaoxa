@@ -91,7 +91,7 @@
                             <span x-text="categoriaTexto"></span>
                             <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
                         </button>
-                        <div x-show="open" @click.outside="open = false"
+                        <div x-show="open" x-cloak @click.outside="open = false"
                              x-transition:enter="transition ease-out duration-150"
                              x-transition:enter-start="opacity-0 -translate-y-1"
                              x-transition:enter-end="opacity-100 translate-y-0"
@@ -118,7 +118,7 @@
                             <span x-text="marcaTexto"></span>
                             <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
                         </button>
-                        <div x-show="open" @click.outside="open = false"
+                        <div x-show="open" x-cloak @click.outside="open = false"
                              x-transition:enter="transition ease-out duration-150"
                              x-transition:enter-start="opacity-0 -translate-y-1"
                              x-transition:enter-end="opacity-100 translate-y-0"
@@ -292,13 +292,15 @@
 
                 <div class="bg-white rounded-2xl overflow-hidden mb-5 flex-1 flex flex-col min-h-0">
 
-                    <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 border-b border-gray-100 text-xs font-black text-gray-900 tracking-widest">
+                    {{-- ✅ HEADER un poquito más grande (text-[13px]) --}}
+                    <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 border-b border-gray-100 text-[13px] font-bold text-gray-800">
                         <div class="col-span-7">Producto</div>
-                        <div class="col-span-2 text-center">Cant.</div>
+                        <div class="col-span-2 text-center">Cantidad</div>
                         <div class="col-span-3 text-right">Precio</div>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    {{-- ITEMS --}}
+                    <div class="flex-1 overflow-y-auto divide-y divide-gray-100 flex flex-col min-h-0">
                         <template x-for="(item, index) in items" :key="index">
                             <div class="grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50/60 transition-colors">
 
@@ -314,14 +316,14 @@
                                     <div class="flex items-center gap-0.5">
                                         <button @click="restarCantidadItem(index)"
                                                 class="w-5 h-5 flex items-center justify-center border border-gray-200 rounded text-[11px] text-gray-500 hover:bg-gray-100 transition">−</button>
-                                        <span class="w-6 text-center text-xs font-semibold" x-text="item.cantidad"></span>
+                                        <span class="w-6 text-center text-xs font-medium" x-text="item.cantidad"></span>
                                         <button @click="sumarCantidadItem(index)"
                                                 class="w-5 h-5 flex items-center justify-center border border-gray-200 rounded text-[11px] text-gray-500 hover:bg-gray-100 transition">+</button>
                                     </div>
                                 </div>
 
                                 <div class="col-span-3 flex items-center justify-end">
-                                    <span class="text-xs font-semibold text-gray-800 whitespace-nowrap">
+                                    <span class="text-xs font-medium text-gray-800 whitespace-nowrap">
                                         S/ <span x-text="(item.precio * item.cantidad).toFixed(2)"></span>
                                     </span>
                                 </div>
@@ -329,15 +331,17 @@
                         </template>
 
                         <template x-if="items.length === 0">
-                            <div class="px-4 py-8 text-center text-xs text-gray-400">
+                            <div class="flex-1 flex items-center justify-center px-4 py-8 text-center text-xs text-gray-400">
                                 Sin productos agregados.
                             </div>
                         </template>
                     </div>
 
-                    <div class="grid grid-cols-12 gap-2 px-4 py-4 bg-gray-50 border-t border-gray-100">
-                        <div class="col-span-9 text-base font-black text-gray-900 text-right">Total</div>
-                        <div class="col-span-3 text-right text-base font-black text-gray-900 whitespace-nowrap">
+                    {{-- ✅ TOTAL un poquito más grande + "Total" centrado en col-span-2 --}}
+                    <div class="grid grid-cols-12 gap-2 px-4 py-4 border-t border-gray-100 text-[13px] font-bold text-gray-800">
+                        <div class="col-span-7"></div>
+                        <div class="col-span-2 text-center">Total</div>
+                        <div class="col-span-3 text-right whitespace-nowrap">
                             S/ <span x-text="items.reduce((s, i) => s + (i.precio * i.cantidad), 0).toFixed(2)"></span>
                         </div>
                     </div>

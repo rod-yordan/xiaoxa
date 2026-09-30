@@ -50,7 +50,7 @@
 
                     {{-- LUPA MÓVIL --}}
                     <button @click="searchOpen = !searchOpen" class="lg:hidden p-1" aria-label="Buscar">
-                        <x-heroicon-o-magnifying-glass x-show="!searchOpen" class="h-7 w-7 text-black" />
+                        <x-heroicon-o-magnifying-glass x-show="!searchOpen" x-cloak class="h-7 w-7 text-black" />
                         <x-heroicon-o-x-mark x-show="searchOpen" x-cloak class="h-7 w-7 text-black" />
                     </button>
 
@@ -62,7 +62,7 @@
                             Seguir comprando
                         </a>
                     @else
-                        {{-- MODO NORMAL: usuario + carrito + admin --}}
+                        {{-- MODO NORMAL: usuario + carrito --}}
 
                         {{-- ÍCONO DE USUARIO --}}
                         @auth
@@ -74,7 +74,7 @@
                             @else
                                 {{-- No verificado → cierra sesión y va a login --}}
                                 <a href="{{ route('logout.redirect') }}" class="p-1" title="Iniciar sesión">
-                                    <x-heroicon-o-user class="h-7 w-7 text-black opacity-40" />
+                                    <x-heroicon-o-user class="h-7 w-7 text-black" />
                                 </a>
                             @endif
                         @endauth
@@ -84,10 +84,10 @@
                             </a>
                         @endguest
 
-                        {{-- CARRITO (solo cuenta items si está logueado) --}}
+                        {{-- CARRITO (solo cuenta items si está verificado) --}}
                         @php
                             $totalItems = 0;
-                            if (Auth::check()) {
+                            if (Auth::check() && Auth::user()->hasVerifiedEmail()) {
                                 $carrito = \App\Models\Carrito::where('id_usuario', Auth::id())->first();
                                 $totalItems = $carrito ? $carrito->detalles()->sum('cantidad') : 0;
                             }
@@ -102,14 +102,6 @@
                                 </span>
                             @endif
                         </a>
-
-                        @auth
-                            @if(auth()->user()->id_rol == 1)
-                                <a href="{{ route('admin.dashboard') }}" class="hidden xl:block text-xs font-bold text-black border border-black px-3 py-1.5 rounded-full hover:bg-black hover:text-white transition-all duration-200 ml-1">
-                                    Admin
-                                </a>
-                            @endif
-                        @endauth
                     @endif
                 </div>
             </div>
