@@ -7,7 +7,6 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
@@ -35,7 +34,6 @@ class RegisteredUserController extends Controller
             'correo'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:usuario,correo'],
             'password'  => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
-            // Mensajes personalizados que aparecerán debajo de cada input
             'nombres.required'    => 'Los nombres son obligatorios.',
             'nombres.string'      => 'Los nombres deben ser texto válido.',
             'nombres.max'         => 'Los nombres no pueden tener más de 255 caracteres.',
@@ -62,10 +60,10 @@ class RegisteredUserController extends Controller
             'id_rol'     => 2,
         ]);
 
+        // Enviamos el correo de verificación
         event(new Registered($user));
 
-        Auth::login($user);
-
+        // ✅ NO logueamos. Redirigimos a la vista informativa de verificación
         return redirect()->route('verification.notice');
     }
 }

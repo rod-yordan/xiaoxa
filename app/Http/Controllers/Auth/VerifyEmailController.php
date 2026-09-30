@@ -3,38 +3,34 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class VerifyEmailController extends Controller
 {
     /**
-     * Mark the authenticated user's email address as verified.
+     * Marca el correo como verificado (a través del link firmado del correo).
      */
-    public function __invoke(EmailVerificationRequest $request): RedirectResponse
+    public function __invoke(Request $request, $id, $hash): RedirectResponse
     {
-        if ($request->user()->hasVerifiedEmail()) {
-            // Ya estaba verificado → cerramos sesión y mandamos a login
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+        // 1. Buscamos al usuario por ID
+        $user = User::findOrFail($id);
 
-            return redirect()->route('login')
-                ->with('status', 'Tu correo ya estaba verificado. Inicia sesión.');
+        // 2. Verificamos que el hash coincida con su correo
+        if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+            abort(403, 'Enlace de verificación inválido.');
         }
 
-        if ($request->user()->markEmailAsVerified()) {
-            event(new Verified($request->user()));
+        // 3. Marcamos como verificado (si aún no lo estaba)
+        if (! $user->hasVerifiedEmail()) {
+            if ($user->markEmailAsVerified()) {
+                event(new Verified($user));
+            }
         }
 
-        // ✅ Recién verificado → cerramos sesión para que inicie sesión manualmente
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('login')
-            ->with('status', '¡Tu correo ha sido verificado! Ahora puedes iniciar sesión.');
+        // 4. Redirigimos a la vista de verificación con ?verificado=1
+        return redirect()->route('verification.notice', ['verificado' => 1]);
     }
 }

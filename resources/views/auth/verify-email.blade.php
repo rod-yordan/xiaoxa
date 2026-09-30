@@ -3,33 +3,41 @@
 @section('title', 'Verificar email - C Lucky')
 
 @section('content')
-<div class="min-h-[calc(100vh-200px)] flex items-center justify-center py-8 px-4 bg-[#fbfaf8]">
-    <div class="w-full max-w-md">
+<div class="flex-1 flex justify-center py-8 px-4"
+     style="min-height: calc(100vh - 160px);">
+    <div class="w-full max-w-2xl">
 
         <div class="p-8 sm:p-10">
 
-            <h1 class="text-2xl font-bold text-center text-black mb-8">Verifica tu correo</h1>
+            @if (request()->has('verificado'))
+                {{-- ✅ Caso: usuario acaba de verificar su correo --}}
+                <h1 class="text-2xl font-bold text-center text-black mb-8">¡Cuenta verificada!</h1>
 
-            @if (session('status') == 'verification-link-sent')
-                <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <p class="text-green-700 text-sm text-center font-medium">
-                        Se ha enviado un nuevo enlace de verificación a tu correo electrónico.
+                <div class="text-center space-y-3">
+                    <p class="text-gray-700 text-sm leading-relaxed">
+                        Tu correo electrónico ha sido verificado correctamente.
+                    </p>
+                    <p class="text-gray-700 text-sm leading-relaxed">
+                        Ya puedes iniciar sesión con tu correo y contraseña.
+                    </p>
+                </div>
+            @else
+                {{-- ⏳ Caso: usuario recién registrado, debe verificar --}}
+                <h1 class="text-2xl font-bold text-center text-black mb-8">Verifica tu cuenta</h1>
+
+                <div class="text-center space-y-3">
+                    <p class="text-gray-700 text-sm leading-relaxed">
+                        Tu cuenta ha sido creada. Sin embargo, es necesario activarla.
+                    </p>
+                    <p class="text-gray-700 text-sm leading-relaxed">
+                        La clave de activación se enviará a tu correo electrónico en un plazo de 5 a 10 minutos.
+                        Por favor, revisa tu correo para obtener más información.
+                    </p>
+                    <p class="text-gray-700 text-sm leading-relaxed">
+                        Si el correo no llega después de un tiempo, te recomendamos revisar la carpeta de "Spam".
                     </p>
                 </div>
             @endif
-
-            <div class="text-center space-y-3">
-                <p class="text-gray-700 text-sm leading-relaxed">
-                    Tu cuenta ha sido creada. Sin embargo, la cuenta requiere activación.
-                </p>
-                <p class="text-gray-700 text-sm leading-relaxed">
-                    La clave de activación será enviada a tu correo electrónico en un plazo de 5 a 10 minutos.
-                    Por favor, revisa tu correo para más información.
-                </p>
-                <p class="text-gray-700 text-sm leading-relaxed">
-                    Si el correo no llega después de un tiempo prolongado, tiene sentido revisar la carpeta de "Spam".
-                </p>
-            </div>
 
         </div>
     </div>

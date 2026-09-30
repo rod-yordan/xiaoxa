@@ -22,7 +22,7 @@
         <div class="w-full px-5 sm:px-8">
             {{-- Grid de 3 columnas exactas --}}
             <div class="grid grid-cols-3 items-center h-20">
-                
+
                 {{-- COLUMNA 1: BUSCADOR (izquierda) --}}
                 <div class="flex items-center justify-start">
                     <div class="hidden lg:flex items-center bg-[#f1f1f1] rounded-full px-3 py-1">
@@ -63,10 +63,20 @@
                         </a>
                     @else
                         {{-- MODO NORMAL: usuario + carrito + admin --}}
+
+                        {{-- ÍCONO DE USUARIO --}}
                         @auth
-                            <a href="{{ route('perfil.index') }}" class="p-1" title="Mi cuenta">
-                                <x-heroicon-o-user class="h-7 w-7 text-black" />
-                            </a>
+                            @if(auth()->user()->hasVerifiedEmail())
+                                {{-- Verificado → va a su perfil --}}
+                                <a href="{{ route('perfil.index') }}" class="p-1" title="Mi cuenta">
+                                    <x-heroicon-o-user class="h-7 w-7 text-black" />
+                                </a>
+                            @else
+                                {{-- No verificado → cierra sesión y va a login --}}
+                                <a href="{{ route('logout.redirect') }}" class="p-1" title="Iniciar sesión">
+                                    <x-heroicon-o-user class="h-7 w-7 text-black opacity-40" />
+                                </a>
+                            @endif
                         @endauth
                         @guest
                             <a href="{{ route('login') }}" class="p-1" title="Iniciar sesión">
@@ -114,26 +124,26 @@
         <div class="bg-[#f1f1f1]">
             <div class="w-full px-5 sm:px-8">
                 <div class="hidden md:flex items-center justify-center space-x-8 lg:space-x-10 py-3">
-                    
+
                     {{-- LO NUEVO --}}
-                    <a href="{{ route('home') }}" 
+                    <a href="{{ route('home') }}"
                         class="text-base font-normal text-black">
                         Lo nuevo
                     </a>
 
                     {{-- DROPDOWN DINÁMICO DE CATEGORÍAS --}}
                     @if(isset($categoriasMenu) && $categoriasMenu->count() > 0)
-                    <div class="relative" 
-                         x-data="{ open: false }" 
-                         @mouseenter="open = true" 
+                    <div class="relative"
+                         x-data="{ open: false }"
+                         @mouseenter="open = true"
                          @mouseleave="open = false">
-                        
+
                         <button class="text-base font-normal text-black flex items-center gap-1">
                             Categorías
                         </button>
 
                         {{-- DROPDOWN --}}
-                        <div 
+                        <div
                             x-show="open"
                             x-cloak
                             x-transition:enter="transition ease-out duration-200"

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CarritoController;
@@ -51,7 +52,18 @@ Route::prefix('ubicacion')->name('ubicacion.')->group(function () {
 // ── ✅ WEBHOOK MERCADO PAGO (SIN AUTH - MP llama desde sus servidores)
 Route::post('/pago/webhook', [PagoController::class, 'webhook'])->name('pago.webhook');
 
-// ── AUTENTICADOS
+// ── ✅ LOGOUT Y REDIRECT (accesible incluso si no verificó el correo)
+// Cierra la sesión del usuario y lo manda a login. Se usa desde el ícono de usuario
+// cuando el email aún no está verificado.
+Route::get('/logout-redirect', function () {
+    Auth::guard('web')->logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+
+    return redirect()->route('login');
+})->name('logout.redirect');
+
+// ── AUTENTICADOS Y VERIFICADOS
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/finalizar-compra',            [CheckoutController::class, 'index'])->name('checkout.index');
@@ -59,9 +71,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::put('/usuario/actualizar', [UsuarioController::class, 'actualizar'])->name('usuario.actualizar');
 
-    Route::get('/perfil',        [PerfilController::class, 'index'])->name('perfil.index');
-    Route::get('/perfil/editar', [PerfilController::class, 'edit'])->name('perfil.edit');
-    Route::put('/perfil',        [PerfilController::class, 'update'])->name('perfil.update');
+    // ── PERFIL (todas las rutas aquí, exigen verificación)
+    Route::prefix('perfil')->name('perfil.')->group(function () {
+        Route::get('/',          [PerfilController::class, 'index'])->name('index');
+        Route::get('/editar',    [PerfilController::class, 'edit'])->name('edit');
+        Route::put('/update',    [PerfilController::class, 'update'])->name('update');
+        Route::put('/email',     [PerfilController::class, 'updateEmail'])->name('update-email');
+        Route::put('/password',  [PerfilController::class, 'updatePassword'])->name('update-password');
+        Route::delete('/',       [PerfilController::class, 'destroy'])->name('destroy');
+    });
 
     // Mercado pago (back_urls de MP)
     Route::get('/pago/exito',     [PagoController::class, 'exito'])->name('pago.exito');
@@ -96,15 +114,5 @@ Route::middleware(['auth', 'verified', 'role:1'])
         Route::get('envios',              [EnvioController::class, 'index'])->name('envios.index');
         Route::put('envios/{departamento}', [EnvioController::class, 'update'])->name('envios.update');
     });
-
-// ── PERFIL
-Route::middleware('auth')->prefix('perfil')->name('perfil.')->group(function () {
-    Route::get('/',        [PerfilController::class, 'index'])->name('index');
-    Route::get('/editar',  [PerfilController::class, 'edit'])->name('edit');
-    Route::put('/update',  [PerfilController::class, 'update'])->name('update');
-    Route::put('/email',   [PerfilController::class, 'updateEmail'])->name('update-email');
-    Route::put('/password', [PerfilController::class, 'updatePassword'])->name('update-password');
-    Route::delete('/',     [PerfilController::class, 'destroy'])->name('destroy');
-});
 
 require __DIR__ . '/auth.php';
