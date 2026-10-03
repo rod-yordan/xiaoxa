@@ -14,13 +14,16 @@
 
             <div class="flex items-center gap-3 shrink-0">
                 <a href="{{ route('admin.productos.index') }}"
-                    class="px-14 py-3.5 bg-gray-100 text-gray-700 border border-gray-200 text-sm font-bold tracking-wider rounded-full transition-colors duration-200">
+                   class="bg-white text-gray-700 border border-gray-300 rounded-2xl py-4 px-14 text-base font-bold text-center
+                          transition-colors duration-200
+                          hover:bg-gray-50">
                     Cancelar
                 </a>
 
                 <button type="submit" form="form-nuevo-producto"
-                    class="px-14 py-3.5 bg-indigo-600 text-white text-sm font-bold tracking-wider rounded-full transition-colors duration-200">
-                    Aceptar
+                        class="bg-indigo-600 text-white rounded-2xl py-4 px-14 text-base font-bold
+                               transition-colors duration-200">
+                    Guardar
                 </button>
             </div>
         </div>
