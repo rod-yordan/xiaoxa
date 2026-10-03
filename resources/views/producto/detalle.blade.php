@@ -91,32 +91,30 @@
 
             <div class="pb-5">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-[0.2em] mb-2">{{ $producto->marca }}</p>
-                <h1 class="text-3xl font-normal leading-snug text-gray-900">
+                <h1 class="text-[35px] font-normal leading-snug text-gray-800">
                     {{ ucwords(strtolower($producto->nombre_producto)) }}
                 </h1>
             </div>
-
-            <div class="py-5">
-                @if($producto->precio_oferta)
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <span class="text-[40px] font-normal text-red-500">
-                            S/ {{ number_format($producto->precio_oferta, 2) }}
-                        </span>
-                        <span class="text-[30px] text-gray-500 line-through">
-                            S/ {{ number_format($producto->precio, 2) }}
-                        </span>
-
-                        <span class="bg-red-500 text-white text-[15px] font-semibold leading-none min-w-[46px] text-center px-1 py-1.5 rounded-md shadow-sm">
-                            -{{ abs($producto->descuento) }}%
-                        </span>
-                    </div>
-                @else
-                    <span class="text-3xl font-bold text-gray-900">
+           
+            @if($producto->precio_oferta)
+                <div class="flex items-center gap-3 flex-wrap">
+                    <span class="text-[40px] font-normal text-red-500">
+                        S/ {{ number_format($producto->precio_oferta, 2) }}
+                    </span>
+                    <span class="text-[30px] text-gray-500 line-through">
                         S/ {{ number_format($producto->precio, 2) }}
                     </span>
-                @endif
-            </div>
 
+                    <span class="bg-red-500 text-white text-[15px] font-semibold leading-none min-w-[46px] text-center px-1 py-1.5 rounded-md shadow-sm">
+                        -{{ abs($producto->descuento) }}%
+                    </span>
+                </div>
+            @else
+                <span class="text-[40px] font-normal text-gray-900">
+                    S/ {{ number_format($producto->precio, 2) }}
+                </span>
+            @endif
+            
             @if(!empty($producto->detalles) && count($producto->detalles) > 0)
             <div class="py-5">
                 <p class="text-lg font-semibold mb-3">Detalles</p>
@@ -247,12 +245,12 @@
 
     /* Color oscuro seleccionado: anillo color 3px + anillo exterior blanco 1.5px */
     .color-btn.color-activo {
-        box-shadow: inset 0 0 0 3px var(--color), inset 0 0 0 4.5px #fff;
+        box-shadow: inset 0 0 0 3px var(--color), inset 0 0 0 5px #fff;
     }
 
     /* Color claro seleccionado: anillo color 3px + anillo exterior gris 1.5px */
     .color-btn.color-activo-negro {
-        box-shadow: inset 0 0 0 3px var(--color), inset 0 0 0 4.5px #aaa;
+        box-shadow: inset 0 0 0 3px var(--color), inset 0 0 0 5px #aaa;
     }
 
     /* Colores claros sin seleccionar: borde gris muy sutil */

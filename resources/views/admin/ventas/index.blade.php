@@ -292,14 +292,12 @@
 
                 <div class="bg-white rounded-2xl overflow-hidden mb-5 flex-1 flex flex-col min-h-0">
 
-                    {{-- ✅ HEADER un poquito más grande (text-[13px]) --}}
                     <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 border-b border-gray-100 text-[13px] font-bold text-gray-800">
                         <div class="col-span-7">Producto</div>
                         <div class="col-span-2 text-center">Cantidad</div>
                         <div class="col-span-3 text-right">Precio</div>
                     </div>
 
-                    {{-- ITEMS --}}
                     <div class="flex-1 overflow-y-auto divide-y divide-gray-100 flex flex-col min-h-0">
                         <template x-for="(item, index) in items" :key="index">
                             <div class="grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50/60 transition-colors">
@@ -337,7 +335,6 @@
                         </template>
                     </div>
 
-                    {{-- ✅ TOTAL un poquito más grande + "Total" centrado en col-span-2 --}}
                     <div class="grid grid-cols-12 gap-2 px-4 py-4 border-t border-gray-100 text-[13px] font-bold text-gray-800">
                         <div class="col-span-7"></div>
                         <div class="col-span-2 text-center">Total</div>
@@ -356,7 +353,7 @@
 
                 <div class="flex gap-3">
                     <button type="button"
-                            @click="cancelarVenta()"
+                            @click="cancelModal = true"
                             :disabled="items.length === 0 || enviando"
                             class="flex-1 bg-white text-gray-700 border border-gray-300 rounded-2xl py-4 text-base font-bold
                                    transition-colors duration-200
@@ -366,7 +363,7 @@
                     </button>
 
                     <button type="button"
-                            @click="registrarVenta()"
+                            @click="registerModal = true"
                             :disabled="items.length === 0 || enviando"
                             class="flex-1 bg-indigo-600 text-white rounded-2xl py-4 text-base font-bold
                                    transition-colors duration-200
@@ -380,6 +377,67 @@
         </div>
 
     </div>
+
+    {{-- ===== MODAL CANCELAR VENTA ===== --}}
+    <template x-if="cancelModal">
+        <div class="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <div @click="cancelModal = false" class="absolute inset-0 bg-gray-900/40 backdrop-blur-md"></div>
+            <div class="relative bg-white rounded-[2.5rem] px-8 py-7 max-w-sm w-full shadow-2xl text-center">
+
+                <div class="w-14 h-14 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <x-heroicon-o-exclamation-triangle class="w-7 h-7" />
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-900 mb-2">¿Cancelar venta?</h3>
+                <p class="text-gray-500 text-sm font-medium mb-6 leading-relaxed">
+                    Se perderán todos los productos agregados al resumen.
+                </p>
+
+                <div class="flex gap-3">
+                    <button @click="cancelModal = false"
+                        class="flex-1 py-3 bg-gray-100 text-gray-700 border border-gray-200 text-sm font-bold rounded-full transition">
+                        Volver
+                    </button>
+                    <button @click="confirmarCancelarVenta()"
+                        class="flex-1 py-3 bg-black text-white text-sm font-bold rounded-full transition">
+                        Aceptar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </template>
+
+    {{-- ===== MODAL REGISTRAR VENTA ===== --}}
+    <template x-if="registerModal">
+        <div class="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <div @click="registerModal = false" class="absolute inset-0 bg-gray-900/40 backdrop-blur-md"></div>
+            <div class="relative bg-white rounded-[2.5rem] px-8 py-7 max-w-sm w-full shadow-2xl text-center">
+
+                <div class="w-14 h-14 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <x-heroicon-o-exclamation-triangle class="w-7 h-7" />
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-900 mb-2">¿Registrar venta?</h3>
+                <p class="text-gray-500 text-sm font-medium mb-6 leading-relaxed">
+                    Se guardará la venta con los productos del resumen.
+                </p>
+
+                <div class="flex gap-3">
+                    <button @click="registerModal = false"
+                        class="flex-1 py-3 bg-gray-100 text-gray-700 border border-gray-200 text-sm font-bold rounded-full transition">
+                        Volver
+                    </button>
+                    <button @click="confirmarRegistrarVenta()"
+                        class="flex-1 py-3 bg-black text-white text-sm font-bold rounded-full transition">
+                        Aceptar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </template>
+
 </div>
 
 <script>
@@ -390,6 +448,9 @@ function ventaData() {
         items: [],
         enviando: false,
         mensaje: null,
+
+        cancelModal: false,
+        registerModal: false,
 
         categoriaSel: '',
         categoriaTexto: 'Categoría',
@@ -546,15 +607,18 @@ function ventaData() {
             }
         },
 
-        cancelarVenta() {
-            if (this.items.length === 0) return;
-            if (confirm('¿Estás seguro de que deseas cancelar la venta? Se perderán todos los productos agregados.')) {
-                this.items = [];
-                this.mensaje = null;
-            }
+        confirmarCancelarVenta() {
+            this.items = [];
+            this.mensaje = null;
+            this.cancelModal = false;
         },
 
-        registrarVenta() {
+        confirmarRegistrarVenta() {
+            this.registerModal = false;
+            this.procesarRegistroVenta();
+        },
+
+        procesarRegistroVenta() {
             if (this.items.length === 0) return;
             this.enviando = true;
 

@@ -61,6 +61,7 @@
                     </button>
 
                     <div x-show="otrosOpen"
+                         x-cloak
                          x-transition:enter="transition ease-out duration-200"
                          x-transition:enter-start="opacity-0 -translate-y-2"
                          x-transition:enter-end="opacity-100 translate-y-0"
@@ -110,7 +111,7 @@
 
             {{-- ✅ ÉXITO --}}
             @if(session('success'))
-                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4500)"
+                <div x-data="{ show: true }" x-show="show" x-cloak x-init="setTimeout(() => show = false, 4500)"
                      x-transition:enter="transform ease-out duration-500 transition"
                      x-transition:enter-start="translate-y-4 opacity-0 scale-95 sm:translate-y-0 sm:translate-x-10"
                      x-transition:enter-end="translate-y-0 opacity-100 scale-100 sm:translate-x-0"
@@ -138,7 +139,7 @@
 
             {{-- ❌ ERROR --}}
             @if(session('error'))
-                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)"
+                <div x-data="{ show: true }" x-show="show" x-cloak x-init="setTimeout(() => show = false, 6000)"
                      x-transition:enter="transform ease-out duration-500 transition"
                      x-transition:enter-start="translate-y-4 opacity-0 scale-95 sm:translate-y-0 sm:translate-x-10"
                      x-transition:enter-end="translate-y-0 opacity-100 scale-100 sm:translate-x-0"
