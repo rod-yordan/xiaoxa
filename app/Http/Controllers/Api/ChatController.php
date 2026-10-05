@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Events\MessageSentEvent;
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -24,7 +24,7 @@ class ChatController extends Controller
         $userId = $request->user_id;
         $userMessage = $request->message;
 
-        $user = User::find($userId);
+        $user = Usuario::find($userId);
         $userName = $user ? $user->nombres : 'usuario';
 
         try {

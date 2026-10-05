@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Admin | Panel</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -34,10 +35,9 @@
                         ['route' => 'admin.productos.index',    'pattern' => 'admin.productos.*',     'icon' => 'o-cube',                   'label' => 'Productos'],
                         ['route' => 'admin.categorias.index',   'pattern' => 'admin.categorias.*',    'icon' => 'o-tag',                    'label' => 'Categorías'],
                         ['route' => 'admin.pedidos.index',      'pattern' => 'admin.pedidos.*',       'icon' => 'o-clipboard-document-list','label' => 'Pedidos'],
+                        ['route' => 'admin.banners.index',      'pattern' => 'admin.banners.*',       'icon' => 'o-photo',                  'label' => 'Banners'],
+                        ['route' => 'admin.cupones.index',      'pattern' => 'admin.cupones.*',       'icon' => 'o-ticket',                 'label' => 'Cupones'],
                     ];
-
-                    $otrosRoutes = ['admin.banners.index', 'admin.cupones.index', 'admin.envios.index'];
-                    $otrosActive = request()->routeIs($otrosRoutes);
                 @endphp
 
                 @foreach($links as $link)
@@ -51,47 +51,6 @@
                     <span class="text-[15px]">{{ $link['label'] }}</span>
                 </a>
                 @endforeach
-
-                <div x-data="{ otrosOpen: {{ $otrosActive ? 'true' : 'false' }} }" class="mr-6">
-                    <button @click="otrosOpen = !otrosOpen"
-                        class="w-full flex items-center gap-3 py-3.5 pl-10 pr-5 font-medium transition-all
-                        {{ $otrosActive ? 'bg-pink-600 text-white rounded-r-full' : 'text-gray-700 rounded-full' }}">
-                        <x-heroicon-o-squares-2x2 class="w-5 h-5 flex-shrink-0" />
-                        <span class="flex-1 text-left text-[15px]">Otros</span>
-                    </button>
-
-                    <div x-show="otrosOpen"
-                         x-cloak
-                         x-transition:enter="transition ease-out duration-200"
-                         x-transition:enter-start="opacity-0 -translate-y-2"
-                         x-transition:enter-end="opacity-100 translate-y-0"
-                         x-transition:leave="transition ease-in duration-150"
-                         x-transition:leave-start="opacity-100 translate-y-0"
-                         x-transition:leave-end="opacity-0 -translate-y-2"
-                         class="mt-1 ml-4 pl-4 space-y-1">
-
-                        <a href="{{ route('admin.banners.index') }}"
-                           class="flex items-center gap-3 px-4 py-3 rounded-full font-medium transition-all
-                           {{ request()->routeIs('admin.banners.index') ? 'bg-pink-600 text-white' : 'text-gray-600' }}">
-                            <x-heroicon-o-photo class="w-5 h-5 flex-shrink-0" />
-                            <span class="text-[15px]">Banners</span>
-                        </a>
-
-                        <a href="{{ route('admin.cupones.index') }}"
-                           class="flex items-center gap-3 px-4 py-3 rounded-full font-medium transition-all
-                           {{ request()->routeIs('admin.cupones.index') ? 'bg-pink-600 text-white' : 'text-gray-600' }}">
-                            <x-heroicon-o-ticket class="w-5 h-5 flex-shrink-0" />
-                            <span class="text-[15px]">Cupones</span>
-                        </a>
-
-                        <a href="{{ route('admin.envios.index') }}"
-                           class="flex items-center gap-3 px-4 py-3 rounded-full font-medium transition-all
-                           {{ request()->routeIs('admin.envios.*') ? 'bg-pink-600 text-white' : 'text-gray-600' }}">
-                            <x-heroicon-o-truck class="w-5 h-5 flex-shrink-0" />
-                            <span class="text-[15px]">Costos de envío</span>
-                        </a>
-                    </div>
-                </div>
             </nav>
 
             <div class="pt-4 pb-6 mr-4">

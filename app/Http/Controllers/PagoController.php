@@ -15,7 +15,6 @@ use MercadoPago\Client\Payment\PaymentClient;
 
 class PagoController extends Controller
 {
-
     public function exito(Request $request)
     {
         $pedido = null;
@@ -106,11 +105,13 @@ class PagoController extends Controller
         try {
             $pedido = DB::transaction(function () use ($data, $paymentId, $referencia) {
 
+                // Re-verificar por si el webhook y el redirect se disparan al mismo tiempo
                 $existe = Pedido::where('payment_id', $paymentId)->first();
                 if ($existe) {
                     return $existe;
                 }
 
+                // Validar stock
                 foreach ($data['items'] as $item) {
                     $variante = ProductoVariante::find($item['id_variante']);
                     if (!$variante || $variante->stock < $item['cantidad']) {
@@ -120,27 +121,24 @@ class PagoController extends Controller
                     }
                 }
 
-                $esRetiro = (int) $data['id_tipo_entrega'] === 1;
-
+                // Crear pedido
                 $pedido = Pedido::create([
                     'numero_pedido'      => $this->generarNumeroPedido(),
                     'fecha_pedido'       => now(),
-                    'subtotal'           => $data['subtotal'] ?? $data['total'],
-                    'costo_envio'        => $data['costo_envio'] ?? 0,
+                    'subtotal'           => $data['subtotal'],
                     'total_pedido'       => $data['total'],
-                    'estado_pedido'      => 'Pendiente', // ← Todos nacen en Pendiente
+                    'estado_pedido'      => 'Pendiente',
                     'payment_id'         => $paymentId,
                     'id_usuario'         => $data['id_usuario'],
                     'id_tipo_entrega'    => $data['id_tipo_entrega'],
-                    'id_departamento'    => $data['id_departamento'],
-                    'provincia'          => $data['provincia'],
-                    'distrito'           => $data['distrito'],
-                    'direccion_entrega'  => $esRetiro
-                        ? 'Jr. Cajamarca N° 396 - Huancayo'
-                        : null,
-                    'fecha_entrega'      => null,
+                    'departamento'       => $data['departamento'] ?? null,
+                    'provincia'          => $data['provincia'] ?? null,
+                    'distrito'           => $data['distrito'] ?? null,
+                    'direccion_entrega'  => null, // ← la llena el admin después
+                    'tiempo_entrega'     => null, // ← la llena el admin después
                 ]);
 
+                // Crear detalles y descontar stock
                 foreach ($data['items'] as $item) {
                     DetallePedido::create([
                         'id_pedido'       => $pedido->id_pedido,
@@ -154,6 +152,7 @@ class PagoController extends Controller
                         ->decrement('stock', $item['cantidad']);
                 }
 
+                // Vaciar carrito
                 $carrito = Carrito::where('id_usuario', $data['id_usuario'])->first();
                 if ($carrito) {
                     $carrito->detalles()->delete();

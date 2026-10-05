@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -52,7 +52,7 @@ class RegisteredUserController extends Controller
             'password.min'        => 'La contraseña debe tener al menos 8 caracteres.',
         ]);
 
-        $user = User::create([
+        $user = Usuario::create([
             'nombres'    => $request->nombres,
             'apellidos'  => $request->apellidos,
             'correo'     => $request->correo,

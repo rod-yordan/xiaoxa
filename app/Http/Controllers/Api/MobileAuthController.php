@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 
@@ -16,7 +16,7 @@ class MobileAuthController extends Controller
             'contrasena' => 'required'
         ]);
 
-        $user = User::where('correo', $request->correo)->first();
+        $user = Usuario::where('correo', $request->correo)->first();
 
         if (!$user || !Hash::check($request->contrasena, $user->contrasena)) {
             return response()->json([
@@ -53,7 +53,7 @@ class MobileAuthController extends Controller
             'contrasena' => 'required|min:6'
         ]);
 
-        $user = User::create([
+        $user = Usuario::create([
             'nombres' => $request->nombres,
             'apellidos' => $request->apellidos,
             'correo' => $request->correo,

@@ -19,15 +19,21 @@ class DetallePedido extends Model
         'subtotal',
     ];
 
+    protected $casts = [
+        'cantidad'        => 'integer',
+        'precio_unitario' => 'decimal:2',
+        'subtotal'        => 'decimal:2',
+    ];
+
     // ── Relaciones
 
     public function pedido()
     {
-        return $this->belongsTo(Pedido::class, 'id_pedido');
+        return $this->belongsTo(Pedido::class, 'id_pedido', 'id_pedido');
     }
 
     public function variante()
     {
-        return $this->belongsTo(ProductoVariante::class, 'id_variante');
+        return $this->belongsTo(ProductoVariante::class, 'id_variante', 'id_variante');
     }
 }

@@ -8,25 +8,31 @@ class Producto extends Model
 {
     protected $table = 'producto';
     protected $primaryKey = 'id_producto';
-    
+
     public $timestamps = true;
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
     protected $fillable = [
-        'nombre_producto', 'detalles', 'precio', 'precio_oferta',
-        'marca', 'estado_producto',
-        'id_categoria', 'id_promocion'
+        'nombre_producto',
+        'detalles',
+        'precio',
+        'precio_oferta',
+        'marca',
+        'estado_producto',
+        'id_categoria',
     ];
 
     protected $casts = [
-        'detalles' => 'array',
-        'precio' => 'decimal:2',
-        'precio_oferta' => 'decimal:2',
+        'detalles'        => 'array',
+        'precio'          => 'decimal:2',
+        'precio_oferta'   => 'decimal:2',
         'estado_producto' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'created_at'      => 'datetime',
+        'updated_at'      => 'datetime',
     ];
+
+    // ============ RELACIONES ============
 
     public function variantes()
     {
@@ -36,11 +42,6 @@ class Producto extends Model
     public function categoria()
     {
         return $this->belongsTo(Categoria::class, 'id_categoria', 'id_categoria');
-    }
-
-    public function promocion()
-    {
-        return $this->belongsTo(Promocion::class, 'id_promocion', 'id_promocion');
     }
 
     public function detallesPedido()
@@ -84,15 +85,7 @@ class Producto extends Model
         if ($this->precio_oferta) {
             return (float) $this->precio_oferta;
         }
-        
-        if ($this->promocion && $this->promocion->estado_promocion) {
-            $fechaActual = now();
-            if ($fechaActual >= $this->promocion->fecha_inicio && 
-                $fechaActual <= $this->promocion->fecha_fin) {
-                return (float) ($this->precio - $this->promocion->descuento);
-            }
-        }
-        
+
         return (float) $this->precio;
     }
 
@@ -101,15 +94,7 @@ class Producto extends Model
         if ($this->precio_oferta) {
             return (float) $this->precio;
         }
-        
-        if ($this->promocion && $this->promocion->estado_promocion) {
-            $fechaActual = now();
-            if ($fechaActual >= $this->promocion->fecha_inicio && 
-                $fechaActual <= $this->promocion->fecha_fin) {
-                return (float) $this->precio;
-            }
-        }
-        
+
         return null;
     }
 
@@ -118,15 +103,7 @@ class Producto extends Model
         if ($this->precio_oferta && $this->precio > 0) {
             return round((($this->precio - $this->precio_oferta) / $this->precio) * 100);
         }
-        
-        if ($this->promocion && $this->promocion->estado_promocion) {
-            $fechaActual = now();
-            if ($fechaActual >= $this->promocion->fecha_inicio && 
-                $fechaActual <= $this->promocion->fecha_fin) {
-                return round(($this->promocion->descuento / $this->precio) * 100);
-            }
-        }
-        
+
         return null;
     }
 
@@ -177,7 +154,7 @@ class Producto extends Model
 
     public function scopeConStock($query)
     {
-        return $query->whereHas('variantes', function($q) {
+        return $query->whereHas('variantes', function ($q) {
             $q->where('stock', '>', 0);
         });
     }
@@ -189,14 +166,7 @@ class Producto extends Model
 
     public function scopeEnOferta($query)
     {
-        return $query->where(function($q) {
-            $q->whereNotNull('precio_oferta')
-              ->orWhereHas('promocion', function($q2) {
-                  $q2->where('estado_promocion', 1)
-                    ->where('fecha_inicio', '<=', now())
-                    ->where('fecha_fin', '>=', now());
-              });
-        });
+        return $query->whereNotNull('precio_oferta');
     }
 
     public function scopePorCategoria($query, $categoriaId)
@@ -206,8 +176,10 @@ class Producto extends Model
 
     public function scopeBuscar($query, $termino)
     {
-        return $query->where('nombre_producto', 'LIKE', "%{$termino}%")
-                     ->orWhere('marca', 'LIKE', "%{$termino}%");
+        return $query->where(function ($q) use ($termino) {
+            $q->where('nombre_producto', 'LIKE', "%{$termino}%")
+              ->orWhere('marca', 'LIKE', "%{$termino}%");
+        });
     }
 
     public function scopeOrderByPrecio($query, $direccion = 'asc')

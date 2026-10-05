@@ -12,22 +12,26 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // CORS global para todas las solicitudes
+        // CORS global
         $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
 
+        // Alias de middleware
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
         ]);
 
+        // Excluir CSRF en login y register
         $middleware->validateCsrfTokens(except: [
             'register',
             'login',
         ]);
-    })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        //
-    })
-    ->withMiddleware(function (Middleware $middleware) {
+
+        // 🆕 NoCacheHeaders en todas las rutas web
+        $middleware->web(append: [
+            \App\Http\Middleware\NoCacheHeaders::class,
+        ]);
+
+        // Trust proxies (unificado aquí)
         $middleware->trustProxies(
             at: '*',
             headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
@@ -36,5 +40,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO |
                 \Illuminate\Http\Request::HEADER_X_FORWARDED_AWS_ELB
         );
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        //
     })
     ->create();

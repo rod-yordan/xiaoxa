@@ -6,23 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class Banner extends Model
 {
+    protected $table = 'banners';
     protected $primaryKey = 'id_banner';
+
+    public $timestamps = true;
 
     protected $fillable = [
         'titulo',
-        'subtitulo',
-        'descripcion',
-        'etiqueta',
-        'texto_boton',
         'url_boton',
-        'imagen',
         'orden',
-        'estado'
+        'estado',
+        'imagen',
     ];
 
     protected $casts = [
-        'estado' => 'integer',  // ← ✅ cambiado de 'boolean' a 'integer'
+        'orden'  => 'integer',
+        'estado' => 'integer',
     ];
+
+    // ── Scopes
 
     public function scopeActivos($query)
     {

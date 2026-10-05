@@ -127,20 +127,25 @@
 
                 <h2 class="font-bold text-lg mb-6 text-gray-800">Resumen del pedido</h2>
 
-                <div class="space-y-3 text-sm text-gray-800">
-                    <div class="flex justify-between">
-                        <span>Subtotal</span>
-                        <span>S/ {{ number_format($total, 2) }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Envío</span>
-                        <span class="text-gray-500 italic text-xs">A calcular</span>
-                    </div>
+                {{-- Lista de productos en el resumen --}}
+                <div class="space-y-3 mb-5">
+                    @foreach($items as $id => $detalles)
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm text-gray-800 leading-tight">
+                                    {{ ucwords(strtolower($detalles['nombre'])) }} x {{ $detalles['cantidad'] }}
+                                </p>
+                            </div>
+                            <span class="text-sm text-gray-800 shrink-0">
+                                S/ {{ number_format($detalles['precio'] * $detalles['cantidad'], 2) }}
+                            </span>
+                        </div>
+                    @endforeach
                 </div>
 
-                <div class="mt-5 pt-5 flex justify-between items-center">
-                    <span class="font-bold text-gray-800 text-base">Total</span>
-                    <span class="font-bold text-gray-800 text-lg">
+                <div class="flex justify-between items-center">
+                    <span class="font-bold text-gray-800 text-[16px]">Total</span>
+                    <span class="font-bold text-gray-800 text-[16px]">
                         S/ {{ number_format($total, 2) }}
                     </span>
                 </div>

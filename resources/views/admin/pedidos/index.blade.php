@@ -6,6 +6,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <style>
+        /* ===== Fix: ocultar elementos antes de que Alpine cargue ===== */
+        [x-cloak] { display: none !important; }
+
         /* ===== Calendario compacto, en español, comienza en domingo, 6 filas fijas ===== */
         .flatpickr-calendar {
             width: 252px !important;
@@ -280,7 +283,7 @@
                         <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
                     </button>
 
-                    <div x-show="open" @click.outside="open = false"
+                    <div x-show="open" x-cloak @click.outside="open = false"
                          x-transition:enter="transition ease-out duration-150"
                          x-transition:enter-start="opacity-0 -translate-y-1"
                          x-transition:enter-end="opacity-100 translate-y-0"

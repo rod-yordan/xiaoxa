@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CarritoResource; // ← IMPORTAR
-use Illuminate\Http\Request;
+use App\Http\Resources\CarritoResource;
+use App\Models\Cupon;
 use App\Models\Carrito;
 use App\Models\DetalleCarrito;
 use App\Models\ProductoVariante;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CarritoController extends Controller
 {
@@ -16,165 +18,297 @@ class CarritoController extends Controller
         $carrito = Carrito::where('id_usuario', $request->id_usuario)
             ->with(['detalles.variante.producto'])
             ->first();
-            
+
         return response()->json([
             'success' => true,
-            'data' => $carrito ? new CarritoResource($carrito) : null // ← USAR RESOURCE
+            'data'    => $carrito ? new CarritoResource($carrito) : null,
         ]);
     }
 
     public function crear(Request $request)
     {
         $carrito = Carrito::create([
-            'id_usuario' => $request->id_usuario
+            'id_usuario' => $request->id_usuario,
         ]);
-        
+
         $carrito->load(['detalles.variante.producto']);
-        
+
         return response()->json([
             'success' => true,
-            'data' => new CarritoResource($carrito) // ← USAR RESOURCE
+            'data'    => new CarritoResource($carrito),
         ]);
     }
 
     public function agregar(Request $request)
     {
         $carrito = Carrito::where('id_usuario', $request->id_usuario)->first();
-        
+
         if (!$carrito) {
             $carrito = Carrito::create(['id_usuario' => $request->id_usuario]);
         }
-        
+
         $variante = ProductoVariante::find($request->id_variante);
         if (!$variante) {
             return response()->json([
                 'success' => false,
-                'message' => 'Variante no encontrada'
+                'message' => 'Variante no encontrada',
             ], 404);
         }
-        
+
         $detalle = DetalleCarrito::updateOrCreate(
             [
-                'id_carrito' => $carrito->id_carrito,
-                'id_variante' => $request->id_variante
+                'id_carrito'  => $carrito->id_carrito,
+                'id_variante' => $request->id_variante,
             ],
             [
-                'cantidad' => $request->cantidad
+                'cantidad' => $request->cantidad,
             ]
         );
-        
+
         $carrito = Carrito::with(['detalles.variante.producto'])
             ->find($carrito->id_carrito);
-        
+
         return response()->json([
             'success' => true,
-            'data' => new CarritoResource($carrito) // ← USAR RESOURCE
+            'data'    => new CarritoResource($carrito),
         ]);
     }
 
     public function actualizar(Request $request)
     {
         $detalle = DetalleCarrito::find($request->id_detalle_carrito);
-        
+
         if (!$detalle) {
             return response()->json([
                 'success' => false,
-                'message' => 'Detalle no encontrado'
+                'message' => 'Detalle no encontrado',
             ], 404);
         }
-        
+
         $detalle->update(['cantidad' => $request->cantidad]);
-        
+
         $carrito = Carrito::with(['detalles.variante.producto'])
             ->find($detalle->id_carrito);
-        
+
         return response()->json([
             'success' => true,
-            'data' => new CarritoResource($carrito) // ← USAR RESOURCE
+            'data'    => new CarritoResource($carrito),
         ]);
     }
 
     public function eliminar(Request $request)
     {
         $detalle = DetalleCarrito::find($request->id_detalle_carrito);
-        
+
         if (!$detalle) {
             return response()->json([
                 'success' => false,
-                'message' => 'Detalle no encontrado'
+                'message' => 'Detalle no encontrado',
             ], 404);
         }
-        
+
         $idCarrito = $detalle->id_carrito;
         $detalle->delete();
-        
+
         $carrito = Carrito::with(['detalles.variante.producto'])
             ->find($idCarrito);
-        
+
         return response()->json([
             'success' => true,
-            'data' => $carrito ? new CarritoResource($carrito) : null // ← USAR RESOURCE
+            'data'    => $carrito ? new CarritoResource($carrito) : null,
         ]);
     }
 
     public function limpiar(Request $request)
     {
         $carrito = Carrito::where('id_usuario', $request->id_usuario)->first();
-        
+
         if ($carrito) {
             $carrito->detalles()->delete();
-            
+
             $carrito = Carrito::with(['detalles.variante.producto'])
                 ->find($carrito->id_carrito);
         }
-        
+
         return response()->json([
             'success' => true,
-            'data' => $carrito ? new CarritoResource($carrito) : null, // ← USAR RESOURCE
-            'message' => 'Carrito limpiado'
+            'data'    => $carrito ? new CarritoResource($carrito) : null,
+            'message' => 'Carrito limpiado',
         ]);
     }
 
     public function total($idCarrito)
     {
         $carrito = Carrito::with('detalles.variante.producto')->find($idCarrito);
-        
+
         if (!$carrito) {
             return response()->json([
                 'success' => false,
-                'message' => 'Carrito no encontrado'
+                'message' => 'Carrito no encontrado',
             ], 404);
         }
-        
+
         $total = 0;
         foreach ($carrito->detalles as $detalle) {
-            $precio = $detalle->variante->producto->precio_oferta ?? $detalle->variante->producto->precio;
+            $precio = $detalle->variante->producto->precio_oferta
+                   ?? $detalle->variante->producto->precio;
             $total += $precio * $detalle->cantidad;
         }
-        
+
         return response()->json([
             'success' => true,
-            'total' => $total
+            'total'   => $total,
         ]);
     }
 
     public function verificarStock($idVariante, Request $request)
     {
         $variante = ProductoVariante::find($idVariante);
-        
+
         if (!$variante) {
             return response()->json([
-                'success' => false,
-                'disponible' => false
+                'success'    => false,
+                'disponible' => false,
             ], 404);
         }
-        
+
         $disponible = $variante->stock >= ($request->cantidad ?? 1);
-        
+
+        return response()->json([
+            'success'    => true,
+            'disponible' => $disponible,
+            'stock'      => $variante->stock,
+        ]);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // 🆕 CUPONES EN EL CARRITO (para app móvil)
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Listar cupones disponibles para el usuario autenticado.
+     * GET /api/cupones
+     */
+    public function cuponesDisponibles()
+    {
+        $idUsuario = Auth::id();
+
+        $cupones = Cupon::where('estado_cupon', 1)
+            ->where('fecha_vencimiento', '>=', now())
+            ->whereDoesntHave('usos', function ($q) use ($idUsuario) {
+                $q->where('id_usuario', $idUsuario);
+            })
+            ->orderBy('fecha_vencimiento', 'asc')
+            ->get()
+            ->map(function ($cupon) {
+                return [
+                    'id_cupon'            => $cupon->id_cupon,
+                    'codigo'              => $cupon->codigo_cupon,
+                    'monto'               => (float) $cupon->monto_cupon,
+                    'monto_minimo'        => (float) $cupon->monto_compra_minima,
+                    'fecha_vencimiento'   => $cupon->fecha_vencimiento->format('Y-m-d'),
+                ];
+            });
+
         return response()->json([
             'success' => true,
-            'disponible' => $disponible,
-            'stock' => $variante->stock
+            'data'    => $cupones,
+        ]);
+    }
+
+    /**
+     * Aplicar un cupón al carrito del usuario.
+     * POST /api/carrito/cupon/aplicar
+     * Body: { codigo_cupon }
+     */
+    public function aplicarCupon(Request $request)
+    {
+        $request->validate([
+            'codigo_cupon' => 'required|string|max:50',
+        ]);
+
+        $idUsuario = Auth::id();
+        $codigo    = strtoupper(trim($request->codigo_cupon));
+
+        $cupon = Cupon::where('codigo_cupon', $codigo)->first();
+
+        if (!$cupon) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El cupón no existe.',
+            ], 404);
+        }
+
+        // Calcular subtotal del carrito
+        $carrito = Carrito::with('detalles.variante.producto')
+            ->where('id_usuario', $idUsuario)
+            ->first();
+
+        if (!$carrito || $carrito->detalles->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El carrito está vacío.',
+            ], 400);
+        }
+
+        $subtotal = 0;
+        foreach ($carrito->detalles as $detalle) {
+            $producto  = $detalle->variante->producto;
+            $precio    = $producto->precio_oferta ?? $producto->precio;
+            $subtotal += $precio * $detalle->cantidad;
+        }
+
+        // Validar el cupón para este usuario
+        if (!$cupon->esValidoPara($idUsuario, $subtotal)) {
+            // Determinar motivo del rechazo
+            if (!$cupon->estado_cupon) {
+                $mensaje = 'El cupón está inactivo.';
+            } elseif ($cupon->fecha_vencimiento < now()) {
+                $mensaje = 'El cupón está vencido.';
+            } elseif ($subtotal < $cupon->monto_compra_minima) {
+                $mensaje = 'El monto mínimo es S/ '
+                    . number_format($cupon->monto_compra_minima, 2);
+            } elseif ($cupon->yaFueUsadoPor($idUsuario)) {
+                $mensaje = 'Ya usaste este cupón.';
+            } else {
+                $mensaje = 'El cupón no es válido.';
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $mensaje,
+            ], 400);
+        }
+
+        // Guardar en sesión (solo para web) — para API usamos respuesta directa
+        session([
+            'cupon_id'        => $cupon->id_cupon,
+            'cupon_codigo'    => $cupon->codigo_cupon,
+            'cupon_descuento' => (float) $cupon->monto_cupon,
+        ]);
+
+        return response()->json([
+            'success'     => true,
+            'message'     => 'Cupón aplicado correctamente.',
+            'id_cupon'    => $cupon->id_cupon,
+            'codigo'      => $cupon->codigo_cupon,
+            'descuento'   => (float) $cupon->monto_cupon,
+            'subtotal'    => (float) $subtotal,
+            'nuevo_total' => (float) max(0, $subtotal - $cupon->monto_cupon),
+        ]);
+    }
+
+    /**
+     * Quitar el cupón aplicado.
+     * DELETE /api/carrito/cupon/quitar
+     */
+    public function quitarCupon()
+    {
+        session()->forget(['cupon_id', 'cupon_codigo', 'cupon_descuento']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cupón removido.',
         ]);
     }
 }

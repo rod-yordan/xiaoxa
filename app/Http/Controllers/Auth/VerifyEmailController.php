@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +16,7 @@ class VerifyEmailController extends Controller
     public function __invoke(Request $request, $id, $hash): RedirectResponse
     {
         // 1. Buscamos al usuario por ID
-        $user = User::findOrFail($id);
+        $user = Usuario::findOrFail($id);
 
         // 2. Verificamos que el hash coincida con su correo
         if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {

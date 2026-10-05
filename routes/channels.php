@@ -2,7 +2,7 @@
 // routes/channels.php
 
 use Illuminate\Support\Facades\Broadcast;
-use App\Models\User; // ✅ ESTÁ BIEN, USAS USER.PHP
+use App\Models\Usuario; // ✅ ESTÁ BIEN, USAS USER.PHP
 
 /*
 |--------------------------------------------------------------------------

@@ -20,13 +20,6 @@ return new class extends Migration
             $table->string('nombre_tipo_documento', 50);
         });
 
-        // Departamento 
-        Schema::create('departamento', function (Blueprint $table) {
-            $table->id('id_departamento');
-            $table->string('nombre_departamento', 100);
-            $table->decimal('costo_envio', 10, 2)->default(0);
-        });
-
         // Usuario
         Schema::create('usuario', function (Blueprint $table) {
             $table->id('id_usuario');
@@ -41,19 +34,11 @@ return new class extends Migration
             $table->string('numero_documento', 20)->nullable();
             $table->string('telefono', 20)->nullable();
 
-            // Ubicación del usuario
-            $table->unsignedBigInteger('id_departamento')->nullable();
-            $table->string('provincia', 100)->nullable();
-            $table->string('distrito', 100)->nullable();
-
             $table->unsignedBigInteger('id_tipo_documento')->nullable();
             $table->unsignedBigInteger('id_rol')->default(2);
 
             $table->rememberToken();
             $table->timestamps();
-
-            $table->foreign('id_departamento')
-                  ->references('id_departamento')->on('departamento');
 
             $table->foreign('id_tipo_documento')
                   ->references('id_tipo_documento')->on('tipo_documento');
@@ -147,7 +132,6 @@ return new class extends Migration
 
             // Desglose económico
             $table->decimal('subtotal', 10, 2)->default(0);
-            $table->decimal('costo_envio', 10, 2)->default(0);
             $table->decimal('descuento', 10, 2)->default(0);
             $table->decimal('total_pedido', 10, 2);
 
@@ -160,16 +144,19 @@ return new class extends Migration
 
             $table->string('payment_id')->nullable();
 
-            // Ubicación del cliente
-            $table->unsignedBigInteger('id_departamento')->nullable();
+            // Ubicación del cliente (texto libre, lo llena el cliente)
+            $table->string('departamento', 100)->nullable();
             $table->string('provincia', 100)->nullable();
             $table->string('distrito', 100)->nullable();
 
-            // Dirección de entrega
+            // Dirección exacta (la llena el admin)
             $table->text('direccion_entrega')->nullable();
 
-            // Fecha de logística
-            $table->date('fecha_entrega')->nullable();
+            // Tiempo de entrega (la llena el admin)
+            $table->string('tiempo_entrega', 100)->nullable();
+
+            // Archivo adjunto (lo sube el admin)
+            $table->string('archivo_adjunto', 255)->nullable();
 
             // FKs
             $table->unsignedBigInteger('id_usuario')->nullable();
@@ -177,9 +164,6 @@ return new class extends Migration
             $table->unsignedBigInteger('id_tipo_entrega')->nullable();
 
             $table->timestamps();
-
-            $table->foreign('id_departamento')
-                ->references('id_departamento')->on('departamento');
 
             $table->foreign('id_usuario')
                 ->references('id_usuario')->on('usuario');
@@ -189,6 +173,32 @@ return new class extends Migration
 
             $table->foreign('id_tipo_entrega')
                 ->references('id_tipo_entrega')->on('tipo_entrega');
+        });
+
+        // Cupones usados
+        Schema::create('cupones_usados', function (Blueprint $table) {
+            $table->id('id_cupon_usado');
+
+            $table->unsignedBigInteger('id_cupon');
+            $table->unsignedBigInteger('id_usuario');
+            $table->unsignedBigInteger('id_pedido');
+            $table->dateTime('usado_en')->useCurrent();
+
+            $table->unique(['id_cupon', 'id_usuario']);
+
+            $table->timestamps();
+
+            $table->foreign('id_cupon')
+                  ->references('id_cupon')->on('cupones')
+                  ->onDelete('cascade');
+
+            $table->foreign('id_usuario')
+                  ->references('id_usuario')->on('usuario')
+                  ->onDelete('cascade');
+
+            $table->foreign('id_pedido')
+                  ->references('id_pedido')->on('pedido')
+                  ->onDelete('cascade');
         });
 
         // Detalle pedido
@@ -298,6 +308,7 @@ return new class extends Migration
         Schema::dropIfExists('detalle_carrito');
         Schema::dropIfExists('carrito');
         Schema::dropIfExists('detalle_pedido');
+        Schema::dropIfExists('cupones_usados');
         Schema::dropIfExists('pedido');
         Schema::dropIfExists('tipo_entrega');
         Schema::dropIfExists('cupones');
@@ -306,7 +317,6 @@ return new class extends Migration
         Schema::dropIfExists('producto');
         Schema::dropIfExists('categoria');
         Schema::dropIfExists('usuario');
-        Schema::dropIfExists('departamento');
         Schema::dropIfExists('tipo_documento');
         Schema::dropIfExists('rol');
     }

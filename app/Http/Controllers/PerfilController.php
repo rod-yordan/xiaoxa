@@ -12,7 +12,7 @@ class PerfilController extends Controller
     {
         $pedidos = auth()->user()
             ->pedidos()
-            ->with(['detalles.variante.producto', 'detalles.variante.imagenes', 'tipoEntrega', 'departamento'])
+            ->with(['detalles.variante.producto', 'detalles.variante.imagenes', 'tipoEntrega', 'cupon'])
             ->orderBy('fecha_pedido', 'desc')
             ->paginate(5);
 
@@ -51,7 +51,7 @@ class PerfilController extends Controller
             'contrasena_actual'         => 'required',
         ]);
 
-        if (!Hash::check($request->contrasena_actual, Auth::user()->password)) {
+        if (!Hash::check($request->contrasena_actual, Auth::user()->contrasena)) {
             return back()->withErrors(['contrasena_actual' => 'Contraseña incorrecta']);
         }
 
@@ -63,15 +63,15 @@ class PerfilController extends Controller
     public function updatePassword(Request $request)
     {
         $request->validate([
-            'contrasena_actual'              => 'required',
-            'nueva_contrasena'               => 'required|min:8|confirmed',
+            'contrasena_actual' => 'required',
+            'nueva_contrasena'  => 'required|min:8|confirmed',
         ]);
 
-        if (!Hash::check($request->contrasena_actual, Auth::user()->password)) {
+        if (!Hash::check($request->contrasena_actual, Auth::user()->contrasena)) {
             return back()->withErrors(['contrasena_actual' => 'Contraseña incorrecta']);
         }
 
-        Auth::user()->update(['password' => Hash::make($request->nueva_contrasena)]);
+        Auth::user()->update(['contrasena' => Hash::make($request->nueva_contrasena)]);
 
         return redirect()->route('perfil.index')->with('success', 'Contraseña actualizada');
     }
@@ -80,7 +80,7 @@ class PerfilController extends Controller
     {
         $request->validate(['contrasena' => 'required']);
 
-        if (!Hash::check($request->contrasena, Auth::user()->password)) {
+        if (!Hash::check($request->contrasena, Auth::user()->contrasena)) {
             return back()->withErrors(['contrasena' => 'Contraseña incorrecta']);
         }
 

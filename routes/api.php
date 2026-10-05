@@ -5,13 +5,11 @@ use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\CarritoController;
 use App\Http\Controllers\Api\ImageController;
-use App\Http\Controllers\Api\FavoritoController; 
+use App\Http\Controllers\Api\FavoritoController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\CategoriaController;
-use App\Http\Controllers\Api\UbicacionController;
 use App\Http\Controllers\Api\CheckoutApiController;
-use App\Http\Controllers\NotificacionController;
 use Illuminate\Http\Request;
 
 Route::middleware('auth:sanctum')->get('/perfil', [MobileAuthController::class, 'perfil']);
@@ -37,11 +35,17 @@ Route::middleware('auth:sanctum')->prefix('carrito')->group(function () {
     Route::delete('/eliminar', [CarritoController::class, 'eliminar']);
     Route::delete('/limpiar', [CarritoController::class, 'limpiar']);
     Route::get('/{idCarrito}/total', [CarritoController::class, 'total']);
+
+    // 🆕 Cupones en el carrito
+    Route::post('/cupon/aplicar', [CarritoController::class, 'aplicarCupon']);
+    Route::delete('/cupon/quitar', [CarritoController::class, 'quitarCupon']);
 });
+
+// 🆕 Listar cupones disponibles para el usuario
+Route::middleware('auth:sanctum')->get('/cupones', [CarritoController::class, 'cuponesDisponibles']);
 
 Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
     Route::post('/confirmar', [CheckoutApiController::class, 'confirmar']);
-    Route::post('/calcular-envio', [CheckoutApiController::class, 'calcularEnvio']); 
 });
 
 Route::get('/variantes/{idVariante}/verificar-stock', [CarritoController::class, 'verificarStock']);
@@ -56,7 +60,7 @@ Route::prefix('productos')->group(function () {
     Route::get('/populares', [ProductoController::class, 'populares']);
     Route::get('/ofertas', [ProductoController::class, 'ofertas']);
     Route::get('/buscar', [ProductoController::class, 'buscar']);
-    
+
     Route::get('/{id}/variantes', [ProductoController::class, 'variantes'])->where('id', '[0-9]+');
     Route::get('/{id}', [ProductoController::class, 'show'])->where('id', '[0-9]+');
 });
@@ -78,13 +82,6 @@ Route::prefix('banners')->group(function () {
     Route::get('/', [BannerController::class, 'index']);
 });
 
-Route::prefix('ubicaciones')->group(function () {
-    Route::get('/tipos-documento', [UbicacionController::class, 'tiposDocumento']);
-    Route::get('/departamentos', [UbicacionController::class, 'departamentos']);
-    Route::get('/provincias/{idDepartamento}', [UbicacionController::class, 'provincias']);
-    Route::get('/distritos/{idProvincia}', [UbicacionController::class, 'distritos']);
-});
-
 Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'time' => now()]);
 });
@@ -92,4 +89,5 @@ Route::get('/health', function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/mis-pedidos', [App\Http\Controllers\Api\PedidoController::class, 'misPedidos']);
     Route::get('/pedidos/{id}', [App\Http\Controllers\Api\PedidoController::class, 'show']);
+    Route::get('/pedidos/{id}/descargar', [App\Http\Controllers\Api\PedidoController::class, 'descargarArchivo']);
 });

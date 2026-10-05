@@ -6,16 +6,15 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Laravel\Sanctum\HasApiTokens; // Para API móvil
+use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable implements MustVerifyEmail
+class Usuario extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $table = 'usuario';
     protected $primaryKey = 'id_usuario';
 
-    // IMPORTANTE: La tabla tiene created_at y updated_at
     public $timestamps = true;
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -30,7 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'id_tipo_documento',
         'id_rol',
         'email_verified_at',
-        'remember_token'
+        'remember_token',
     ];
 
     protected $hidden = [
@@ -40,9 +39,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'id_rol' => 'integer',
+        'created_at'        => 'datetime',
+        'updated_at'        => 'datetime',
+        'id_rol'            => 'integer',
         'id_tipo_documento' => 'integer',
     ];
 
@@ -73,6 +72,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(Producto::class, 'favoritos', 'id_usuario', 'id_producto');
     }
 
+    // 🆕 Cupones que este usuario ha usado
+    public function cuponesUsados()
+    {
+        return $this->hasMany(CuponUsado::class, 'id_usuario', 'id_usuario');
+    }
+
     // ============ AUTENTICACIÓN ============
 
     public function getAuthPassword()
@@ -82,7 +87,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function getAuthIdentifierName()
     {
-        return 'id_usuario'; // Laravel usa 'id' por defecto, pero tu PK es 'id_usuario'
+        return 'id_usuario';
     }
 
     public function getEmailForVerification()

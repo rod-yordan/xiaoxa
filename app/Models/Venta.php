@@ -8,7 +8,18 @@ class Venta extends Model
 {
     protected $table = 'ventas';
     protected $primaryKey = 'id_venta';
-    protected $fillable = ['total'];
+
+    public $timestamps = true;
+
+    protected $fillable = [
+        'total',
+    ];
+
+    protected $casts = [
+        'total' => 'decimal:2',
+    ];
+
+    // ── Relaciones
 
     public function detalles()
     {

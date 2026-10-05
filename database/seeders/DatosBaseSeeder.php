@@ -36,27 +36,5 @@ class DatosBaseSeeder extends Seeder
             ]);
             $this->command->info('Tipos de documento insertados.');
         }
-
-        // Departamentos del Perú
-        if (DB::table('departamento')->count() === 0) {
-            $departamentos = [
-                'Amazonas', 'Áncash', 'Apurímac', 'Arequipa', 'Ayacucho',
-                'Cajamarca', 'Callao', 'Cusco', 'Huancavelica', 'Huánuco',
-                'Ica', 'Junín', 'La Libertad', 'Lambayeque', 'Lima',
-                'Loreto', 'Madre de Dios', 'Moquegua', 'Pasco', 'Piura',
-                'Puno', 'San Martín', 'Tacna', 'Tumbes', 'Ucayali',
-            ];
-
-            $rows = array_map(
-                fn($nombre) => [
-                    'nombre_departamento' => $nombre,
-                    'costo_envio'         => 10.00,
-                ],
-                $departamentos
-            );
-
-            DB::table('departamento')->insert($rows);
-            $this->command->info('Departamentos insertados (25).');
-        }
     }
 }

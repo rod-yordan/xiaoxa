@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -42,7 +42,7 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         // 1. Verificamos si el correo existe
-        $usuario = User::where('correo', $this->correo)->first();
+        $usuario = Usuario::where('correo', $this->correo)->first();
 
         if (! $usuario) {
             RateLimiter::hit($this->throttleKey());

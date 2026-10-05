@@ -2,159 +2,46 @@
 
 @section('content')
 
-    {{-- Flatpickr CSS --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-
     <style>
-        .flatpickr-calendar {
-            width: 252px !important;
-            padding: 0 !important;
-            font-size: 11px !important;
-            border-radius: 14px !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.12) !important;
-        }
-        .flatpickr-calendar::before,
-        .flatpickr-calendar::after,
-        .flatpickr-calendar.arrowTop::before,
-        .flatpickr-calendar.arrowTop::after,
-        .flatpickr-calendar.arrowBottom::before,
-        .flatpickr-calendar.arrowBottom::after,
-        .flatpickr-calendar.arrowLeft::before,
-        .flatpickr-calendar.arrowLeft::after,
-        .flatpickr-calendar.arrowRight::before,
-        .flatpickr-calendar.arrowRight::after {
-            display: none !important;
-            border: none !important;
-        }
-        .flatpickr-calendar .flatpickr-months { padding: 6px 0 !important; }
-        .flatpickr-calendar .flatpickr-month { height: 28px !important; }
-        .flatpickr-calendar .flatpickr-current-month {
-            font-size: 12px !important;
-            padding: 0 !important;
-            height: 28px !important;
-            line-height: 28px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 6px !important;
-            color: #374151 !important;
-            font-weight: 600 !important;
-            pointer-events: none !important;
-            cursor: default !important;
-        }
-        .flatpickr-calendar .flatpickr-current-month:hover,
-        .flatpickr-calendar .flatpickr-current-month *:hover {
-            background: transparent !important;
-            color: #374151 !important;
-        }
-        .flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months,
-        .flatpickr-calendar .flatpickr-current-month input.cur-year,
-        .flatpickr-calendar .flatpickr-current-month .numInputWrapper {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            outline: none !important;
-            font-size: 12px !important;
-            font-weight: 600 !important;
-            color: #374151 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            pointer-events: none !important;
-            cursor: default !important;
-            appearance: none !important;
-        }
-        .flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowUp,
-        .flatpickr-calendar .flatpickr-current-month .numInputWrapper span.arrowDown {
-            display: none !important;
-        }
-        .flatpickr-calendar .flatpickr-prev-month,
-        .flatpickr-calendar .flatpickr-next-month {
-            padding: 6px !important;
-            height: 28px !important;
-            line-height: 28px !important;
-            top: 6px !important;
-            color: #6366f1 !important;
-        }
-        .flatpickr-calendar .flatpickr-prev-month svg,
-        .flatpickr-calendar .flatpickr-next-month svg {
-            width: 12px !important;
-            height: 12px !important;
-            fill: #6366f1 !important;
-        }
-        .flatpickr-calendar .flatpickr-prev-month:hover svg,
-        .flatpickr-calendar .flatpickr-next-month:hover svg {
-            fill: #4338ca !important;
-        }
-        .flatpickr-calendar .flatpickr-weekdays {
-            height: 24px !important;
-            background: #f9fafb !important;
-        }
-        .flatpickr-calendar .flatpickr-weekday {
-            font-size: 10px !important;
-            font-weight: 600 !important;
-            line-height: 24px !important;
-            color: #6b7280 !important;
-        }
-        .flatpickr-calendar .flatpickr-days {
-            width: 252px !important;
-            height: 180px !important;
-            overflow: hidden !important;
-        }
-        .flatpickr-calendar .dayContainer {
-            width: 252px !important;
-            min-width: 252px !important;
-            max-width: 252px !important;
-            height: 180px !important;
-            overflow: hidden !important;
-        }
-        .flatpickr-calendar .flatpickr-day {
-            width: 28px !important;
-            height: 28px !important;
-            max-width: 28px !important;
-            flex-basis: 28px !important;
-            line-height: 28px !important;
-            font-size: 11px !important;
-            margin: 1px 4px !important;
-            border-radius: 50% !important;
-            color: #374151 !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
-        .flatpickr-calendar .flatpickr-day.prevMonthDay,
-        .flatpickr-calendar .flatpickr-day.nextMonthDay { color: #d1d5db !important; }
-        .flatpickr-calendar .flatpickr-day.today {
-            border-color: #6366f1 !important;
-            color: #6366f1 !important;
-            font-weight: 700 !important;
-        }
-        .flatpickr-calendar .flatpickr-day.selected {
-            background: #6366f1 !important;
-            border-color: #6366f1 !important;
-            color: white !important;
-            font-weight: 700 !important;
-            border-radius: 50% !important;
-        }
-        .flatpickr-calendar .flatpickr-day:hover {
-            background: #eef2ff !important;
-            border-radius: 50% !important;
-        }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+
+        .paso-clickable { cursor: pointer; }
+        .paso-clickable:disabled { cursor: not-allowed; }
     </style>
 
     <div class="max-w-7xl mx-auto" x-data="pedidoEstado({{ Js::from($pedido->estado_pedido) }})">
 
-        {{-- Header --}}
+        {{-- Header con título y botones a la derecha --}}
         <div class="flex items-center justify-between gap-4 mb-6">
             <div>
                 <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Detalles del Pedido</h1>
             </div>
+
+            <div class="flex items-center gap-3 shrink-0">
+                <a href="{{ route('admin.pedidos.index') }}"
+                   class="bg-white text-gray-700 border border-gray-300 rounded-2xl py-4 px-14 text-base font-bold text-center
+                          transition-colors duration-200
+                          hover:bg-gray-50">
+                    Cancelar
+                </a>
+
+                <button type="button"
+                        @click="enviarFormulario('guardar')"
+                        class="bg-indigo-600 text-white rounded-2xl py-4 px-14 text-base font-bold
+                               transition-colors duration-200">
+                    Guardar
+                </button>
+            </div>
         </div>
 
-        <form id="form-actualizar-pedido" action="{{ route('admin.pedidos.update', $pedido->id_pedido) }}" method="POST">
+        <form id="form-actualizar-pedido"
+              action="{{ route('admin.pedidos.update', $pedido->id_pedido) }}"
+              method="POST"
+              enctype="multipart/form-data">
             @csrf @method('PUT')
 
-            <input type="hidden" name="estado_pedido" id="estado_pedido_input" x-model="estadoActual" value="{{ $pedido->estado_pedido }}">
-            <input type="hidden" name="accion" id="accion_input" value="guardar">
+            <input type="hidden" name="estado_pedido" :value="estadoActual">
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -212,7 +99,7 @@
                             </div>
                         </div>
 
-                        {{-- Fila 3: Teléfono | Departamento (solo envío) --}}
+                        {{-- Fila 3: Teléfono --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div class="flex items-center gap-2">
                                 <label class="text-[14px] font-bold text-gray-800 shrink-0">Teléfono:</label>
@@ -220,36 +107,28 @@
                                     value="{{ $pedido->usuario->telefono ?? 'N/A' }}"
                                     class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 focus:outline-none">
                             </div>
-
-                            @if($pedido->id_tipo_entrega == 2)
-                                <div class="flex items-center gap-2">
-                                    <label class="text-[14px] font-bold text-gray-800 shrink-0">Departamento:</label>
-                                    <input type="text" readonly
-                                        value="{{ $pedido->departamento?->nombre_departamento ?? '—' }}"
-                                        class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 focus:outline-none">
-                                </div>
-                            @endif
                         </div>
 
-                        {{-- Fila 4: Provincia | Distrito (solo envío) --}}
+                        {{-- Fila 4: Ubicación del cliente (solo envío) --}}
                         @if($pedido->id_tipo_entrega == 2)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                                 <div class="flex items-center gap-2">
-                                    <label class="text-[14px] font-bold text-gray-800 shrink-0">Provincia:</label>
-                                    <input type="text" readonly
-                                        value="{{ $pedido->provincia ?? '—' }}"
+                                    <label class="text-[14px] font-bold text-gray-800 shrink-0">Departamento:</label>
+                                    <input type="text" readonly value="{{ $pedido->departamento ?? '—' }}"
                                         class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 focus:outline-none">
                                 </div>
-
+                                <div class="flex items-center gap-2">
+                                    <label class="text-[14px] font-bold text-gray-800 shrink-0">Provincia:</label>
+                                    <input type="text" readonly value="{{ $pedido->provincia ?? '—' }}"
+                                        class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 focus:outline-none">
+                                </div>
                                 <div class="flex items-center gap-2">
                                     <label class="text-[14px] font-bold text-gray-800 shrink-0">Distrito:</label>
-                                    <input type="text" readonly
-                                        value="{{ $pedido->distrito ?? '—' }}"
+                                    <input type="text" readonly value="{{ $pedido->distrito ?? '—' }}"
                                         class="w-full px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 focus:outline-none">
                                 </div>
                             </div>
                         @else
-                            {{-- Retiro: solo dejamos el mb-6 en la fila anterior --}}
                             <div class="mb-2"></div>
                         @endif
 
@@ -264,7 +143,6 @@
                                         <th class="w-[20%] px-5 py-4 text-base font-black text-gray-800 text-right border-b border-gray-200">Subtotal</th>
                                     </tr>
                                 </thead>
-
                                 <tbody>
                                     @foreach($pedido->detalles as $detalle)
                                         @php
@@ -281,19 +159,14 @@
                                                     <span class="ml-2">Talla: {{ $variante?->talla ?? '—' }}</span>
                                                 </p>
                                             </td>
-
                                             <td class="px-2 py-4 text-center">
                                                 <span class="font-normal text-gray-800 text-base whitespace-nowrap">
                                                     S/ {{ number_format($detalle->precio_unitario, 2) }}
                                                 </span>
                                             </td>
-
                                             <td class="px-2 py-4 text-center">
-                                                <span class="font-normal text-gray-800 text-base">
-                                                    {{ $detalle->cantidad }}
-                                                </span>
+                                                <span class="font-normal text-gray-800 text-base">{{ $detalle->cantidad }}</span>
                                             </td>
-
                                             <td class="px-5 py-4 text-right">
                                                 <span class="font-normal text-gray-800 text-base whitespace-nowrap">
                                                     S/ {{ number_format($detalle->subtotal, 2) }}
@@ -302,37 +175,31 @@
                                         </tr>
                                     @endforeach
                                 </tbody>
-
                                 <tfoot>
-                                    @if($pedido->id_tipo_entrega == 2)
+                                    @if($pedido->descuento > 0)
                                         <tr class="border-t border-gray-200">
                                             <td class="px-5 py-4"></td>
                                             <td class="px-2 py-4"></td>
-                                            <td class="px-2 py-4 text-center text-base text-gray-800 font-normal">
-                                                Envío
-                                            </td>
-                                            <td class="px-5 py-4 text-right text-base font-normal text-gray-800 whitespace-nowrap">
-                                                @if($pedido->costo_envio > 0)
-                                                    S/ {{ number_format($pedido->costo_envio, 2) }}
-                                                @else
-                                                    Gratis
+                                            <td class="px-2 py-4 text-center text-base font-normal text-emerald-600">
+                                                Descuento
+                                                @if($pedido->cupon)
+                                                    ({{ $pedido->cupon->codigo_cupon }})
                                                 @endif
+                                            </td>
+                                            <td class="px-5 py-4 text-right text-base font-normal text-emerald-600 whitespace-nowrap">
+                                                - S/ {{ number_format($pedido->descuento, 2) }}
                                             </td>
                                         </tr>
                                     @endif
-
                                     <tr class="border-t border-gray-200">
                                         <td class="px-5 py-4"></td>
                                         <td class="px-2 py-4"></td>
-                                        <td class="px-2 py-4 text-center text-base font-bold text-gray-800">
-                                            Total
-                                        </td>
+                                        <td class="px-2 py-4 text-center text-base font-bold text-gray-800">Total</td>
                                         <td class="px-5 py-4 text-right text-base font-bold text-gray-800 whitespace-nowrap">
                                             S/ {{ number_format($pedido->total_pedido, 2) }}
                                         </td>
                                     </tr>
                                 </tfoot>
-
                             </table>
                         </div>
 
@@ -340,7 +207,7 @@
 
                 </div>
 
-                {{-- COLUMNA DERECHA: ESTADO + ENTREGA --}}
+                {{-- COLUMNA DERECHA --}}
                 <div class="space-y-6">
 
                     {{-- ESTADO --}}
@@ -373,12 +240,16 @@
 
                         <div x-init="init({{ Js::from($pasos) }}, {{ $esRetiroTienda ? 'true' : 'false' }})"></div>
 
-                        {{-- PASOS --}}
-                        <div class="flex items-start mb-6">
+                        {{-- PASOS (colores negros) --}}
+                        <div class="flex items-start">
                             <template x-for="(paso, i) in pasos" :key="i">
                                 <div class="contents">
                                     <div class="flex flex-col items-center" style="width: 56px;">
-                                        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+
+                                        <button type="button"
+                                            @click="avanzarA(i)"
+                                            :disabled="i <= indiceActual || i > indiceActual + 1"
+                                            class="paso-clickable w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-transform disabled:cursor-not-allowed"
                                             :class="i <= indiceActual ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400'">
                                             <template x-if="paso.icono === 'clock'">
                                                 <x-heroicon-s-clock class="w-4 h-4" />
@@ -392,7 +263,8 @@
                                             <template x-if="paso.icono === 'building-storefront'">
                                                 <x-heroicon-s-building-storefront class="w-4 h-4" />
                                             </template>
-                                        </div>
+                                        </button>
+
                                         <span class="text-[10px] mt-1.5 text-center leading-tight whitespace-nowrap"
                                             :class="i <= indiceActual ? 'font-bold text-gray-900' : 'font-normal text-gray-400'">
                                             <template x-if="paso.nombre === 'Listo para recoger'">
@@ -404,7 +276,6 @@
                                         </span>
                                     </div>
 
-                                    {{-- Conector --}}
                                     <template x-if="i < pasos.length - 1">
                                         <div class="flex-1 mt-[18px] h-px"
                                             :class="i < indiceActual ? 'bg-gray-900' : 'bg-gray-300'"></div>
@@ -412,14 +283,6 @@
                                 </div>
                             </template>
                         </div>
-
-                        {{-- BOTÓN ACTUALIZAR ESTADO --}}
-                        <button type="submit" form="form-actualizar-pedido"
-                            onclick="document.getElementById('accion_input').value = 'estado';"
-                            :disabled="estadoActual === 'Entregado'"
-                            class="w-full py-3.5 bg-indigo-600 text-white text-sm font-bold tracking-wider rounded-2xl transition-colors duration-200 disabled:cursor-not-allowed">
-                            Actualizar estado
-                        </button>
 
                     </div>
 
@@ -435,48 +298,45 @@
 
                         <div class="space-y-5">
 
-                            @php
-                                $fechaEntregaFormateada = $pedido->fecha_entrega
-                                    ? \Carbon\Carbon::parse($pedido->fecha_entrega)->format('d/m/Y')
-                                    : 'Seleccionar';
-                            @endphp
-
                             {{-- Fecha --}}
                             <div class="flex items-center gap-2">
                                 <label class="text-[14px] font-bold text-gray-800 shrink-0">Fecha:</label>
-
-                                <input type="text" name="fecha_entrega" id="fechaFiltro"
-                                    value="{{ $pedido->fecha_entrega ? \Carbon\Carbon::parse($pedido->fecha_entrega)->format('Y-m-d') : '' }}"
-                                    class="sr-only" readonly>
-
-                                <button type="button" id="fechaBtn"
-                                    class="flex-1 flex items-center justify-between gap-2 pl-4 pr-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 cursor-pointer focus:outline-none focus:border-gray-400 transition-colors">
-                                    <span id="fechaTexto">{{ $fechaEntregaFormateada }}</span>
-                                    <x-heroicon-o-chevron-down class="w-4 h-4 shrink-0" />
-                                </button>
+                                <input type="text" name="tiempo_entrega"
+                                    value="{{ $pedido->tiempo_entrega ?? '' }}"
+                                    placeholder="Ej: 3 días hábiles"
+                                    class="flex-1 px-4 py-1.5 border border-gray-200 rounded-full bg-gray-50 text-[14px] text-gray-600 focus:outline-none focus:border-gray-400 transition-colors">
                             </div>
 
                             {{-- Dirección --}}
                             <div class="flex items-start gap-2">
                                 <label class="text-[14px] font-bold text-gray-800 shrink-0 mt-3">Dirección:</label>
                                 <textarea name="direccion_entrega" rows="3"
+                                    placeholder="Dirección de entrega o agencia Shalom"
                                     class="flex-1 px-4 py-3 border border-gray-200 rounded-2xl bg-gray-50 text-[14px] text-gray-600 focus:outline-none focus:border-gray-400 transition-colors resize-none">{{ $pedido->direccion_entrega ?? '' }}</textarea>
                             </div>
 
-                        </div>
+                            {{-- Guía (archivo) --}}
+                            <div class="flex items-start gap-2" x-data="archivoGuia()">
+                                <label class="text-[14px] font-bold text-gray-800 shrink-0 mt-3">Guía:</label>
+                                <div class="flex-1 min-w-0">
+                                    <div class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1.5 max-w-full">
+                                        <span class="text-[13px] text-gray-500 truncate max-w-[200px]" x-text="nombreArchivo || 'Ningún archivo seleccionado'"></span>
 
-                        {{-- BOTONES --}}
-                        <div class="flex gap-3 mt-6">
-                            <a href="{{ route('admin.pedidos.index') }}"
-                                class="flex-1 py-3.5 bg-white text-gray-700 border border-gray-300 rounded-2xl text-sm font-bold tracking-wider text-center transition-colors duration-200 hover:bg-gray-50">
-                                Cancelar
-                            </a>
+                                        <button type="button"
+                                            @click="$refs.archivoInput.click()"
+                                            class="shrink-0 bg-[#dbe3ff] text-[#3b3bb3] text-[13px] font-medium px-4 py-1.5 rounded-full hover:bg-[#cfd8ff] transition">
+                                            <span x-text="tieneArchivo ? 'Cambiar archivo' : 'Seleccionar archivo'"></span>
+                                        </button>
 
-                            <button type="submit" form="form-actualizar-pedido"
-                                onclick="document.getElementById('accion_input').value = 'guardar';"
-                                class="flex-1 py-3.5 bg-indigo-600 text-white text-sm font-bold tracking-wider rounded-2xl transition-colors duration-200">
-                                Guardar
-                            </button>
+                                        <input type="file" x-ref="archivoInput"
+                                               name="archivo_adjunto"
+                                               accept="image/*,application/pdf"
+                                               class="hidden"
+                                               @change="actualizarNombre($event)">
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
 
                     </div>
@@ -486,57 +346,7 @@
         </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const inputFecha = document.getElementById('fechaFiltro');
-            const botonFecha = document.getElementById('fechaBtn');
-            const textoFecha = document.getElementById('fechaTexto');
-
-            flatpickr.localize(flatpickr.l10ns.es);
-            flatpickr.l10ns.es.firstDayOfWeek = 0;
-
-            const picker = flatpickr(inputFecha, {
-                dateFormat: 'Y-m-d',
-                defaultDate: inputFecha.value || null,
-                positionElement: botonFecha,
-                locale: 'es',
-                firstDayOfWeek: 0,
-                monthSelectorType: 'static',
-                yearSelectorType: 'input',
-
-                // 👇 Forzar que se recalcule la posición al abrir
-                onOpen: function (selectedDates, dateStr, instance) {
-                    // Mover el calendario para que se alinee con el botón
-                    instance._positionCalendar();
-
-                    botonFecha.classList.add('border-indigo-400', 'ring-2', 'ring-indigo-100');
-                },
-                onChange: function (selectedDates, dateStr) {
-                    if (dateStr) {
-                        const [y, m, d] = dateStr.split('-');
-                        textoFecha.textContent = `${d}/${m}/${y}`;
-                    } else {
-                        textoFecha.textContent = 'Seleccionar';
-                    }
-                },
-                onClose: function () {
-                    botonFecha.classList.remove('border-indigo-400', 'ring-2', 'ring-indigo-100');
-                }
-            });
-
-            botonFecha.addEventListener('click', function (e) {
-                e.preventDefault();
-
-                // 👇 Forzar que el positionElement esté actualizado antes de abrir
-                picker.set('positionElement', botonFecha);
-
-                // 👇 Recalcular posición y abrir
-                picker.open();
-            });
-        });
-
         function pedidoEstado(estadoInicial) {
             return {
                 estadoActual: estadoInicial,
@@ -556,14 +366,106 @@
                     this.indiceActual = idx === -1 ? -1 : idx;
                 },
 
-                siguienteEstado() {
-                    const nombres = this.pasos.map(p => p.nombre);
-                    const idx = nombres.indexOf(this.estadoActual);
-                    if (idx === -1 || idx >= nombres.length - 1) return;
-                    this.estadoActual = nombres[idx + 1];
+                avanzarA(i) {
+                    if (i !== this.indiceActual + 1) return;
+                    if (i >= this.pasos.length) return;
+
+                    this.estadoActual = this.pasos[i].nombre;
                     this.actualizarIndice();
                 }
             };
+        }
+
+        function archivoGuia() {
+            return {
+                nombreArchivo: '',
+                tieneArchivo: false,
+
+                actualizarNombre(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        this.nombreArchivo = file.name;
+                        this.tieneArchivo = true;
+                    }
+                }
+            };
+        }
+
+        function enviarFormulario(accion) {
+            const form = document.getElementById('form-actualizar-pedido');
+            const formData = new FormData(form);
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+                           || form.querySelector('input[name="_token"]').value;
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarToast('success', data.message);
+                } else {
+                    mostrarToast('error', data.message || 'Error al actualizar');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mostrarToast('error', 'Error de conexión');
+            });
+        }
+
+        function mostrarToast(tipo, mensaje) {
+            document.querySelectorAll('.toast-dinamico').forEach(t => t.remove());
+
+            const color = tipo === 'success' ? 'emerald' : 'rose';
+            const iconPath = tipo === 'success'
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>'
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+
+            const toast = document.createElement('div');
+            toast.className = `toast-dinamico pointer-events-auto flex items-center gap-4 p-5 bg-white shadow-2xl rounded-[2rem] border border-${color}-100 min-w-[340px] max-w-md fixed top-6 right-6 z-[999]`;
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(20px)';
+            toast.style.transition = 'all 0.3s ease';
+
+            toast.innerHTML = `
+                <div class="w-12 h-12 bg-${color}-50 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-${color}-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${iconPath}
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p class="font-black text-gray-900 text-sm leading-none">
+                        ${tipo === 'success' ? '¡Éxito!' : 'Error'}
+                    </p>
+                    <p class="text-gray-500 text-xs font-medium mt-1.5 leading-relaxed">${mensaje}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-gray-300 hover:text-gray-600 transition flex-shrink-0 p-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+
+            document.body.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(0)';
+            });
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4500);
         }
     </script>
 

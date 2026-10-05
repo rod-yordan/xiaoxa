@@ -375,23 +375,6 @@
                                                     @endforeach
                                                 </tbody>
                                                 <tfoot>
-                                                    @if($pedido->id_tipo_entrega == 2)
-                                                        <tr class="border-t border-gray-200">
-                                                            <td class="px-5 py-3"></td>
-                                                            <td class="px-2 py-3"></td>
-                                                            <td class="px-2 py-3 text-center text-[11px] text-black">
-                                                                Envío
-                                                            </td>
-                                                            <td class="px-5 py-3 text-right text-[11px] text-black whitespace-nowrap">
-                                                                @if($pedido->costo_envio > 0)
-                                                                    S/ {{ number_format($pedido->costo_envio, 2) }}
-                                                                @else
-                                                                    Gratis
-                                                                @endif
-                                                            </td>
-                                                        </tr>
-                                                    @endif
-
                                                     <tr class="border-t border-gray-200">
                                                         <td class="px-5 py-4"></td>
                                                         <td class="px-2 py-4"></td>
@@ -423,7 +406,7 @@
                                                         <span class="text-xs text-gray-600 shrink-0">Destino</span>
                                                         <span class="text-xs font-semibold text-black text-right max-w-[60%]">
                                                             {{ collect([
-                                                                $pedido->departamento?->nombre_departamento,
+                                                                $pedido->departamento,
                                                                 $pedido->provincia,
                                                                 $pedido->distrito,
                                                             ])->filter()->implode(', ') ?: '—' }}
@@ -445,10 +428,10 @@
                                                 </div>
 
                                                 <div class="flex justify-between">
-                                                    <span class="text-xs text-gray-600">Fecha</span>
-                                                    @if($pedido->fecha_entrega)
+                                                    <span class="text-xs text-gray-600">Tiempo de entrega</span>
+                                                    @if($pedido->tiempo_entrega)
                                                         <span class="text-xs font-semibold text-black">
-                                                            {{ \Carbon\Carbon::parse($pedido->fecha_entrega)->format('d/m/Y') }}
+                                                            {{ $pedido->tiempo_entrega }}
                                                         </span>
                                                     @else
                                                         <span class="text-xs font-semibold text-amber-600 italic">
@@ -458,6 +441,27 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {{-- 🆕 ARCHIVO ADJUNTO --}}
+                                        @if($pedido->archivo_adjunto)
+                                            <div class="bg-white border border-gray-200 rounded-lg px-5 py-4">
+                                                <div class="flex items-center justify-between gap-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center shrink-0">
+                                                            <x-heroicon-o-document-arrow-down class="w-5 h-5 text-indigo-600" />
+                                                        </div>
+                                                        <div>
+                                                            <p class="text-xs font-bold text-gray-800">Guía de envío</p>
+                                                            <p class="text-[10px] text-gray-500">Descarga este archivo para gestionar tu envío</p>
+                                                        </div>
+                                                    </div>
+                                                    <a href="{{ route('perfil.pedidos.descargar', $pedido->id_pedido) }}"
+                                                       class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition">
+                                                        Descargar
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        @endif
 
                                     </div>
                                 </div>

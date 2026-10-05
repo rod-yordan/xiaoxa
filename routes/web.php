@@ -3,12 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\UbicacionController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\PedidoUsuarioController;
 use App\Http\Controllers\Admin\ProductoController;
 use App\Http\Controllers\Admin\CategoriaController;
 use App\Http\Controllers\Admin\PedidoController;
@@ -18,7 +17,6 @@ use App\Models\Producto;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CuponController;
-use App\Http\Controllers\Admin\EnvioController;
 use App\Http\Controllers\Api\ImageController;
 
 // ── PÚBLICAS
@@ -42,19 +40,10 @@ Route::get('/carrito/aumentar/{id}',     [CarritoController::class, 'aumentar'])
 Route::get('/carrito/disminuir/{id}',    [CarritoController::class, 'disminuir'])->name('carrito.disminuir');
 Route::get('/carrito/eliminar/{id}',     [CarritoController::class, 'eliminar'])->name('carrito.eliminar');
 
-// UBICACIÓN
-Route::prefix('ubicacion')->name('ubicacion.')->group(function () {
-    Route::get('/provincias/{id}', [UbicacionController::class, 'provincias'])->name('provincias');
-    Route::get('/distritos/{id}',  [UbicacionController::class, 'distritos'])->name('distritos');
-    Route::get('/agencias/{id}',   [UbicacionController::class, 'agencias'])->name('agencias');
-});
-
-// ── ✅ WEBHOOK MERCADO PAGO (SIN AUTH - MP llama desde sus servidores)
+// ── WEBHOOK MERCADO PAGO
 Route::post('/pago/webhook', [PagoController::class, 'webhook'])->name('pago.webhook');
 
-// ── ✅ LOGOUT Y REDIRECT (accesible incluso si no verificó el correo)
-// Cierra la sesión del usuario y lo manda a login. Se usa desde el ícono de usuario
-// cuando el email aún no está verificado.
+// ── LOGOUT Y REDIRECT
 Route::get('/logout-redirect', function () {
     Auth::guard('web')->logout();
     request()->session()->invalidate();
@@ -71,7 +60,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::put('/usuario/actualizar', [UsuarioController::class, 'actualizar'])->name('usuario.actualizar');
 
-    // ── PERFIL (todas las rutas aquí, exigen verificación)
+    // ── PERFIL
     Route::prefix('perfil')->name('perfil.')->group(function () {
         Route::get('/',          [PerfilController::class, 'index'])->name('index');
         Route::get('/editar',    [PerfilController::class, 'edit'])->name('edit');
@@ -79,6 +68,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/email',     [PerfilController::class, 'updateEmail'])->name('update-email');
         Route::put('/password',  [PerfilController::class, 'updatePassword'])->name('update-password');
         Route::delete('/',       [PerfilController::class, 'destroy'])->name('destroy');
+
+        // 🆕 Descargar archivo adjunto del pedido
+        Route::get('/pedidos/{id}/descargar', [PedidoUsuarioController::class, 'descargarArchivo'])
+            ->name('pedidos.descargar');
     });
 
     // Mercado pago (back_urls de MP)
@@ -98,9 +91,10 @@ Route::middleware(['auth', 'verified', 'role:1'])
         Route::resource('productos', ProductoController::class)->except(['show']);
         Route::resource('categorias', CategoriaController::class)->except(['show']);
 
-        Route::get('pedidos',      [PedidoController::class, 'index'])->name('pedidos.index');
-        Route::get('pedidos/{id}', [PedidoController::class, 'show'])->name('pedidos.show');
-        Route::put('pedidos/{id}', [PedidoController::class, 'update'])->name('pedidos.update');
+        Route::get('pedidos',                  [PedidoController::class, 'index'])->name('pedidos.index');
+        Route::get('pedidos/{id}',             [PedidoController::class, 'show'])->name('pedidos.show');
+        Route::put('pedidos/{id}',             [PedidoController::class, 'update'])->name('pedidos.update');
+        Route::get('pedidos/{id}/descargar',   [PedidoController::class, 'descargarArchivo'])->name('pedidos.descargar');
 
         Route::resource('banners', BannerController::class)->except(['show']);
         Route::resource('cupones', CuponController::class)->except(['show']);
@@ -109,10 +103,6 @@ Route::middleware(['auth', 'verified', 'role:1'])
         // ── VENTAS
         Route::get('ventas',  [VentaController::class, 'index'])->name('ventas.index');
         Route::post('ventas', [VentaController::class, 'store'])->name('ventas.store');
-
-        // ── ENVÍOS
-        Route::get('envios',              [EnvioController::class, 'index'])->name('envios.index');
-        Route::put('envios/{departamento}', [EnvioController::class, 'update'])->name('envios.update');
     });
 
 require __DIR__ . '/auth.php';

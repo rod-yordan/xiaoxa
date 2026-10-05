@@ -92,17 +92,16 @@ class DashboardController extends Controller
             ->limit(6)
             ->get();
 
-        // ─── Top 5 productos más vendidos
+        // ─── Top 5 productos más vendidos (CORREGIDO)
+        // 1) Primero sumamos unidades SIN join a imágenes (evita duplicados)
         $topProductos = DB::table('detalle_pedido as dp')
             ->join('pedido as p',             'p.id_pedido',    '=', 'dp.id_pedido')
             ->join('producto_variante as pv', 'pv.id_variante', '=', 'dp.id_variante')
             ->join('producto as pr',          'pr.id_producto', '=', 'pv.id_producto')
-            ->leftJoin('producto_variante_imagen as pvi', 'pvi.id_variante', '=', 'pv.id_variante')
             ->whereNotIn('p.estado_pedido', ['Cancelado'])
             ->selectRaw('
                 pr.id_producto,
                 pr.nombre_producto,
-                MIN(pvi.imagen) as imagen,
                 SUM(dp.cantidad) as unidades,
                 SUM(dp.subtotal) as ingresos
             ')
@@ -110,6 +109,18 @@ class DashboardController extends Controller
             ->orderByDesc('unidades')
             ->limit(5)
             ->get();
+
+        // 2) Luego, para cada producto, obtenemos UNA imagen (la primera)
+        $topProductos = $topProductos->map(function ($prod) {
+            $imagen = DB::table('producto_variante as pv')
+                ->join('producto_variante_imagen as pvi', 'pvi.id_variante', '=', 'pv.id_variante')
+                ->where('pv.id_producto', $prod->id_producto)
+                ->orderBy('pvi.orden')
+                ->value('pvi.imagen');
+
+            $prod->imagen = $imagen;
+            return $prod;
+        });
 
         // ─── Últimos 8 pedidos
         $ultimosPedidos = DB::table('pedido as p')

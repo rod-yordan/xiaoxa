@@ -13,10 +13,8 @@ class Pedido extends Model
 
     protected $casts = [
         'fecha_pedido'  => 'datetime',
-        'fecha_entrega' => 'date',
         'total_pedido'  => 'decimal:2',
         'subtotal'      => 'decimal:2',
-        'costo_envio'   => 'decimal:2',
         'descuento'     => 'decimal:2',
     ];
 
@@ -24,16 +22,16 @@ class Pedido extends Model
         'numero_pedido',
         'fecha_pedido',
         'subtotal',
-        'costo_envio',
         'descuento',
         'total_pedido',
         'estado_pedido',
         'payment_id',
-        'id_departamento',
+        'departamento',
         'provincia',
         'distrito',
         'direccion_entrega',
-        'fecha_entrega',
+        'tiempo_entrega',
+        'archivo_adjunto',
         'id_usuario',
         'id_cupon',
         'id_tipo_entrega',
@@ -43,17 +41,12 @@ class Pedido extends Model
 
     public function usuario()
     {
-        return $this->belongsTo(User::class, 'id_usuario', 'id_usuario');
+        return $this->belongsTo(Usuario::class, 'id_usuario', 'id_usuario');
     }
 
     public function detalles()
     {
         return $this->hasMany(DetallePedido::class, 'id_pedido', 'id_pedido');
-    }
-
-    public function departamento()
-    {
-        return $this->belongsTo(Departamento::class, 'id_departamento', 'id_departamento');
     }
 
     public function tipoEntrega()
@@ -66,19 +59,33 @@ class Pedido extends Model
         return $this->belongsTo(Cupon::class, 'id_cupon', 'id_cupon');
     }
 
+    // 🆕 Registro de uso del cupón (quién lo usó, cuándo, en qué pedido)
+    public function cuponUsado()
+    {
+        return $this->hasOne(CuponUsado::class, 'id_pedido', 'id_pedido');
+    }
+
     // ── Helpers ─────────────────────────────────────
 
     /**
-     * Devuelve la dirección de envío formateada.
+     * Devuelve la ubicación del cliente formateada (departamento, provincia, distrito).
      */
-    public function getDireccionCompletaAttribute(): ?string
+    public function getUbicacionCompletaAttribute(): ?string
     {
         $partes = array_filter([
             $this->distrito,
             $this->provincia,
-            $this->departamento?->nombre_departamento,
+            $this->departamento,
         ]);
 
         return $partes ? implode(', ', $partes) : null;
+    }
+
+    /**
+     * Verifica si el pedido tiene archivo adjunto.
+     */
+    public function tieneArchivo(): bool
+    {
+        return !empty($this->archivo_adjunto);
     }
 }

@@ -18,7 +18,7 @@ class ProductoController extends Controller
     public function index(Request $request)
     {
         $query = Producto::activos()
-            ->with(['categoria', 'promocion', 'variantes.imagenes']);
+            ->with(['categoria', 'variantes.imagenes']);
 
         // Filtros
         if ($request->has('categoria')) {
@@ -81,7 +81,7 @@ class ProductoController extends Controller
     public function show($id)
     {
         $producto = Producto::activos()
-            ->with(['categoria', 'promocion', 'variantes.imagenes'])
+            ->with(['categoria', 'variantes.imagenes'])
             ->find($id);
 
         if (!$producto) {
@@ -129,7 +129,7 @@ class ProductoController extends Controller
     {
         try {
             $query = Producto::activos()
-                ->with(['categoria', 'promocion', 'variantes.imagenes']);
+                ->with(['categoria', 'variantes.imagenes']);
 
             // Filtrar por oferta/promociones
             if ($request->has('en_oferta') && $request->en_oferta == 'true') {
@@ -169,7 +169,7 @@ class ProductoController extends Controller
     {
         try {
             $query = Producto::activos()
-                ->with(['categoria', 'promocion', 'variantes.imagenes']);
+                ->with(['categoria', 'variantes.imagenes']);
 
             // Filtrar por oferta/promociones
             if ($request->has('en_oferta') && $request->en_oferta == 'true') {
@@ -211,7 +211,7 @@ class ProductoController extends Controller
         try {
             $query = Producto::activos()
                 ->enOferta()
-                ->with(['categoria', 'promocion', 'variantes.imagenes'])
+                ->with(['categoria', 'variantes.imagenes'])
                 ->conStock();
 
             $productos = $query->paginate($request->get('limit', 10));
@@ -245,7 +245,7 @@ class ProductoController extends Controller
 
             $query = Producto::activos()
                 ->buscar($request->q)
-                ->with(['categoria', 'promocion', 'variantes.imagenes'])
+                ->with(['categoria', 'variantes.imagenes'])
                 ->conStock();
 
             $productos = $query->paginate($request->get('limit', 10));
@@ -278,7 +278,7 @@ class ProductoController extends Controller
                     $q->where('talla', $talla)
                       ->where('stock', '>', 0);
                 })
-                ->with(['categoria', 'promocion', 'variantes.imagenes']);
+                ->with(['categoria', 'variantes.imagenes']);
 
             $productos = $query->paginate($request->get('limit', 10));
 
@@ -310,7 +310,7 @@ class ProductoController extends Controller
                     $q->where('color', $color)
                       ->where('stock', '>', 0);
                 })
-                ->with(['categoria', 'promocion', 'variantes.imagenes']);
+                ->with(['categoria', 'variantes.imagenes']);
 
             $productos = $query->paginate($request->get('limit', 10));
 
@@ -344,7 +344,7 @@ class ProductoController extends Controller
 
             $query = Producto::activos()
                 ->whereBetween('precio', [$request->min, $request->max])
-                ->with(['categoria', 'promocion', 'variantes.imagenes'])
+                ->with(['categoria', 'variantes.imagenes'])
                 ->conStock();
 
             $productos = $query->paginate($request->get('limit', 10));

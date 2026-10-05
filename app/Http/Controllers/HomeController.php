@@ -21,7 +21,6 @@ class HomeController extends Controller
                    || $request->has('promocion')
                    || $request->has('nuevo');
 
-        // ✅ Cargamos la relación con las imágenes de variantes
         $query = Producto::query()
             ->where('estado_producto', 1)
             ->with(['variantes.imagenes']);
@@ -32,21 +31,21 @@ class HomeController extends Controller
             });
         }
 
-        // Filtro por promoción activa
+        // Filtro por oferta (productos con precio_oferta)
         if ($request->has('promocion')) {
             $query->where(function ($q) {
                 $q->whereNotNull('precio_oferta')
-                    ->where('precio_oferta', '>', 0)
-                    ->whereColumn('precio_oferta', '<', 'precio');
+                  ->where('precio_oferta', '>', 0)
+                  ->whereColumn('precio_oferta', '<', 'precio');
             });
         }
 
-        // ✅ Filtro "Lo nuevo" → 8 últimos productos creados
+        // Filtro "Lo nuevo" → 8 últimos productos creados
         if ($request->has('nuevo')) {
             $query->orderBy('created_at', 'desc')->limit(8);
         }
 
-        // ✅ Filtro por búsqueda de texto (mejorado)
+        // Filtro por búsqueda de texto
         if ($request->filled('buscar')) {
             $buscar = trim($request->buscar);
 
@@ -65,17 +64,13 @@ class HomeController extends Controller
             });
         }
 
-        // ✅ Si hay filtros → un solo array
         if ($hayFiltros) {
-            // Si es "lo nuevo", ya tiene su orderBy y limit aplicado
             if (!$request->has('nuevo')) {
                 $query->orderBy('created_at', 'desc');
             }
             $productos = $query->get();
             $categorias = collect();
-        }
-        // ✅ Si NO hay filtros → agrupar por categoría
-        else {
+        } else {
             $categorias = Categoria::where('estado_categoria', 1)
                 ->with(['productos' => function ($q) {
                     $q->where('estado_producto', 1)
