@@ -31,13 +31,9 @@ class HomeController extends Controller
             });
         }
 
-        // Filtro por oferta (productos con precio_oferta)
+        // Filtro por promociones → usa el scope enOferta()
         if ($request->has('promocion')) {
-            $query->where(function ($q) {
-                $q->whereNotNull('precio_oferta')
-                  ->where('precio_oferta', '>', 0)
-                  ->whereColumn('precio_oferta', '<', 'precio');
-            });
+            $query->enOferta();
         }
 
         // Filtro "Lo nuevo" → 8 últimos productos creados

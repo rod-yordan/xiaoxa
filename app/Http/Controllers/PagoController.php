@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Carrito;
+use App\Models\CuponUsado;
 use App\Models\DetallePedido;
 use App\Models\Pedido;
 use App\Models\ProductoVariante;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use MercadoPago\MercadoPagoConfig;
@@ -89,6 +89,7 @@ class PagoController extends Controller
             ->first();
 
         if ($existente) {
+            $this->marcarComoCompletado($referencia, $existente);
             return $existente;
         }
 
@@ -105,13 +106,11 @@ class PagoController extends Controller
         try {
             $pedido = DB::transaction(function () use ($data, $paymentId, $referencia) {
 
-                // Re-verificar por si el webhook y el redirect se disparan al mismo tiempo
                 $existe = Pedido::where('payment_id', $paymentId)->first();
                 if ($existe) {
                     return $existe;
                 }
 
-                // Validar stock
                 foreach ($data['items'] as $item) {
                     $variante = ProductoVariante::find($item['id_variante']);
                     if (!$variante || $variante->stock < $item['cantidad']) {
@@ -121,24 +120,24 @@ class PagoController extends Controller
                     }
                 }
 
-                // Crear pedido
                 $pedido = Pedido::create([
-                    'numero_pedido'      => $this->generarNumeroPedido(),
-                    'fecha_pedido'       => now(),
-                    'subtotal'           => $data['subtotal'],
-                    'total_pedido'       => $data['total'],
-                    'estado_pedido'      => 'Pendiente',
-                    'payment_id'         => $paymentId,
-                    'id_usuario'         => $data['id_usuario'],
-                    'id_tipo_entrega'    => $data['id_tipo_entrega'],
-                    'departamento'       => $data['departamento'] ?? null,
-                    'provincia'          => $data['provincia'] ?? null,
-                    'distrito'           => $data['distrito'] ?? null,
-                    'direccion_entrega'  => null, // ← la llena el admin después
-                    'tiempo_entrega'     => null, // ← la llena el admin después
+                    'numero_pedido'     => $this->generarNumeroPedido(),
+                    'fecha_pedido'      => now(),
+                    'subtotal'          => $data['subtotal'],
+                    'descuento'         => $data['descuento'] ?? 0,
+                    'total_pedido'      => $data['total'],
+                    'estado_pedido'     => 'Pendiente',
+                    'payment_id'        => $paymentId,
+                    'id_usuario'        => $data['id_usuario'],
+                    'id_cupon'          => $data['id_cupon'] ?? null,
+                    'id_tipo_entrega'   => $data['id_tipo_entrega'],
+                    'departamento'      => $data['departamento'] ?? null,
+                    'provincia'         => $data['provincia'] ?? null,
+                    'distrito'          => $data['distrito'] ?? null,
+                    'direccion_entrega' => null,
+                    'tiempo_entrega'    => null,
                 ]);
 
-                // Crear detalles y descontar stock
                 foreach ($data['items'] as $item) {
                     DetallePedido::create([
                         'id_pedido'       => $pedido->id_pedido,
@@ -152,13 +151,31 @@ class PagoController extends Controller
                         ->decrement('stock', $item['cantidad']);
                 }
 
-                // Vaciar carrito
+                if (!empty($data['id_cupon'])) {
+                    CuponUsado::firstOrCreate(
+                        [
+                            'id_cupon'   => $data['id_cupon'],
+                            'id_usuario' => $data['id_usuario'],
+                        ],
+                        [
+                            'id_pedido' => $pedido->id_pedido,
+                            'usado_en'  => now(),
+                        ]
+                    );
+                }
+
                 $carrito = Carrito::where('id_usuario', $data['id_usuario'])->first();
                 if ($carrito) {
                     $carrito->detalles()->delete();
                 }
 
                 Cache::forget("checkout:{$referencia}");
+                Cache::put("checkout-pagado:{$referencia}", [
+                    'id_pedido'     => $pedido->id_pedido,
+                    'numero_pedido' => $pedido->numero_pedido,
+                    'total_pedido'  => (float) $pedido->total_pedido,
+                    'estado_pedido' => $pedido->estado_pedido,
+                ], now()->addDay());
 
                 return $pedido;
             });
@@ -175,6 +192,16 @@ class PagoController extends Controller
             ]);
             return null;
         }
+    }
+
+    private function marcarComoCompletado(string $referencia, Pedido $pedido): void
+    {
+        Cache::put("checkout-pagado:{$referencia}", [
+            'id_pedido'     => $pedido->id_pedido,
+            'numero_pedido' => $pedido->numero_pedido,
+            'total_pedido'  => (float) $pedido->total_pedido,
+            'estado_pedido' => $pedido->estado_pedido,
+        ], now()->addDay());
     }
 
     private function generarNumeroPedido(): string

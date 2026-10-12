@@ -8,17 +8,16 @@ class VarianteResource extends JsonResource
 {
     public function toArray($request)
     {
-        // 👇 NUEVO: colección de imágenes de esta variante (puede estar vacía)
+        // Imágenes como lista de strings (URL completa)
         $imagenes = $this->relationLoaded('imagenes')
-            ? $this->imagenes->map(fn($img) => [
-                'id'     => $img->id_imagen,
-                'url'    => url('/api/imagen/' . $img->imagen),
-                'orden'  => $img->orden,
-            ])->values()->toArray()
+            ? $this->imagenes
+                ->map(fn($img) => url('/api/imagen/' . $img->imagen))
+                ->values()
+                ->toArray()
             : [];
 
-        // Imagen principal de la variante (primera) o null
-        $imagenPrincipal = $imagenes[0]['url'] ?? null;
+        // Imagen principal = primera imagen
+        $imagenPrincipal = $imagenes[0] ?? null;
 
         return [
             'id' => $this->id_variante,

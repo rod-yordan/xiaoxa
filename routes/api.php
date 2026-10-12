@@ -10,23 +10,30 @@ use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\CategoriaController;
 use App\Http\Controllers\Api\CheckoutApiController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\NavbarController;
+use App\Http\Controllers\Api\TipoDocumentoController;
 
-Route::middleware('auth:sanctum')->get('/perfil', [MobileAuthController::class, 'perfil']);
-
+// Auth
 Route::post('/register', [MobileAuthController::class, 'register']);
 Route::post('/login', [MobileAuthController::class, 'login']);
 
-Route::middleware('auth:sanctum')->put('/perfil', [MobileAuthController::class, 'updatePerfil']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/perfil', [MobileAuthController::class, 'perfil']);
+    Route::put('/perfil', [MobileAuthController::class, 'updatePerfil']);
+    Route::put('/perfil/datos-contacto', [MobileAuthController::class, 'updateDatosContacto']);
+});
 
-Route::middleware('auth:sanctum')->put('/perfil/datos-contacto', [MobileAuthController::class, 'updateDatosContacto']);
+// Tipos de documento
+Route::get('/tipos-documento', [TipoDocumentoController::class, 'index']);
 
+// Favoritos
 Route::prefix('favoritos')->group(function () {
     Route::get('/', [FavoritoController::class, 'obtener']);
     Route::post('/agregar', [FavoritoController::class, 'agregar']);
     Route::delete('/eliminar', [FavoritoController::class, 'eliminar']);
 });
 
+// Carrito
 Route::middleware('auth:sanctum')->prefix('carrito')->group(function () {
     Route::get('/', [CarritoController::class, 'obtener']);
     Route::post('/crear', [CarritoController::class, 'crear']);
@@ -36,58 +43,60 @@ Route::middleware('auth:sanctum')->prefix('carrito')->group(function () {
     Route::delete('/limpiar', [CarritoController::class, 'limpiar']);
     Route::get('/{idCarrito}/total', [CarritoController::class, 'total']);
 
-    // 🆕 Cupones en el carrito
     Route::post('/cupon/aplicar', [CarritoController::class, 'aplicarCupon']);
     Route::delete('/cupon/quitar', [CarritoController::class, 'quitarCupon']);
 });
 
-// 🆕 Listar cupones disponibles para el usuario
 Route::middleware('auth:sanctum')->get('/cupones', [CarritoController::class, 'cuponesDisponibles']);
-
-Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
-    Route::post('/confirmar', [CheckoutApiController::class, 'confirmar']);
-});
 
 Route::get('/variantes/{idVariante}/verificar-stock', [CarritoController::class, 'verificarStock']);
 
-// ✅ Ruta unificada para servir imágenes (productos + banners)
+// Checkout
+Route::middleware('auth:sanctum')->prefix('checkout')->group(function () {
+    Route::post('/crear-preferencia', [CheckoutApiController::class, 'crearPreferencia']);
+    Route::get('/estado/{referencia}', [CheckoutApiController::class, 'estadoPago']);
+});
+
+// Imágenes
 Route::get('/imagen/{filename}', [ImageController::class, 'show'])
     ->where('filename', '.*\.(jpg|jpeg|png|gif|webp)$');
 
+// Productos
 Route::prefix('productos')->group(function () {
     Route::get('/', [ProductoController::class, 'index']);
-    Route::get('/recomendados', [ProductoController::class, 'recomendados']);
-    Route::get('/populares', [ProductoController::class, 'populares']);
     Route::get('/ofertas', [ProductoController::class, 'ofertas']);
     Route::get('/buscar', [ProductoController::class, 'buscar']);
-
+    Route::get('/talla/{talla}', [ProductoController::class, 'porTalla']);
+    Route::get('/color/{color}', [ProductoController::class, 'porColor']);
     Route::get('/{id}/variantes', [ProductoController::class, 'variantes'])->where('id', '[0-9]+');
     Route::get('/{id}', [ProductoController::class, 'show'])->where('id', '[0-9]+');
 });
 
-Route::prefix('productos')->group(function () {
-    Route::get('/talla/{talla}', [ProductoController::class, 'porTalla']);
-    Route::get('/color/{color}', [ProductoController::class, 'porColor']);
-    Route::get('/rango-precio', [ProductoController::class, 'porRangoPrecio']);
-});
-
+// Categorías
 Route::get('/categorias', [CategoriaController::class, 'index']);
 Route::get('/categorias/{id}/productos', [CategoriaController::class, 'productos']);
 
+// Chat
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chat/message', [ChatController::class, 'sendMessage']);
 });
 
+// Banners
 Route::prefix('banners')->group(function () {
     Route::get('/', [BannerController::class, 'index']);
 });
 
-Route::get('/health', function () {
-    return response()->json(['status' => 'ok', 'time' => now()]);
-});
+// Navbar
+Route::get('/navbar', [NavbarController::class, 'index']);
 
+// Pedidos
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/mis-pedidos', [App\Http\Controllers\Api\PedidoController::class, 'misPedidos']);
     Route::get('/pedidos/{id}', [App\Http\Controllers\Api\PedidoController::class, 'show']);
     Route::get('/pedidos/{id}/descargar', [App\Http\Controllers\Api\PedidoController::class, 'descargarArchivo']);
+});
+
+// Health
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok', 'time' => now()]);
 });

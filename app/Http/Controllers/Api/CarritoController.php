@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Api/CarritoController.php
 
 namespace App\Http\Controllers\Api;
 
@@ -13,10 +14,22 @@ use Illuminate\Support\Facades\Auth;
 
 class CarritoController extends Controller
 {
+    /**
+     * Relations que se cargan SIEMPRE con el carrito.
+     * Incluye variantes.imagenes del producto para poder sacar la imagen principal.
+     */
+    private function relations(): array
+    {
+        return [
+            'detalles.variante.producto.variantes.imagenes',
+            'detalles.variante.producto.categoria',
+        ];
+    }
+
     public function obtener(Request $request)
     {
         $carrito = Carrito::where('id_usuario', $request->id_usuario)
-            ->with(['detalles.variante.producto'])
+            ->with($this->relations())
             ->first();
 
         return response()->json([
@@ -31,7 +44,7 @@ class CarritoController extends Controller
             'id_usuario' => $request->id_usuario,
         ]);
 
-        $carrito->load(['detalles.variante.producto']);
+        $carrito->load($this->relations());
 
         return response()->json([
             'success' => true,
@@ -65,7 +78,7 @@ class CarritoController extends Controller
             ]
         );
 
-        $carrito = Carrito::with(['detalles.variante.producto'])
+        $carrito = Carrito::with($this->relations())
             ->find($carrito->id_carrito);
 
         return response()->json([
@@ -87,7 +100,7 @@ class CarritoController extends Controller
 
         $detalle->update(['cantidad' => $request->cantidad]);
 
-        $carrito = Carrito::with(['detalles.variante.producto'])
+        $carrito = Carrito::with($this->relations())
             ->find($detalle->id_carrito);
 
         return response()->json([
@@ -110,7 +123,7 @@ class CarritoController extends Controller
         $idCarrito = $detalle->id_carrito;
         $detalle->delete();
 
-        $carrito = Carrito::with(['detalles.variante.producto'])
+        $carrito = Carrito::with($this->relations())
             ->find($idCarrito);
 
         return response()->json([
@@ -126,7 +139,7 @@ class CarritoController extends Controller
         if ($carrito) {
             $carrito->detalles()->delete();
 
-            $carrito = Carrito::with(['detalles.variante.producto'])
+            $carrito = Carrito::with($this->relations())
                 ->find($carrito->id_carrito);
         }
 
@@ -139,7 +152,7 @@ class CarritoController extends Controller
 
     public function total($idCarrito)
     {
-        $carrito = Carrito::with('detalles.variante.producto')->find($idCarrito);
+        $carrito = Carrito::with($this->relations())->find($idCarrito);
 
         if (!$carrito) {
             return response()->json([
@@ -182,13 +195,9 @@ class CarritoController extends Controller
     }
 
     // ══════════════════════════════════════════════════════════
-    // 🆕 CUPONES EN EL CARRITO (para app móvil)
+    // CUPONES
     // ══════════════════════════════════════════════════════════
 
-    /**
-     * Listar cupones disponibles para el usuario autenticado.
-     * GET /api/cupones
-     */
     public function cuponesDisponibles()
     {
         $idUsuario = Auth::id();
@@ -202,11 +211,11 @@ class CarritoController extends Controller
             ->get()
             ->map(function ($cupon) {
                 return [
-                    'id_cupon'            => $cupon->id_cupon,
-                    'codigo'              => $cupon->codigo_cupon,
-                    'monto'               => (float) $cupon->monto_cupon,
-                    'monto_minimo'        => (float) $cupon->monto_compra_minima,
-                    'fecha_vencimiento'   => $cupon->fecha_vencimiento->format('Y-m-d'),
+                    'id_cupon'          => $cupon->id_cupon,
+                    'codigo'            => $cupon->codigo_cupon,
+                    'monto'             => (float) $cupon->monto_cupon,
+                    'monto_minimo'      => (float) $cupon->monto_compra_minima,
+                    'fecha_vencimiento' => $cupon->fecha_vencimiento->format('Y-m-d'),
                 ];
             });
 
@@ -216,11 +225,6 @@ class CarritoController extends Controller
         ]);
     }
 
-    /**
-     * Aplicar un cupón al carrito del usuario.
-     * POST /api/carrito/cupon/aplicar
-     * Body: { codigo_cupon }
-     */
     public function aplicarCupon(Request $request)
     {
         $request->validate([
@@ -239,7 +243,6 @@ class CarritoController extends Controller
             ], 404);
         }
 
-        // Calcular subtotal del carrito
         $carrito = Carrito::with('detalles.variante.producto')
             ->where('id_usuario', $idUsuario)
             ->first();
@@ -258,9 +261,7 @@ class CarritoController extends Controller
             $subtotal += $precio * $detalle->cantidad;
         }
 
-        // Validar el cupón para este usuario
         if (!$cupon->esValidoPara($idUsuario, $subtotal)) {
-            // Determinar motivo del rechazo
             if (!$cupon->estado_cupon) {
                 $mensaje = 'El cupón está inactivo.';
             } elseif ($cupon->fecha_vencimiento < now()) {
@@ -280,7 +281,6 @@ class CarritoController extends Controller
             ], 400);
         }
 
-        // Guardar en sesión (solo para web) — para API usamos respuesta directa
         session([
             'cupon_id'        => $cupon->id_cupon,
             'cupon_codigo'    => $cupon->codigo_cupon,
@@ -298,10 +298,6 @@ class CarritoController extends Controller
         ]);
     }
 
-    /**
-     * Quitar el cupón aplicado.
-     * DELETE /api/carrito/cupon/quitar
-     */
     public function quitarCupon()
     {
         session()->forget(['cupon_id', 'cupon_codigo', 'cupon_descuento']);

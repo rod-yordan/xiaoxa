@@ -33,12 +33,14 @@ Route::get('/producto/{id}', function ($id) {
     return view('producto.detalle', compact('producto'));
 })->name('producto.show');
 
-// CARRITO
-Route::get('/carrito',                   [CarritoController::class, 'index'])->name('carrito.index');
-Route::post('/carrito/add/{id}',         [CarritoController::class, 'add'])->name('carrito.add');
-Route::get('/carrito/aumentar/{id}',     [CarritoController::class, 'aumentar'])->name('carrito.aumentar');
-Route::get('/carrito/disminuir/{id}',    [CarritoController::class, 'disminuir'])->name('carrito.disminuir');
-Route::get('/carrito/eliminar/{id}',     [CarritoController::class, 'eliminar'])->name('carrito.eliminar');
+// ── CARRITO (requiere sesión)
+Route::middleware('auth')->group(function () {
+    Route::get('/carrito',                   [CarritoController::class, 'index'])->name('carrito.index');
+    Route::post('/carrito/add/{id}',         [CarritoController::class, 'add'])->name('carrito.add');
+    Route::get('/carrito/aumentar/{id}',     [CarritoController::class, 'aumentar'])->name('carrito.aumentar');
+    Route::get('/carrito/disminuir/{id}',    [CarritoController::class, 'disminuir'])->name('carrito.disminuir');
+    Route::get('/carrito/eliminar/{id}',     [CarritoController::class, 'eliminar'])->name('carrito.eliminar');
+});
 
 // ── WEBHOOK MERCADO PAGO
 Route::post('/pago/webhook', [PagoController::class, 'webhook'])->name('pago.webhook');
@@ -69,12 +71,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/password',  [PerfilController::class, 'updatePassword'])->name('update-password');
         Route::delete('/',       [PerfilController::class, 'destroy'])->name('destroy');
 
-        // 🆕 Descargar archivo adjunto del pedido
         Route::get('/pedidos/{id}/descargar', [PedidoUsuarioController::class, 'descargarArchivo'])
             ->name('pedidos.descargar');
     });
 
-    // Mercado pago (back_urls de MP)
     Route::get('/pago/exito',     [PagoController::class, 'exito'])->name('pago.exito');
     Route::get('/pago/fallo',     [PagoController::class, 'fallo'])->name('pago.fallo');
     Route::get('/pago/pendiente', [PagoController::class, 'pendiente'])->name('pago.pendiente');
@@ -100,7 +100,6 @@ Route::middleware(['auth', 'verified', 'role:1'])
         Route::resource('cupones', CuponController::class)->except(['show']);
         Route::patch('cupones/{cupon}/toggle', [CuponController::class, 'toggle'])->name('cupones.toggle');
 
-        // ── VENTAS
         Route::get('ventas',  [VentaController::class, 'index'])->name('ventas.index');
         Route::post('ventas', [VentaController::class, 'store'])->name('ventas.store');
     });

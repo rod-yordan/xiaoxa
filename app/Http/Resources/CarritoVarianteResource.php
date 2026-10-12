@@ -11,11 +11,14 @@ class CarritoVarianteResource extends JsonResource
     {
         return [
             'id_variante' => $this->id_variante,
-            'talla' => $this->talla,
-            'color' => $this->color,
-            'sku' => $this->sku,
-            'stock' => $this->stock,
-            'producto' => new CarritoProductoResource($this->whenLoaded('producto')),
+            'talla'       => $this->talla,
+            'color'       => $this->color,
+            'color_hex'   => $this->color_hex,
+            'sku'         => $this->sku,
+            'stock'       => $this->stock,
+            'producto'    => new CarritoProductoResource(
+                $this->whenLoaded('producto')
+            ),
         ];
     }
 }

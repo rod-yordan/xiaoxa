@@ -8,7 +8,6 @@ class ProductoResource extends JsonResource
 {
     public function toArray($request)
     {
-        // Obtener variantes (cargadas o colección vacía)
         $variantes = $this->whenLoaded('variantes', function () {
             return $this->variantes;
         }, collect());
@@ -43,25 +42,13 @@ class ProductoResource extends JsonResource
         // SKU principal
         $skuPrincipal = $variantes->isNotEmpty() ? $variantes->first()->sku : null;
 
-        // Precio final (solo oferta, sin promociones)
-        $precioOriginal = (float) $this->precio;
-        $precioFinal = $precioOriginal;
-        $descuento = 0;
-
-        if ($this->precio_oferta) {
-            $precioFinal = (float) $this->precio_oferta;
-            $descuento = $precioOriginal > 0
-                ? round((($precioOriginal - $precioFinal) / $precioOriginal) * 100, 0)
-                : 0;
-        }
-
         return [
             'id' => $this->id_producto,
             'titulo' => $this->nombre_producto,
             'descripcion' => '',
-            'precio' => $precioFinal,
-            'precio_antes' => $precioFinal < $precioOriginal ? $precioOriginal : null,
-            'descuento' => $descuento > 0 ? $descuento : null,
+            'precio' => (float) $this->precio,
+            'precio_oferta' => $this->precio_oferta ? (float) $this->precio_oferta : null,
+            'descuento' => $this->descuento,
             'imagenes' => $galeria,
             'imagen_principal' => $imagenPrincipal,
             'categoria' => $this->categoria?->nombre_categoria,

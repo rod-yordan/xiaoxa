@@ -34,9 +34,11 @@
                 <div class="col-span-2 text-center">Subtotal</div>
             </div>
 
-            <div class="divide-y divide-gray-100">
+            <div class="divide-y divide-gray-200">
                 @foreach($items as $id => $detalles)
-                <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center py-6">
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center py-6"
+                     data-item-id="{{ $id }}"
+                     data-precio="{{ $detalles['precio'] }}">
 
                     <a href="{{ route('producto.show', $detalles['id_producto'] ?? '') }}"
                        class="col-span-7 flex items-center gap-4 min-w-0">
@@ -79,38 +81,48 @@
 
                         @if(!empty($detalles['precio_oferta']))
                             <div class="flex flex-col items-center leading-tight">
-                                <span class="text-sm text-gray-800">S/ {{ number_format($detalles['precio'], 2) }}</span>
-                                <span class="text-xs text-gray-400 line-through">S/ {{ number_format($detalles['precio_normal'], 2) }}</span>
+                                <span class="text-xs text-gray-700 line-through">
+                                    S/ {{ number_format($detalles['precio_normal'], 2) }}
+                                </span>
+                                <span class="text-sm text-red-500 font-semibold">
+                                    S/ {{ number_format($detalles['precio'], 2) }}
+                                </span>
                             </div>
                         @else
-                            <span class="text-sm text-gray-800">S/ {{ number_format($detalles['precio'], 2) }}</span>
+                            <span class="text-sm text-gray-900">
+                                S/ {{ number_format($detalles['precio'], 2) }}
+                            </span>
                         @endif
                     </div>
 
                     <div class="col-span-1 flex flex-col items-center gap-1">
                         <span class="sm:hidden text-xs text-gray-400 mb-1">Cantidad:</span>
 
-                        <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-                            <a href="{{ route('carrito.disminuir', $id) }}"
-                               class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition">
+                        {{-- 👇 Contenedor completo del selector de cantidad --}}
+                        <div class="selector-cantidad flex items-center border border-gray-200 rounded-lg overflow-hidden transition-opacity">
+                            <button type="button"
+                                    onclick="cambiarCantidad('{{ $id }}', -1, this)"
+                                    class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition">
                                 <x-heroicon-o-minus class="w-3.5 h-3.5" />
-                            </a>
+                            </button>
 
-                            <span class="w-8 text-center text-sm font-semibold text-gray-800">
+                            <span class="w-8 text-center text-sm text-gray-800 cantidad-display">
                                 {{ $detalles['cantidad'] }}
                             </span>
 
-                            <a href="{{ route('carrito.aumentar', $id) }}"
-                               class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition
-                                      {{ ($detalles['cantidad'] ?? 0) >= ($detalles['stock'] ?? 0) ? 'pointer-events-none opacity-40' : '' }}">
+                            <button type="button"
+                                    onclick="cambiarCantidad('{{ $id }}', 1, this)"
+                                    data-stock="{{ $detalles['stock'] ?? 0 }}"
+                                    class="btn-aumentar w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition
+                                           {{ ($detalles['cantidad'] ?? 0) >= ($detalles['stock'] ?? 0) ? 'pointer-events-none opacity-40' : '' }}">
                                 <x-heroicon-o-plus class="w-3.5 h-3.5" />
-                            </a>
+                            </button>
                         </div>
                     </div>
 
                     <div class="col-span-2 text-center">
                         <span class="sm:hidden text-xs text-gray-400 mr-1">Subtotal:</span>
-                        <span class="text-sm text-gray-800">
+                        <span class="text-sm text-gray-800 subtotal-display">
                             S/ {{ number_format($detalles['precio'] * $detalles['cantidad'], 2) }}
                         </span>
                     </div>
@@ -121,38 +133,21 @@
 
         </div>
 
-        {{-- ===== COLUMNA DERECHA: RESUMEN DEL PEDIDO ===== --}}
         <div class="lg:col-span-4">
-            <div class="bg-[#f1f1f1] rounded-2xl p-7 lg:sticky lg:top-24">
+            <div class="lg:sticky lg:top-24 pt-4 lg:pt-16">
 
-                <h2 class="font-bold text-lg mb-6 text-gray-800">Resumen del pedido</h2>
-
-                {{-- Lista de productos en el resumen --}}
-                <div class="space-y-3 mb-5">
-                    @foreach($items as $id => $detalles)
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm text-gray-800 leading-tight">
-                                    {{ ucwords(strtolower($detalles['nombre'])) }} x {{ $detalles['cantidad'] }}
-                                </p>
-                            </div>
-                            <span class="text-sm text-gray-800 shrink-0">
-                                S/ {{ number_format($detalles['precio'] * $detalles['cantidad'], 2) }}
-                            </span>
-                        </div>
-                    @endforeach
-                </div>
-
+                {{-- Total --}}
                 <div class="flex justify-between items-center">
-                    <span class="font-bold text-gray-800 text-[16px]">Total</span>
-                    <span class="font-bold text-gray-800 text-[16px]">
+                    <span class="text-gray-800 text-[16px]">Total</span>
+                    <span class="text-gray-800 text-[16px] total-global">
                         S/ {{ number_format($total, 2) }}
                     </span>
                 </div>
 
+                {{-- Botón continuar --}}
                 <a href="{{ route('checkout.index') }}"
-                   class="mt-7 flex items-center justify-center w-full bg-gray-900 text-white rounded-full py-4 text-xs font-bold tracking-widest hover:bg-gray-800 active:scale-[0.99] transition-all uppercase">
-                    Continuar con la compra
+                class="mt-5 flex items-center justify-center w-full bg-gray-900 text-white rounded-full py-4 text-xs font-bold tracking-widest hover:bg-gray-800 active:scale-[0.99] transition-all uppercase">
+                    Continuar
                 </a>
 
             </div>
@@ -181,6 +176,167 @@
 <script>
     function carritoData() {
         return {}
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // Cambiar cantidad sin recargar la página (AJAX)
+    // ══════════════════════════════════════════════════════════
+    async function cambiarCantidad(idVariante, delta, btn) {
+        const fila = btn.closest('[data-item-id]');
+        if (!fila) return;
+
+        const cantidadEl = fila.querySelector('.cantidad-display');
+        const subtotalEl = fila.querySelector('.subtotal-display');
+        const btnAumentar = fila.querySelector('.btn-aumentar');
+        const selectorEl = fila.querySelector('.selector-cantidad');
+        const precio = parseFloat(fila.dataset.precio) || 0;
+
+        const cantidadActual = parseInt(cantidadEl.textContent.trim());
+        const stock = btnAumentar ? parseInt(btnAumentar.dataset.stock) : 999;
+
+        const nuevaCantidad = cantidadActual + delta;
+
+        // 🗑️ Si va a bajar a 0 → eliminar el producto
+        if (nuevaCantidad < 1) {
+            await eliminarProducto(idVariante, fila);
+            return;
+        }
+
+        // Validar stock máximo
+        if (nuevaCantidad > stock) return;
+
+        // 🔒 Poner todo el SELECTOR de cantidad en gris + bloquear clicks
+        if (selectorEl) {
+            selectorEl.style.opacity = '0.4';
+            selectorEl.style.pointerEvents = 'none';
+        }
+
+        try {
+            let url;
+            if (delta > 0) {
+                url = `{{ url('/carrito/aumentar') }}/${idVariante}`;
+            } else {
+                url = `{{ url('/carrito/disminuir') }}/${idVariante}`;
+            }
+
+            await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+
+            // Actualizar UI
+            cantidadEl.textContent = nuevaCantidad;
+            const nuevoSubtotal = precio * nuevaCantidad;
+            subtotalEl.textContent = 'S/ ' + nuevoSubtotal.toFixed(2);
+
+            recalcularTotalGlobal();
+
+        } catch (error) {
+            console.error('Error al cambiar cantidad:', error);
+        } finally {
+            // 🔓 Restaurar el selector y aplicar reglas según stock
+            restaurarSelector(fila, nuevaCantidad, stock);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // Eliminar producto del carrito
+    // ══════════════════════════════════════════════════════════
+    async function eliminarProducto(idVariante, fila) {
+        // 🔒 Bloquear el selector de cantidad
+        const selectorEl = fila.querySelector('.selector-cantidad');
+        if (selectorEl) {
+            selectorEl.style.opacity = '0.4';
+            selectorEl.style.pointerEvents = 'none';
+        }
+
+        try {
+            const url = `{{ url('/carrito/eliminar') }}/${idVariante}`;
+
+            await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+
+            // Animación de salida
+            fila.style.transition = 'opacity 0.2s, transform 0.2s';
+            fila.style.opacity = '0';
+            fila.style.transform = 'translateX(-20px)';
+
+            setTimeout(() => {
+                fila.remove();
+                recalcularTotalGlobal();
+
+                // Si ya no quedan items → recargar para mostrar empty state
+                const quedanItems = document.querySelectorAll('[data-item-id]');
+                if (quedanItems.length === 0) {
+                    window.location.reload();
+                }
+            }, 200);
+
+        } catch (error) {
+            console.error('Error al eliminar producto:', error);
+            // Restaurar en caso de error
+            fila.style.opacity = '1';
+            if (selectorEl) {
+                selectorEl.style.opacity = '1';
+                selectorEl.style.pointerEvents = 'auto';
+            }
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // Restaurar el selector de cantidad (opacidad + interacción)
+    // ══════════════════════════════════════════════════════════
+    function restaurarSelector(fila, cantidad, stock) {
+        const selectorEl = fila.querySelector('.selector-cantidad');
+        const btnAumentar = fila.querySelector('.btn-aumentar');
+
+        if (!selectorEl) return;
+
+        // Restaurar el contenedor completo (opacidad + clicks)
+        selectorEl.style.opacity = '1';
+        selectorEl.style.pointerEvents = 'auto';
+
+        // Reglas para el botón (+): bloquear si llegó al stock máximo
+        if (btnAumentar) {
+            if (cantidad >= stock) {
+                btnAumentar.classList.add('pointer-events-none', 'opacity-40');
+            } else {
+                btnAumentar.classList.remove('pointer-events-none', 'opacity-40');
+            }
+        }
+
+        // El botón (-) siempre está activo (al bajar de 1 elimina el producto)
+        // No hay que hacer nada con él
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // Recalcular total global
+    // ══════════════════════════════════════════════════════════
+    function recalcularTotalGlobal() {
+        let total = 0;
+
+        document.querySelectorAll('[data-item-id]').forEach(fila => {
+            const precio = parseFloat(fila.dataset.precio) || 0;
+            const cantidad = parseInt(
+                fila.querySelector('.cantidad-display').textContent.trim()
+            );
+            total += precio * cantidad;
+        });
+
+        const totalEl = document.querySelector('.total-global');
+        if (totalEl) {
+            totalEl.textContent = 'S/ ' + total.toFixed(2);
+        }
     }
 </script>
 @endpush

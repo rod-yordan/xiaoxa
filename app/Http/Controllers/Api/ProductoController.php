@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductoResource;
 use App\Http\Resources\VarianteResource;
 use App\Models\Producto;
-use App\Models\ProductoVariante;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -20,58 +19,77 @@ class ProductoController extends Controller
         $query = Producto::activos()
             ->with(['categoria', 'variantes.imagenes']);
 
-        // Filtros
-        if ($request->has('categoria')) {
-            $query->where('id_categoria', $request->categoria);
+        // ─── Filtro por categoría (acepta ID o nombre) ─────────────────
+        if ($request->filled('categoria')) {
+            $cat = $request->categoria;
+
+            if (is_numeric($cat)) {
+                $query->where('id_categoria', $cat);
+            } else {
+                $query->whereHas('categoria', function ($q) use ($cat) {
+                    $q->where('nombre_categoria', $cat);
+                });
+            }
         }
 
-        if ($request->has('talla') && !empty($request->talla)) {
-            $query->whereHas('variantes', function($q) use ($request) {
+        if ($request->filled('talla')) {
+            $query->whereHas('variantes', function ($q) use ($request) {
                 $q->where('talla', $request->talla)
                   ->where('stock', '>', 0);
             });
         }
 
-        if ($request->has('color') && !empty($request->color)) {
-            $query->whereHas('variantes', function($q) use ($request) {
+        if ($request->filled('color')) {
+            $query->whereHas('variantes', function ($q) use ($request) {
                 $q->where('color', $request->color)
                   ->where('stock', '>', 0);
             });
         }
 
-        if ($request->has('precio_min') && $request->has('precio_max')) {
-            $query->whereBetween('precio', [$request->precio_min, $request->precio_max]);
-        }
-
-        if ($request->has('busqueda') && !empty($request->busqueda)) {
+        if ($request->filled('busqueda')) {
             $query->buscar($request->busqueda);
         }
 
-        // Solo productos con stock
+        // ─── Filtro por promociones (igual que la web) ────────────────
+        if ($request->boolean('promocion')) {
+            $query->enOferta();
+        }
+
+        // ─── Filtro "nuevo" → ordenar por fecha desc ──────────────────
+        $esNuevo = $request->boolean('nuevo');
+
+        // ─── Solo productos con stock ────────────────────────────────
         if ($request->boolean('con_stock', true)) {
             $query->conStock();
         }
 
-        // Ordenamiento
-        $orden = $request->get('orden', 'created_at');
-        $direccion = $request->get('direccion', 'desc');
+        // ─── Ordenamiento ────────────────────────────────────────────
+        if ($esNuevo) {
+            $query->orderBy('created_at', 'desc');
+        } else {
+            $orden = $request->get('orden', 'created_at');
+            $direccion = $request->get('direccion', 'desc');
 
-        $ordenPermitido = ['created_at', 'nombre_producto', 'precio', 'id_producto'];
-        if (!in_array($orden, $ordenPermitido)) {
-            $orden = 'created_at';
+            $ordenPermitido = ['created_at', 'nombre_producto', 'precio', 'id_producto'];
+            if (!in_array($orden, $ordenPermitido)) {
+                $orden = 'created_at';
+            }
+            if (!in_array($direccion, ['asc', 'desc'])) {
+                $direccion = 'desc';
+            }
+
+            $query->orderBy($orden, $direccion);
         }
 
-        $query->orderBy($orden, $direccion);
-
-        // Paginación
+        // ─── Paginación ──────────────────────────────────────────────
         $productos = $query->paginate($request->get('limit', 10));
 
         return response()->json([
-            'success' => true,
-            'data' => ProductoResource::collection($productos),
+            'success'      => true,
+            'data'         => ProductoResource::collection($productos),
             'current_page' => $productos->currentPage(),
-            'last_page' => $productos->lastPage(),
-            'total' => $productos->total(),
+            'last_page'    => $productos->lastPage(),
+            'total'        => $productos->total(),
         ]);
     }
 
@@ -112,7 +130,7 @@ class ProductoController extends Controller
         }
 
         $variantes = $producto->variantes()
-            ->with('imagenes')            // 👈 NUEVO: eager loading
+            ->with('imagenes')
             ->where('stock', '>', 0)
             ->get();
 
@@ -120,87 +138,6 @@ class ProductoController extends Controller
             'success' => true,
             'data' => VarianteResource::collection($variantes)
         ]);
-    }
-
-    /**
-     * Obtener productos recomendados
-     */
-    public function recomendados(Request $request)
-    {
-        try {
-            $query = Producto::activos()
-                ->with(['categoria', 'variantes.imagenes']);
-
-            // Filtrar por oferta/promociones
-            if ($request->has('en_oferta') && $request->en_oferta == 'true') {
-                $query->enOferta();
-            }
-
-            // Filtrar por categoría si es necesario
-            if ($request->has('categoria_id')) {
-                $query->where('id_categoria', $request->categoria_id);
-            }
-
-            // Límite de resultados
-            $limit = $request->get('limit', 10);
-
-            // Orden aleatorio para "recomendados"
-            $productos = $query->inRandomOrder()->limit($limit)->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => ProductoResource::collection($productos)
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error en recomendados: ' . $e->getMessage());
-            Log::error('Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al cargar productos recomendados: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Obtener productos populares
-     */
-    public function populares(Request $request)
-    {
-        try {
-            $query = Producto::activos()
-                ->with(['categoria', 'variantes.imagenes']);
-
-            // Filtrar por oferta/promociones
-            if ($request->has('en_oferta') && $request->en_oferta == 'true') {
-                $query->enOferta();
-            }
-
-            // Filtrar por categoría si es necesario
-            if ($request->has('categoria_id')) {
-                $query->where('id_categoria', $request->categoria_id);
-            }
-
-            // Límite de resultados
-            $limit = $request->get('limit', 10);
-
-            // Orden aleatorio para "populares"
-            $productos = $query->inRandomOrder()->limit($limit)->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => ProductoResource::collection($productos)
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error en populares: ' . $e->getMessage());
-            Log::error('Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al cargar productos populares: ' . $e->getMessage()
-            ], 500);
-        }
     }
 
     /**
@@ -217,11 +154,11 @@ class ProductoController extends Controller
             $productos = $query->paginate($request->get('limit', 10));
 
             return response()->json([
-                'success' => true,
-                'data' => ProductoResource::collection($productos),
+                'success'      => true,
+                'data'         => ProductoResource::collection($productos),
                 'current_page' => $productos->currentPage(),
-                'last_page' => $productos->lastPage(),
-                'total' => $productos->total(),
+                'last_page'    => $productos->lastPage(),
+                'total'        => $productos->total(),
             ]);
         } catch (\Exception $e) {
             Log::error('Error en ofertas: ' . $e->getMessage());
@@ -251,11 +188,11 @@ class ProductoController extends Controller
             $productos = $query->paginate($request->get('limit', 10));
 
             return response()->json([
-                'success' => true,
-                'data' => ProductoResource::collection($productos),
+                'success'      => true,
+                'data'         => ProductoResource::collection($productos),
                 'current_page' => $productos->currentPage(),
-                'last_page' => $productos->lastPage(),
-                'total' => $productos->total(),
+                'last_page'    => $productos->lastPage(),
+                'total'        => $productos->total(),
             ]);
         } catch (\Exception $e) {
             Log::error('Error en buscar: ' . $e->getMessage());
@@ -274,7 +211,7 @@ class ProductoController extends Controller
     {
         try {
             $query = Producto::activos()
-                ->whereHas('variantes', function($q) use ($talla) {
+                ->whereHas('variantes', function ($q) use ($talla) {
                     $q->where('talla', $talla)
                       ->where('stock', '>', 0);
                 })
@@ -283,11 +220,11 @@ class ProductoController extends Controller
             $productos = $query->paginate($request->get('limit', 10));
 
             return response()->json([
-                'success' => true,
-                'data' => ProductoResource::collection($productos),
+                'success'      => true,
+                'data'         => ProductoResource::collection($productos),
                 'current_page' => $productos->currentPage(),
-                'last_page' => $productos->lastPage(),
-                'total' => $productos->total(),
+                'last_page'    => $productos->lastPage(),
+                'total'        => $productos->total(),
             ]);
         } catch (\Exception $e) {
             Log::error('Error en porTalla: ' . $e->getMessage());
@@ -306,7 +243,7 @@ class ProductoController extends Controller
     {
         try {
             $query = Producto::activos()
-                ->whereHas('variantes', function($q) use ($color) {
+                ->whereHas('variantes', function ($q) use ($color) {
                     $q->where('color', $color)
                       ->where('stock', '>', 0);
                 })
@@ -315,11 +252,11 @@ class ProductoController extends Controller
             $productos = $query->paginate($request->get('limit', 10));
 
             return response()->json([
-                'success' => true,
-                'data' => ProductoResource::collection($productos),
+                'success'      => true,
+                'data'         => ProductoResource::collection($productos),
                 'current_page' => $productos->currentPage(),
-                'last_page' => $productos->lastPage(),
-                'total' => $productos->total(),
+                'last_page'    => $productos->lastPage(),
+                'total'        => $productos->total(),
             ]);
         } catch (\Exception $e) {
             Log::error('Error en porColor: ' . $e->getMessage());
@@ -327,41 +264,6 @@ class ProductoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al filtrar por color'
-            ], 500);
-        }
-    }
-
-    /**
-     * Filtrar productos por rango de precio
-     */
-    public function porRangoPrecio(Request $request)
-    {
-        try {
-            $request->validate([
-                'min' => 'required|numeric|min:0',
-                'max' => 'required|numeric|min:0|gt:min',
-            ]);
-
-            $query = Producto::activos()
-                ->whereBetween('precio', [$request->min, $request->max])
-                ->with(['categoria', 'variantes.imagenes'])
-                ->conStock();
-
-            $productos = $query->paginate($request->get('limit', 10));
-
-            return response()->json([
-                'success' => true,
-                'data' => ProductoResource::collection($productos),
-                'current_page' => $productos->currentPage(),
-                'last_page' => $productos->lastPage(),
-                'total' => $productos->total(),
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error en porRangoPrecio: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al filtrar por rango de precio'
             ], 500);
         }
     }
